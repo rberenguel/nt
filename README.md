@@ -26,7 +26,7 @@ and offers _quicklinks_.
 
 ## <a name='Whatarequicklinks'></a>What are quicklinks?
 
-Yes.
+This is hard to explain.
 
 In the basic examples of the screenshot below, there are a bunch of quicklinks for Google stuff.
 If you want to open Google, you can press `g` (it will highlight all links that match) and
