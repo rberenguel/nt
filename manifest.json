@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "NT",
+  "version": "0.1",
+  "description": "Replaces the default new tab page with a custom one",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  }
+}
