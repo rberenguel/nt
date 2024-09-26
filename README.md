@@ -1,15 +1,14 @@
 # NT (new tab)
 
 <!-- vscode-markdown-toc -->
-
-- [What does it do?](#Whatdoesitdo)
-- [What are quicklinks?](#Whatarequicklinks)
-- [Installation](#Installation)
-- [Installing](#Installing)
-- [Tweaking](#Tweaking)
-- [Safari?](#Safari)
-- [Image credits](#Imagecredits)
-- [Attribution](#Attribution)
+* [What does it do?](#Whatdoesitdo)
+* [What are quicklinks?](#Whatarequicklinks)
+* [Why vanilla Javascript, and why not publish it as a "real" extension?](#WhyvanillaJavascriptandwhynotpublishitasarealextension)
+* [Installing](#Installing)
+* [Tweaking](#Tweaking)
+* [Safari?](#Safari)
+* [Image credits](#Imagecredits)
+* [Attribution](#Attribution)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -45,10 +44,19 @@ the flow would be `Cmd-Tab ESC g o`
 Shortcuts are optional, you can find more about how to set links up in general in the `links.js` file.
 
 Shortcuts can be more than one letter as long as they do not overlap. So, don't use `gg` for one link
-and `gga` for another. If you want to have a lot of links, you can optionally add columns, separators
-and tweak the font size without needing to the CSS (even if it is available to edit, it is always a hassle!).
+and `gga` for another: `gg` will capture your keys first. If you want to have a lot of links, you can
+optionally add columns, separators and tweak the font size and any other properties of the container div
+without needing to modify the CSS (even if it is available to edit, it is always a hassle).
 
-## <a name='Installation'></a>Installation
+## <a name='WhyvanillaJavascriptandwhynotpublishitasarealextension'></a>Why vanilla Javascript, and why not publish it as a "real" extension?
+
+The whole point I had in writing this was having access to everything in the extension without needing to rebuild it.
+By using vanilla, run-of-the-mill JS not only I can avoid a build toolchain, but adding any new functionality is
+as easy as opening any text editor and adding it to `utilities.js`. Changing styles? Just change `style.css`. Adding
+backgrounds? Same, you get the idea.
+
+As such, packaging this as an extension makes no sense: once packed it is _not_ customizable, it has no settings, no
+background worker, no `ObjectStorage`. Configuration _is_ code.
 
 ## <a name='Installing'></a>Installing
 
@@ -62,19 +70,34 @@ When you enable it, the first time you create a new tab it will ask for confirma
 ## <a name='Tweaking'></a>Tweaking
 
 Just edit the source you have downloaded, and in the Chrome Extensions manager, click update (many times
-this is not even needed, just a refresh).
+this is not even needed, just a refresh or recreate the new tab).
 
 This is thrown together in one folder on purpose, to make it easier to edit without wondering where anything
 is. Everything is in this folder (except for backgrounds).
 
-I will add some more documentation at some point.
+I will add some more documentation of the functions you can use at some point, but they should be pretty
+descriptive already.
 
 ## <a name='Safari'></a>Safari?
 
-I haven't checked yet, but I had great success auto-porting [bestBefore](https://github.com/rberenguel/bestBefore)
-to Safari with Apple's autoconverter.
+[Extension auto-porting](https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari),
+as I tried for [bestBefore](https://github.com/rberenguel/bestBefore)
+works, although it is not as convenient as direct-edit when using Chrome.
 
-I think I'd like to have this in Safari too.
+After cloning, run (I did it in another folder at the same level):
+
+```
+xcrun safari-web-extension-converter ../nt
+```
+
+It will automatically open the generated Xcode project: the project references the assets in the original, cloned folder:
+any changes you make to the Chrome extension source can then propagate to the Safari extension by rebuilding the project
+in Xcode.
+
+You might need to set up signing (in theory for local running it is not needed), but that is free with an Apple account,
+just a bit annoying to do the first time. If you don't want the iOS extension (I'm interested, but installing extensions
+on iOS is annoying, and requires the 7+ GB of the iOS toolchain) remove the references to the iOS "apps" from the project
+hierarchy in Xcode. Finally, [follow the instructions in the autoporting documentation]((https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari)).
 
 ## <a name='Imagecredits'></a>Image credits
 
