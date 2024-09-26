@@ -21,7 +21,7 @@ A customizable new tab extension for Chrome.
 
 ## <a name='Whatdoesitdo'></a>What does it do?
 
-This is inspired by something I use somewhere else, but way easier to customize and tweak.
+This is inspired by something I use _somewhere else_, but way easier to customize and tweak.
 It lets you:
 - Have large named timezones anywhere,
 - Rotates backgrounds from a list on new tab,
