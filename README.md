@@ -22,12 +22,17 @@ A customizable new tab extension for Chrome.
 ## <a name='Whatdoesitdo'></a>What does it do?
 
 This is inspired by something I use somewhere else, but way easier to customize and tweak.
-It lets you put named timezones anywhere, rotate backgrounds from a list, iframes,
-and offers _quicklinks_.
+It lets you:
+- Have large named timezones anywhere,
+- Rotates backgrounds from a list on new tab,
+- Add lists of iframes,
+- Offers _quicklinks_,
+- Can be edited and customized by changing its code (see [Tweaking](#Tweaking).
 
 ## <a name='Whatarequicklinks'></a>What are quicklinks?
 
-This is hard to explain.
+In short, they are just URLs in the middle of the new tab (or anywhere you put them). But they can
+have optionally shortcuts, which makes them way faster to open.
 
 In the basic examples of the screenshot below, there are a bunch of quicklinks for Google stuff.
 If you want to open Google, you can press `g` (it will highlight all links that match) and
@@ -37,7 +42,7 @@ the flow would be `Cmd-Tab ESC g o`
 
 ![](media/screenshot.png)
 
-They are optional, you can find more about how to set links up in the links file.
+Shortcuts are optional, you can find more about how to set links up in general in the `links.js` file.
 
 Shortcuts can be more than one letter as long as they do not overlap. So, don't use `gg` for one link
 and `gga` for another. If you want to have a lot of links, you can optionally add columns, separators
