@@ -140,9 +140,13 @@ function addLinksToDiv(links, targetDivId) {
         for (let i = 0; i < shortcut.length; i++) {
           s.querySelector(`span.letter-${i}`).classList.add("highlight");
         }
+        s.closest(".quicklink-div").classList.add("highlight")
       } else {
         Array.from(s.querySelectorAll("span")).map((l) =>
-          l.classList.remove("highlight"),
+          {
+            l.classList.remove("highlight");
+            s.closest(".quicklink-div").classList.remove("highlight");
+          }
         );
       }
     });

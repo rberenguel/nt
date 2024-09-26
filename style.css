@@ -76,6 +76,13 @@ iframe {
 .quicklink-div {
   display: flex;
   justify-content: space-between;
+  padding: 0.1em 0.15em 0.1em 0.15em;
+  margin: 0.1em;
+}
+
+.quicklink-div.highlight {
+  border: 1px solid var(--cyan);
+  border-radius: 0.3em;
 }
 
 .quicklink {
