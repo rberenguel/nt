@@ -56,6 +56,7 @@ iframe {
 
 #center {
   position: absolute;
+  display: flex;
   top: 25%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -64,6 +65,12 @@ iframe {
   padding: 1em;
   border-radius: 0.2em;
   border: 2px solid #c60;
+  flex-direction: row;
+  gap: 1em; /* gap between the columns */
+}
+
+.quicklink-column {
+  flex: 1;
 }
 
 .quicklink-div {
@@ -73,6 +80,7 @@ iframe {
 
 .quicklink {
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .quicklink.normal {

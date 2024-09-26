@@ -58,7 +58,7 @@ function addTimesToDiv(timezoneObjs, targetDivId) {
   }
 }
 
-window.firstKey = null; // Store the first key pressed
+window.hasKeys = ""; // Store the first key pressed
 
 function addLinksToDiv(links, targetDivId) {
   const targetDiv = document.getElementById(targetDivId);
@@ -67,11 +67,24 @@ function addLinksToDiv(links, targetDivId) {
     return;
   }
   targetDiv.innerHTML = "";
+  let wrapperNode = document.createElement("DIV");
+  wrapperNode.classList.add("quicklink-column");
   for (let i = 0; i < links.length; i++) {
     const link = links[i];
+    if (link.kind == "settings") {
+      const property = link.display.split(":")[0].trim();
+      const value = link.display.split(":")[1].trim();
+      targetDiv.style[property] = value;
+      continue;
+    }
     if (link.kind == "sep") {
       const hr = document.createElement("HR");
-      targetDiv.appendChild(hr);
+      wrapperNode.appendChild(hr);
+      continue;
+    }
+    if (link.kind == "col") {
+      wrapperNode = document.createElement("DIV");
+      wrapperNode.classList.add("quicklink-column");
       continue;
     }
     const div = document.createElement("DIV");
@@ -102,45 +115,57 @@ function addLinksToDiv(links, targetDivId) {
       shortcutDiv.classList.add("shortcut");
       const one = link.shortcut[0];
       const two = link.shortcut[1];
-      shortcutDiv.innerHTML = `[<span>${one}</span>${two ? two : ""}]`;
+      let shortcut = "[";
+      for (let i = 0; i < link.shortcut.length; i++) {
+        shortcut += `<span class="letter-${i}">${link.shortcut[i]}</span>`;
+      }
+      shortcutDiv.innerHTML = `${shortcut}]`;
       div.appendChild(shortcutDiv);
     }
-    targetDiv.appendChild(div);
+    wrapperNode.appendChild(div);
+    targetDiv.appendChild(wrapperNode);
   }
 
   document.addEventListener("keydown", function (event) {
     event.preventDefault();
     const shortcuts = document.querySelectorAll(".quicklink.shortcut");
-    if (window.firstKey) {
-      const secondKey = event.key;
-      const shortcut = firstKey + secondKey;
+    console.info(`Keys: ${window.hasKeys}`);
+    const nextKey = event.key;
+    window.hasKeys = window.hasKeys + [nextKey];
+    const shortcut = window.hasKeys;
+    let match = false;
+    Array.from(shortcuts).map((s) => {
+      if (s.textContent.startsWith(`[${shortcut}`)) {
+        match = true;
+        for (let i = 0; i < shortcut.length; i++) {
+          s.querySelector(`span.letter-${i}`).classList.add("highlight");
+        }
+      } else {
+        Array.from(s.querySelectorAll("span")).map((l) =>
+          l.classList.remove("highlight"),
+        );
+      }
+    });
 
+    if (window.hasKeys) {
+      console.info(`Shortcut: ${shortcut}`);
       const matchingLink = links.find((link) => link.shortcut === shortcut);
-
       if (matchingLink) {
-        window.firstKey = null; // This is kind of pointless though
+        window.hasKeys = ""; // This is kind of pointless though
         window.location.href = matchingLink.url;
       } else {
-        Array.from(shortcuts).map((s) =>
-          s.querySelector("span").classList.remove("highlight"),
-        );
-        window.firstKey = null;
+        if (!match) {
+          window.hasKeys = "";
+        }
       }
     } else {
-      window.firstKey = event.key;
-      const matchingLink = links.find(
-        (link) => link.shortcut === window.firstKey,
-      );
+      window.hasKeys = [event.key];
+      const matchingLink = links.find((link) => link.shortcut === event.key);
 
       if (matchingLink) {
         window.location.href = matchingLink.url;
-        window.firstKey = null; // Reset firstKey after a successful match
+        window.hasKeys = ""; // Reset firstKey after a successful match
       }
-      Array.from(shortcuts).map((s) => {
-        if (s.textContent.startsWith(`[${window.firstKey}`)) {
-          s.querySelector("span").classList.add("highlight");
-        }
-      });
     }
   });
   targetDiv.focus();

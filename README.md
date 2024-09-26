@@ -1,14 +1,15 @@
 # NT (new tab)
 
 <!-- vscode-markdown-toc -->
-* [What does it do?](#Whatdoesitdo)
-* [What are quicklinks?](#Whatarequicklinks)
-* [Installation](#Installation)
-* [Installing](#Installing)
-* [Tweaking](#Tweaking)
-* [Safari?](#Safari)
-* [Image credits](#Imagecredits)
-* [Attribution](#Attribution)
+
+- [What does it do?](#Whatdoesitdo)
+- [What are quicklinks?](#Whatarequicklinks)
+- [Installation](#Installation)
+- [Installing](#Installing)
+- [Tweaking](#Tweaking)
+- [Safari?](#Safari)
+- [Image credits](#Imagecredits)
+- [Attribution](#Attribution)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -37,6 +38,10 @@ the flow would be `Cmd-Tab ESC g o`
 ![](media/screenshot.png)
 
 They are optional, you can find more about how to set links up in the links file.
+
+Shortcuts can be more than one letter as long as they do not overlap. So, don't use `gg` for one link
+and `gga` for another. If you want to have a lot of links, you can optionally add columns, separators
+and tweak the font size without needing to the CSS (even if it is available to edit, it is always a hassle!).
 
 ## <a name='Installation'></a>Installation
 
