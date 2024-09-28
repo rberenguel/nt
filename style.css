@@ -19,6 +19,11 @@ body {
   font-family: "Roboto Mono";
 }
 
+iframe {
+  display: block;
+  margin: 0.1em;
+}
+
 #upper-left {
   left: 0.2em;
   top: 0.2em;
@@ -28,6 +33,26 @@ body {
 
 #lower-left {
   left: 0.2em;
+  bottom: 0.2em;
+  position: absolute;
+  font-size: 40px;
+}
+
+#upper-right {
+  right: 0.2em;
+  top: 0.2em;
+  position: absolute;
+  font-size: 40px;
+}
+
+#weather-chart {
+  width: 500px;
+  background-color:#333333ff;
+  border-radius: 0.1em;
+}
+
+#lower-right {
+  right: 0.2em;
   bottom: 0.2em;
   position: absolute;
   font-size: 40px;

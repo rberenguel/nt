@@ -99,11 +99,19 @@ just a bit annoying to do the first time. If you don't want the iOS extension (I
 on iOS is annoying, and requires the 7+ GB of the iOS toolchain) remove the references to the iOS "apps" from the project
 hierarchy in Xcode. Finally, [follow the instructions in the autoporting documentation]((https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari)).
 
+To avoid creating the iOS version, run instead:
+
+```
+xcrun safari-web-extension-converter --macos-only --force PATH
+```
+
 ## <a name='Imagecredits'></a>Image credits
 
 All images are algorithmic art pieces I have created, see [mostlymaths.net/sketches](https://mostlymaths.net/sketches)
 
 ## <a name='Attribution'></a>Attribution
 
-- Uses the [luxon.js](https://moment.github.io/luxon/#/) datetime library
+- Uses the [luxon.js](https://moment.github.io/luxon/#/) datetime library.
+- Uses the [charts.js](https://chartsjs.org) plotting library.
+- Uses the free and awesome [OpenMeteo API](https://open-meteo.com/en/docs).
 - Many thanks to [Google Gemini](http://gemini.google.com") for the help.

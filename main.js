@@ -4,14 +4,20 @@ import {
   addTimesToDiv,
   addLinksToDiv,
   randomBackground,
-  addIframes,
 } from "./utilities.js";
 import { links } from "./links.js";
 import { backgrounds } from "./backgrounds.js";
 import { timezones } from "./timezones.js";
-import { iframes } from "./iframes.js";
+import { plotWeather } from "./weather.js";
 
 addLinksToDiv(links, "center");
 addTimesToDiv(timezones, "upper-left");
 randomBackground(backgrounds);
-addIframes(iframes, "lower-left");
+
+const locations = {
+  "Adliswil": {
+    lat: 47.3081, long: 8.5318
+  }
+}
+
+plotWeather(locations["Adliswil"], "upper-right");
