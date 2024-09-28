@@ -15,7 +15,7 @@ const plotWeather = (location, targetDivId) => {
   targetDiv.appendChild(canvas)
   const ctx = document.getElementById("weather-chart").getContext("2d");
   fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m,precipitation_probability,precipitation,rain&forecast_days=1`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m,precipitation_probability,precipitation,rain&forecast_days=2`
   )
     .then((response) => response.json())
     .then((data) => {
