@@ -1,5 +1,7 @@
 export { plotWeather };
 
+let weatherChart
+
 Chart.defaults.color = '#eee';
 const plotWeather = (location, targetDivId) => {
   const {lat, long} = location
@@ -17,7 +19,7 @@ const plotWeather = (location, targetDivId) => {
   )
     .then((response) => response.json())
     .then((data) => {
-      new Chart(ctx, {
+      weatherChart = new Chart(ctx, {
         options: {
           scales: {
             temp: {
@@ -89,5 +91,42 @@ const plotWeather = (location, targetDivId) => {
           ],
         },
       });
-    });
+      updateCurrentTimeLine(); // Add the current time line initially
+      setInterval(updateCurrentTimeLine, 60000); // Update every minute
+    }
+  );
 };
+
+function updateCurrentTimeLine() {
+  const now = new Date();
+  const currentHour = now.getHours();
+
+  // Find the index of the current hour in the labels
+  const currentTimeIndex = weatherChart.data.labels.findIndex(label => parseInt(label) === currentHour);
+
+  // Remove any existing vertical line annotation
+  if (weatherChart.options.plugins.annotation) {
+    weatherChart.options.plugins.annotation.annotations = [];
+  } else {
+    weatherChart.options.plugins.annotation = {
+              annotations: []
+      };
+  }
+
+  // Add the new vertical line annotation
+  weatherChart.options.plugins.annotation.annotations.push({
+      type: 'line',
+      mode: 'vertical',
+      scaleID: 'x',
+      value: currentTimeIndex,
+      borderColor: 'yellow',
+      borderWidth: 2,
+      label: {
+          enabled: true,
+          content: 'Current Time',
+          position: 'top'
+      }
+  });
+
+  weatherChart.update(); // Update the chart to reflect the changes
+}
