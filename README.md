@@ -1,14 +1,15 @@
 # NT (new tab)
 
 <!-- vscode-markdown-toc -->
-* [What does it do?](#Whatdoesitdo)
-* [What are quicklinks?](#Whatarequicklinks)
-* [Why vanilla Javascript, and why not publish it as a "real" extension?](#WhyvanillaJavascriptandwhynotpublishitasarealextension)
-* [Installing](#Installing)
-* [Tweaking](#Tweaking)
-* [Safari?](#Safari)
-* [Image credits](#Imagecredits)
-* [Attribution](#Attribution)
+
+- [What does it do?](#Whatdoesitdo)
+- [What are quicklinks?](#Whatarequicklinks)
+- [Why vanilla Javascript, and why not publish it as a "real" extension?](#WhyvanillaJavascriptandwhynotpublishitasarealextension)
+- [Installing](#Installing)
+- [Tweaking](#Tweaking)
+- [Safari?](#Safari)
+- [Image credits](#Imagecredits)
+- [Attribution](#Attribution)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -22,6 +23,7 @@ A customizable new tab extension for Chrome.
 
 This is inspired by something I use _somewhere else_, but way easier to customize and tweak.
 It lets you:
+
 - Have large named timezones anywhere,
 - Rotates backgrounds from a list on new tab,
 - Add lists of iframes,
@@ -97,7 +99,7 @@ in Xcode.
 You might need to set up signing (in theory for local running it is not needed), but that is free with an Apple account,
 just a bit annoying to do the first time. If you don't want the iOS extension (I'm interested, but installing extensions
 on iOS is annoying, and requires the 7+ GB of the iOS toolchain) remove the references to the iOS "apps" from the project
-hierarchy in Xcode. Finally, [follow the instructions in the autoporting documentation]((https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari)).
+hierarchy in Xcode. Finally, [follow the instructions in the autoporting documentation](<(https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari)>).
 
 To avoid creating the iOS version, run instead:
 

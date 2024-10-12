@@ -1,4 +1,10 @@
-export { addTimesToDiv, addLinksToDiv, randomBackground, addIframes };
+export {
+  addTimesToDiv,
+  addLinksToDiv,
+  randomBackground,
+  addIframes,
+  addTasksToDiv,
+};
 
 import { DateTime } from "./libs/luxon.js";
 
@@ -140,14 +146,12 @@ function addLinksToDiv(links, targetDivId) {
         for (let i = 0; i < shortcut.length; i++) {
           s.querySelector(`span.letter-${i}`).classList.add("highlight");
         }
-        s.closest(".quicklink-div").classList.add("highlight")
+        s.closest(".quicklink-div").classList.add("highlight");
       } else {
-        Array.from(s.querySelectorAll("span")).map((l) =>
-          {
-            l.classList.remove("highlight");
-            s.closest(".quicklink-div").classList.remove("highlight");
-          }
-        );
+        Array.from(s.querySelectorAll("span")).map((l) => {
+          l.classList.remove("highlight");
+          s.closest(".quicklink-div").classList.remove("highlight");
+        });
       }
     });
 
@@ -197,4 +201,50 @@ function addIframes(iframes, targetDivId) {
     }
     targetDiv.appendChild(frame);
   }
+}
+
+function addTasksToDiv(tasks, targetDivId) {
+  const d = () => document.createElement("DIV");
+  const targetDiv = document.getElementById(targetDivId);
+  if (!targetDiv) {
+    console.error("Target div not found:", targetDivId);
+    return;
+  }
+  targetDiv.innerHTML = "";
+  let wrapperNode = d();
+  wrapperNode.id = "taskWrapper";
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+    if (task.settings) {
+      for (const key in task.settings) {
+        targetDiv.style[key] = task.settings[key];
+      }
+      continue;
+    }
+    console.info(task);
+    const taskWrapper = d();
+    taskWrapper.classList.add("taskRow");
+    const taskText = d();
+    const taskExtra = d();
+    taskText.classList.add("taskText");
+    taskExtra.classList.add("taskExtra");
+    const text = task.text;
+    const extra = task.extra ? task.extra : "";
+    const taskColor = task.color ? task.color : "task-default";
+    const extraColor = task.extraColor ? task.extraColor : "task-extra-default";
+    const link = task.link;
+    taskText.innerHTML = text;
+    taskExtra.innerHTML = extra;
+    if (link) {
+      taskText.addEventListener("click", (e) => (window.location.href = link));
+      taskText.innerHTML += " 🔗";
+      taskText.style.cursor = "pointer";
+    }
+    taskText.style.color = `var(--${taskColor})`;
+    taskExtra.style.color = `var(--${extraColor})`;
+    taskWrapper.appendChild(taskText);
+    taskWrapper.appendChild(taskExtra);
+    wrapperNode.appendChild(taskWrapper);
+  }
+  targetDiv.appendChild(wrapperNode);
 }

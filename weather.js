@@ -1,10 +1,10 @@
 export { plotWeather };
 
-let weatherChart
+let weatherChart;
 
-Chart.defaults.color = '#eee';
+Chart.defaults.color = "#eee";
 const plotWeather = (location, targetDivId) => {
-  const {lat, long} = location
+  const { lat, long } = location;
   const targetDiv = document.getElementById(targetDivId);
   if (!targetDiv) {
     console.error("Target div not found:", targetDivId);
@@ -12,10 +12,10 @@ const plotWeather = (location, targetDivId) => {
   }
   const canvas = document.createElement("CANVAS");
   canvas.id = "weather-chart";
-  targetDiv.appendChild(canvas)
+  targetDiv.appendChild(canvas);
   const ctx = document.getElementById("weather-chart").getContext("2d");
   fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m,precipitation_probability,precipitation,rain&forecast_days=2`
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m,precipitation_probability,precipitation,rain&forecast_days=2`,
   )
     .then((response) => response.json())
     .then((data) => {
@@ -93,8 +93,7 @@ const plotWeather = (location, targetDivId) => {
       });
       updateCurrentTimeLine(); // Add the current time line initially
       setInterval(updateCurrentTimeLine, 60000); // Update every minute
-    }
-  );
+    });
 };
 
 function updateCurrentTimeLine() {
@@ -102,30 +101,32 @@ function updateCurrentTimeLine() {
   const currentHour = now.getHours();
 
   // Find the index of the current hour in the labels
-  const currentTimeIndex = weatherChart.data.labels.findIndex(label => parseInt(label) === currentHour);
+  const currentTimeIndex = weatherChart.data.labels.findIndex(
+    (label) => parseInt(label) === currentHour,
+  );
 
   // Remove any existing vertical line annotation
   if (weatherChart.options.plugins.annotation) {
     weatherChart.options.plugins.annotation.annotations = [];
   } else {
     weatherChart.options.plugins.annotation = {
-              annotations: []
-      };
+      annotations: [],
+    };
   }
 
   // Add the new vertical line annotation
   weatherChart.options.plugins.annotation.annotations.push({
-      type: 'line',
-      mode: 'vertical',
-      scaleID: 'x',
-      value: currentTimeIndex,
-      borderColor: 'yellow',
-      borderWidth: 2,
-      label: {
-          enabled: true,
-          content: 'Current Time',
-          position: 'top'
-      }
+    type: "line",
+    mode: "vertical",
+    scaleID: "x",
+    value: currentTimeIndex,
+    borderColor: "yellow",
+    borderWidth: 2,
+    label: {
+      enabled: true,
+      content: "Current Time",
+      position: "top",
+    },
   });
 
   weatherChart.update(); // Update the chart to reflect the changes
