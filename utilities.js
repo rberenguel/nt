@@ -213,7 +213,12 @@ function addTasksToDiv(tasks, targetDivId) {
   targetDiv.innerHTML = "";
   let wrapperNode = d();
   wrapperNode.id = "taskWrapper";
-  for (let i = 0; i < tasks.length; i++) {
+  const maxPrio = Math.max(...tasks.map((e) => e.prio ?? 0));
+  for (
+    let i = 0;
+    i < tasks.sort((a, b) => (b.prio ?? 0) - (a.prio ?? 0)).length;
+    i++
+  ) {
     const task = tasks[i];
     if (task.settings) {
       for (const key in task.settings) {
@@ -242,6 +247,12 @@ function addTasksToDiv(tasks, targetDivId) {
     }
     taskText.style.color = `var(--${taskColor})`;
     taskExtra.style.color = `var(--${extraColor})`;
+    if (task.prio) {
+      const sqrr = (s) => Math.sqrt(Math.sqrt(s));
+      const f = sqrr(task.prio / maxPrio);
+      const fuzz = f * 40;
+      taskText.style.color = `color-mix(in srgb, ${taskText.style.color} ${100 - fuzz}%, var(--light) ${fuzz}%)`;
+    }
     taskWrapper.appendChild(taskText);
     taskWrapper.appendChild(taskExtra);
     wrapperNode.appendChild(taskWrapper);
