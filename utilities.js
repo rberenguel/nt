@@ -247,7 +247,7 @@ function addTasksToDiv(tasks, targetDivId) {
     const taskExtra = d();
     taskText.classList.add("taskText");
     taskExtra.classList.add("taskExtra");
-    let text = task.text;
+    let text = task.text.replace("#kr", "✨ #kr");
     const extra = task.extra ? task.extra : "";
     const taskColor = task.color ? task.color : "task-default";
     const extraColor = task.extraColor ? task.extraColor : "task-extra-default";
