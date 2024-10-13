@@ -133,6 +133,9 @@ function addLinksToDiv(links, targetDivId) {
   }
 
   document.addEventListener("keydown", function (event) {
+    if(event.metaKey){
+      return
+    }
     event.preventDefault();
     const shortcuts = document.querySelectorAll(".quicklink.shortcut");
     console.info(`Keys: ${window.hasKeys}`);
@@ -160,6 +163,9 @@ function addLinksToDiv(links, targetDivId) {
       const matchingLink = links.find((link) => link.shortcut === shortcut);
       if (matchingLink) {
         window.hasKeys = ""; // This is kind of pointless though
+        if(matchingLink.alsoOpen2){
+          window.open(matchingLink.url2, "_blank");
+        }
         window.location.href = matchingLink.url;
       } else {
         if (!match) {

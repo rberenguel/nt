@@ -9,7 +9,7 @@ const tasks = [
     },
   },
   {
-    projects: ["Lego"],
+    projects: ["Lego"], // This will be slightly highlighted in task texts
   },
   {
     text: "Build Lego",
