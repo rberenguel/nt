@@ -161,6 +161,10 @@ iframe {
   margin-right: 1em;
 }
 
+.taskText > strong {
+  text-shadow: -0.06em -0.06em 0;
+}
+
 .taskExtra {
   margin-top: 0.3em;
   font-size: 70%;

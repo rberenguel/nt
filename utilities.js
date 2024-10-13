@@ -210,13 +210,17 @@ function addTasksToDiv(tasks, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  let projects = [];
   targetDiv.innerHTML = "";
   let wrapperNode = d();
   wrapperNode.id = "taskWrapper";
   const maxPrio = Math.max(...tasks.map((e) => e.prio ?? 0));
   for (
     let i = 0;
-    i < tasks.sort((a, b) => (b.prio ?? 0) - (a.prio ?? 0)).length;
+    i <
+    tasks.sort(
+      (a, b) => (b.prio ?? 0) - (a.prio ?? 0) + (b.projects ? 10000 : 0),
+    ).length;
     i++
   ) {
     const task = tasks[i];
@@ -226,6 +230,10 @@ function addTasksToDiv(tasks, targetDivId) {
       }
       continue;
     }
+    if (task.projects) {
+      projects = task.projects;
+      continue;
+    }
     console.info(task);
     const taskWrapper = d();
     taskWrapper.classList.add("taskRow");
@@ -233,13 +241,11 @@ function addTasksToDiv(tasks, targetDivId) {
     const taskExtra = d();
     taskText.classList.add("taskText");
     taskExtra.classList.add("taskExtra");
-    const text = task.text;
+    let text = task.text;
     const extra = task.extra ? task.extra : "";
     const taskColor = task.color ? task.color : "task-default";
     const extraColor = task.extraColor ? task.extraColor : "task-extra-default";
     const link = task.link;
-    taskText.innerHTML = text;
-    taskExtra.innerHTML = extra;
     if (link) {
       taskText.addEventListener("click", (e) => (window.location.href = link));
       taskText.innerHTML += " 🔗";
@@ -253,6 +259,15 @@ function addTasksToDiv(tasks, targetDivId) {
       const fuzz = f * 40;
       taskText.style.color = `color-mix(in srgb, ${taskText.style.color} ${100 - fuzz}%, var(--light) ${fuzz}%)`;
     }
+    for (let proj of projects) {
+      const adjColor = `color-mix(in srgb, ${taskText.style.color} 70%, var(--light) 30%)`;
+      text = text.replace(
+        proj,
+        `<strong style="color: ${adjColor};">${proj}</strong>`,
+      );
+    }
+    taskText.innerHTML = text;
+    taskExtra.innerHTML = extra;
     taskWrapper.appendChild(taskText);
     taskWrapper.appendChild(taskExtra);
     wrapperNode.appendChild(taskWrapper);

@@ -9,6 +9,9 @@ const tasks = [
     },
   },
   {
+    projects: ["Lego"],
+  },
+  {
     text: "Build Lego",
   },
   {
