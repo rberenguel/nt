@@ -16,39 +16,37 @@ kind can also be:
 - settings, then display holds a CSS style rule, named as a Javascript property identifier (no dashes, using capitalisation)
 */
 
-const goog = {
-  url: "https://google.com",
-  display: "Goog",
-  shortcut: "g ",
-  kind: "title",
-};
-
-const googGemini = {
+const gemini = {
   url: "https://gemini.google.com",
   display: "Gemini",
   shortcut: "gg",
   kind: "normal",
 };
 
-const googDocs = {
-  url: "https://docs.google.com",
-  display: "Goog Docs",
-  shortcut: "gdo", // Just to show 3 letters works
+const omnivore = {
+  url: "https://omnivore.app/home",
+  display: "Omnivore",
+  shortcut: "o",
   kind: "normal",
-  url2: "https://docs.new",
-  display2: "(new)",
 };
 
-const newspapers = {
-  display: "Newspapers",
+const githubRepoList = {
+  url: "https://github.com/rberenguel?tab=repositories",
+  display: "Repo list",
+  shortcut: "gr",
+  kind: "normal",
+};
+
+const githubWeave = {
+  url: "https://github.com/rberenguel/weave",
+  display: "Weave",
+  shortcut: "gw",
+  kind: "normal",
+};
+
+const github = {
+  display: "Github",
   kind: "title",
-};
-
-const theGuardian = {
-  url: "https://theguardian.co.uk",
-  display: "The Guardian",
-  shortcut: "t",
-  kind: "normal",
 };
 
 const hr = {
@@ -64,13 +62,42 @@ const fontsize = {
   kind: "settings",
 };
 
+const vscode = {
+  kind: "title",
+  display: "VSCode",
+};
+
+const vscodeLinks = {
+  url: "vscode://file/Users/ruben/fromsource/nt/links.js",
+  display: "Edit links",
+  kind: "normal",
+  shortcut: ".l",
+};
+
+const vscodeTasks = {
+  url: "vscode://file//Users/ruben/Library/Mobile%20Documents/com~apple~CloudDocs/_nt/tasks.js",
+  display: "Edit tasks",
+  kind: "normal",
+  shortcut: ".t",
+};
+
+const usenixSRE = {
+  url: "https://www.usenix.org/publications/loginonline?field_lv2_article_type_tid=All&field_lv2_tags_tid=1102",
+  display: "usenix SRE",
+  kind: "normal",
+  shortcut: "u",
+};
+
 const links = [
   fontsize,
-  goog,
-  googGemini,
-  googDocs,
+  omnivore,
+  gemini,
+  usenixSRE,
+  github,
+  githubRepoList,
+  githubWeave,
   hr,
-  col,
-  newspapers,
-  theGuardian,
+  vscode,
+  vscodeLinks,
+  vscodeTasks,
 ];

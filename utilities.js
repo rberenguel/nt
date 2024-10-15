@@ -294,8 +294,13 @@ function addTasksToDiv(tasks, targetDivId) {
       extralink.classList.add("extralink");
       const num = numMojis[i % numMojis.length];
       extralink.innerText = num;
-      extralink.dataset.href = links[i];
-      extralink.title = links[i];
+      if (typeof links[i] === "string") {
+        extralink.dataset.title = links[i];
+        extralink.dataset.href = links[i];
+      } else {
+        extralink.dataset.title = links[i][0];
+        extralink.dataset.href = links[i][1];
+      }
       extralinkWrapper.appendChild(extralink);
       extralink.addEventListener("click", () => {
         chrome.storage.local.get(["visitedLinks"], (data) => {

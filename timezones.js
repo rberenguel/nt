@@ -4,16 +4,15 @@ export { timezones };
 
 const timezones = [
   {
+    timezone: "America/Los_Angeles",
+    name: "SVL",
+  },
+  {
     timezone: "America/New_York",
-    name: "New York",
+    name: "NY",
   },
   {
     timezone: "Europe/Zurich",
     name: "ZRH",
-  },
-  // TODO(me) fix with Luxon
-  {
-    timezone: "Europe/Paris",
-    name: "🥐",
   },
 ];

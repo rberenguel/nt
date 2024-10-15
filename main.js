@@ -10,7 +10,7 @@ import { links } from "./links.js";
 import { backgrounds } from "./backgrounds.js";
 import { timezones } from "./timezones.js";
 import { plotWeather } from "./weather.js";
-import { tasks } from "./tasks.js";
+import { tasks } from "./ttasks.js";
 
 addLinksToDiv(links, "center");
 addTimesToDiv(timezones, "upper-left");

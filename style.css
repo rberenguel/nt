@@ -177,6 +177,16 @@ iframe {
   cursor: pointer;
 }
 
+span[data-title]:hover::after {
+  content: attr(data-title);
+  display: block;
+  position: absolute;
+  background-color: var(--dark);
+  color: var(--light);
+  padding: 0.5em;
+  border-radius: 0.5em;
+}
+
 .taskText span.extralink.visited {
   color: var(--light-grey-trans);
 }
