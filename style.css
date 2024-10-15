@@ -9,6 +9,7 @@
   --green: #859900ff;
   --light: #fdf6e3ff;
   --light-grey: #93a1a1ff;
+  --light-grey-trans: #93a1a199;
   --light-trans: #fdf6e399;
   --dark: #002b36ff;
   --grey-trans: #333333dd;
@@ -163,6 +164,21 @@ iframe {
 
 .taskText > strong {
   text-shadow: -0.06em -0.06em 0;
+}
+
+.taskText .extralinkWrapper {
+  margin-left: 2em;
+  display: inline-block;
+}
+
+.taskText span.extralink {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.taskText span.extralink.visited {
+  color: var(--light-grey-trans);
 }
 
 .taskExtra {

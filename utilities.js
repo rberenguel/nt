@@ -66,6 +66,8 @@ function addTimesToDiv(timezoneObjs, targetDivId) {
 
 window.hasKeys = ""; // Store the first key pressed
 
+const numMojis = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧"];
+
 function addLinksToDiv(links, targetDivId) {
   const targetDiv = document.getElementById(targetDivId);
   if (!targetDiv) {
@@ -133,8 +135,8 @@ function addLinksToDiv(links, targetDivId) {
   }
 
   document.addEventListener("keydown", function (event) {
-    if(event.metaKey){
-      return
+    if (event.metaKey) {
+      return;
     }
     event.preventDefault();
     const shortcuts = document.querySelectorAll(".quicklink.shortcut");
@@ -163,7 +165,7 @@ function addLinksToDiv(links, targetDivId) {
       const matchingLink = links.find((link) => link.shortcut === shortcut);
       if (matchingLink) {
         window.hasKeys = ""; // This is kind of pointless though
-        if(matchingLink.alsoOpen2){
+        if (matchingLink.alsoOpen2) {
           window.open(matchingLink.url2, "_blank");
         }
         window.location.href = matchingLink.url;
@@ -221,12 +223,12 @@ function addTasksToDiv(tasks, targetDivId) {
   let wrapperNode = d();
   wrapperNode.id = "taskWrapper";
   const maxPrio = Math.max(...tasks.map((e) => e.prio ?? 0));
+  // This is to allow explicit prio = 0 to be at the bottom
+  const _prio = (a) => (a.prio !== undefined ? a.prio : 1);
   for (
     let i = 0;
     i <
-    tasks.sort(
-      (a, b) => (b.prio ?? 0) - (a.prio ?? 0) + (b.projects ? 10000 : 0),
-    ).length;
+    tasks.sort((a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0)).length;
     i++
   ) {
     const task = tasks[i];
@@ -252,31 +254,86 @@ function addTasksToDiv(tasks, targetDivId) {
     const taskColor = task.color ? task.color : "task-default";
     const extraColor = task.extraColor ? task.extraColor : "task-extra-default";
     const link = task.link;
-    if (link) {
-      taskText.addEventListener("click", (e) => (window.location.href = link));
-      taskText.innerHTML += " 🔗";
-      taskText.style.cursor = "pointer";
-    }
     taskText.style.color = `var(--${taskColor})`;
     taskExtra.style.color = `var(--${extraColor})`;
     if (task.prio) {
       const sqrr = (s) => Math.sqrt(Math.sqrt(s));
       const f = sqrr(task.prio / maxPrio);
       const fuzz = f * 40;
-      taskText.style.color = `color-mix(in srgb, ${taskText.style.color} ${100 - fuzz}%, var(--light) ${fuzz}%)`;
+      taskText.style.color = `color-mix(in srgb, ${taskText.style.color} ${
+        100 - fuzz
+      }%, var(--light) ${fuzz}%)`;
     }
-    for (let proj of projects) {
-      const adjColor = `color-mix(in srgb, ${taskText.style.color} 70%, var(--light) 30%)`;
-      text = text.replace(
-        proj,
-        `<strong style="color: ${adjColor};">${proj}</strong>`,
-      );
+    for (let i = 0; i < projects.length; i++) {
+      const _p = projects[i];
+      let pproj = _p;
+      if (typeof _p === "string") {
+        pproj = [_p];
+      }
+      const color = colors[i % colors.length];
+      for (let proj of pproj) {
+        const adjColor = `color-mix(in srgb, var(${color}) 98%, var(--light) 2%)`;
+        text = text.replace(
+          proj,
+          `<strong style="color: ${adjColor};">${proj}</strong>`,
+        );
+      }
     }
     taskText.innerHTML = text;
     taskExtra.innerHTML = extra;
+    if (link) {
+      taskText.addEventListener("click", (e) => (window.location.href = link));
+      taskText.innerHTML += " 🔗";
+      taskText.style.cursor = "pointer";
+    }
+    const extralinkWrapper = document.createElement("div");
+    extralinkWrapper.classList.add("extralinkWrapper");
+    const links = task.links ?? [];
+    for (let i = 0; i < links.length; i++) {
+      const extralink = document.createElement("SPAN");
+      extralink.classList.add("extralink");
+      const num = numMojis[i % numMojis.length];
+      extralink.innerText = num;
+      extralink.dataset.href = links[i];
+      extralink.title = links[i];
+      extralinkWrapper.appendChild(extralink);
+      extralink.addEventListener("click", () => {
+        chrome.storage.local.get(["visitedLinks"], (data) => {
+          const visitedLinks = data.visitedLinks || {};
+          visitedLinks[extralink.dataset.href] = true;
+          extralink.classList.add("visited");
+          chrome.storage.local.set({ visitedLinks });
+          // This assumes extra links are "things we might want to open a lot of"
+          window.open(extralink.dataset.href, "_blank");
+        });
+      });
+      extralink.addEventListener("contextmenu", (ev) => {
+        ev.preventDefault();
+        chrome.storage.local.get(["visitedLinks"], (data) => {
+          const visitedLinks = data.visitedLinks || {};
+          visitedLinks[extralink.dataset.href] = false;
+          extralink.classList.remove("visited");
+          chrome.storage.local.set({ visitedLinks });
+        });
+      });
+    }
+    if (task.links) {
+      taskText.appendChild(extralinkWrapper);
+    }
     taskWrapper.appendChild(taskText);
     taskWrapper.appendChild(taskExtra);
     wrapperNode.appendChild(taskWrapper);
   }
+  chrome.storage.local.get(["visitedLinks"], (data) => {
+    const visitedLinks = data.visitedLinks || {};
+    for (const href in visitedLinks) {
+      const elms = document.querySelectorAll(`[data-href="${href}"]`);
+      for (const elm of elms) {
+        if (visitedLinks[href]) {
+          elm.classList.add("visited");
+        }
+      }
+    }
+  });
   targetDiv.appendChild(wrapperNode);
 }
