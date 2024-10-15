@@ -1,5 +1,7 @@
 export { plotWeather };
 
+import { toTop } from "./utilities.js";
+
 let weatherChart;
 
 Chart.defaults.color = "#eee";
@@ -10,6 +12,7 @@ const plotWeather = (location, targetDivId) => {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   const canvas = document.createElement("CANVAS");
   canvas.id = "weather-chart";
   targetDiv.appendChild(canvas);

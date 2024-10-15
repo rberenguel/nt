@@ -18,6 +18,6 @@ const tasks = [
     text: "B",
   },
   {
-    text: "C"
-  }
+    text: "C",
+  },
 ];

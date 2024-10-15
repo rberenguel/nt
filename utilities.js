@@ -4,6 +4,7 @@ export {
   randomBackground,
   addIframes,
   addTasksToDiv,
+  toTop,
 };
 
 import { DateTime } from "./libs/luxon.js";
@@ -44,6 +45,7 @@ function addTimesToDiv(timezoneObjs, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   targetDiv.innerHTML = "";
   for (let i = 0; i < timezoneObjs.length; i++) {
     const id = `timezone-${i}`;
@@ -74,6 +76,7 @@ function addLinksToDiv(links, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   targetDiv.innerHTML = "";
   let wrapperNode = document.createElement("DIV");
   wrapperNode.classList.add("quicklink-column");
@@ -202,6 +205,7 @@ function addIframes(iframes, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   for (let iframe of iframes) {
     const frame = document.createElement("IFRAME");
     for (const key in iframe) {
@@ -211,6 +215,18 @@ function addIframes(iframes, targetDivId) {
   }
 }
 
+function toTop(div) {
+  const allDivs = document.querySelectorAll("div");
+  const zs = Array.from(allDivs)
+    .map((d) => getComputedStyle(d).getPropertyValue("z-index"))
+    .filter((z) => z != "auto");
+  console.log(zs);
+  const maxZ = Math.max(0, ...zs);
+  console.log(maxZ);
+  div.style.zIndex = maxZ + 1;
+  console.info("Sent to top");
+}
+
 function addTasksToDiv(tasks, targetDivId) {
   const d = () => document.createElement("DIV");
   const targetDiv = document.getElementById(targetDivId);
@@ -218,6 +234,7 @@ function addTasksToDiv(tasks, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   let projects = [];
   targetDiv.innerHTML = "";
   let wrapperNode = d();
