@@ -99,9 +99,3 @@ const links = [
   vscodeLinks,
   vscodeTasks,
 ];
-
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-  module.exports = { links }; 
-} else {
-  window.links = links;
-}

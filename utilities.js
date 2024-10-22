@@ -67,7 +67,7 @@ const numMojis = [
   "&#9316;",
   "&#9317;",
   "&#9318;",
-  "&#9319;"
+  "&#9319;",
 ];
 
 function addLinksToDiv(links, targetDivId) {
@@ -190,11 +190,12 @@ function addLinksToDiv(links, targetDivId) {
   targetDiv.focus();
 }
 
-function randomBackground(backgrounds) {
+function randomBackground(backgrounds, path = ".") {
+  console.log(backgrounds);
   const randomIndex = Math.floor(Math.random() * backgrounds.length);
 
   const background = backgrounds[randomIndex];
-  document.body.style.backgroundImage = `url(backgrounds/${background})`;
+  document.body.style.backgroundImage = `url(${path}/backgrounds/${background})`;
   document.body.style.backgroundSize = "cover";
   document.body.style.repeat = "no-repeat";
 }
@@ -248,7 +249,9 @@ function addTasksToDiv(tasks, targetDivId) {
     tasks.sort((a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0)).length;
     i++
   ) {
-    const task = tasks.sort((a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0))[i];
+    const task = tasks.sort(
+      (a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0),
+    )[i];
     if (task.settings) {
       for (const key in task.settings) {
         targetDiv.style[key] = task.settings[key];

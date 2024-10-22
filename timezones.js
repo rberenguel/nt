@@ -14,9 +14,3 @@ const timezones = [
     name: "ZRH",
   },
 ];
-
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-  module.exports = { timezones }; 
-} else {
-  window.timezones = timezones;
-}
