@@ -1,6 +1,4 @@
-export { plotWeather };
-
-import { toTop } from "./utilities.js";
+//import { toTop } from "./utilities.js";
 
 let weatherChart;
 
@@ -133,4 +131,11 @@ function updateCurrentTimeLine() {
   });
 
   weatherChart.update(); // Update the chart to reflect the changes
+}
+
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = { plotWeather }; 
+} else {
+  window.plotWeather = plotWeather;
 }

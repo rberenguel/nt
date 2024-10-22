@@ -1,5 +1,3 @@
-export { backgrounds };
-
 const backgrounds = [
   "ideas.jpg",
   "synthwave.jpg",
@@ -10,3 +8,10 @@ const backgrounds = [
   "big-bang.jpg",
   "underwater.jpg",
 ];
+
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = { backgrounds }; 
+} else {
+  window.backgrounds = backgrounds;
+}

@@ -1,13 +1,4 @@
-export {
-  addTimesToDiv,
-  addLinksToDiv,
-  randomBackground,
-  addIframes,
-  addTasksToDiv,
-  toTop,
-};
-
-import { DateTime } from "./libs/luxon.js";
+const DateTime = luxon.DateTime;
 
 const colors = [
   "--yellow",
@@ -68,7 +59,16 @@ function addTimesToDiv(timezoneObjs, targetDivId) {
 
 window.hasKeys = ""; // Store the first key pressed
 
-const numMojis = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧"];
+const numMojis = [
+  "&#9312;",
+  "&#9313;",
+  "&#9314;",
+  "&#9315;",
+  "&#9316;",
+  "&#9317;",
+  "&#9318;",
+  "&#9319;"
+];
 
 function addLinksToDiv(links, targetDivId) {
   const targetDiv = document.getElementById(targetDivId);
@@ -248,7 +248,7 @@ function addTasksToDiv(tasks, targetDivId) {
     tasks.sort((a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0)).length;
     i++
   ) {
-    const task = tasks[i];
+    const task = tasks.sort((a, b) => _prio(b) - _prio(a) + (b.projects ? 10000 : 0))[i];
     if (task.settings) {
       for (const key in task.settings) {
         targetDiv.style[key] = task.settings[key];
@@ -300,7 +300,7 @@ function addTasksToDiv(tasks, targetDivId) {
     taskExtra.innerHTML = extra;
     if (link) {
       taskText.addEventListener("click", (e) => (window.location.href = link));
-      taskText.innerHTML += " 🔗";
+      taskText.innerHTML += " &#128279;";
       taskText.style.cursor = "pointer";
     }
     const extralinkWrapper = document.createElement("div");
@@ -310,7 +310,7 @@ function addTasksToDiv(tasks, targetDivId) {
       const extralink = document.createElement("SPAN");
       extralink.classList.add("extralink");
       const num = numMojis[i % numMojis.length];
-      extralink.innerText = num;
+      extralink.innerHTML = num;
       if (typeof links[i] === "string") {
         extralink.dataset.title = links[i];
         extralink.dataset.href = links[i];
@@ -320,23 +320,11 @@ function addTasksToDiv(tasks, targetDivId) {
       }
       extralinkWrapper.appendChild(extralink);
       extralink.addEventListener("click", () => {
-        chrome.storage.local.get(["visitedLinks"], (data) => {
-          const visitedLinks = data.visitedLinks || {};
-          visitedLinks[extralink.dataset.href] = true;
-          extralink.classList.add("visited");
-          chrome.storage.local.set({ visitedLinks });
-          // This assumes extra links are "things we might want to open a lot of"
-          window.open(extralink.dataset.href, "_blank");
-        });
+        window.open(extralink.dataset.href, "_blank");
       });
       extralink.addEventListener("contextmenu", (ev) => {
         ev.preventDefault();
-        chrome.storage.local.get(["visitedLinks"], (data) => {
-          const visitedLinks = data.visitedLinks || {};
-          visitedLinks[extralink.dataset.href] = false;
-          extralink.classList.remove("visited");
-          chrome.storage.local.set({ visitedLinks });
-        });
+        extralink.classList.remove("visited");
       });
     }
     if (task.links) {
@@ -346,16 +334,5 @@ function addTasksToDiv(tasks, targetDivId) {
     taskWrapper.appendChild(taskExtra);
     wrapperNode.appendChild(taskWrapper);
   }
-  chrome.storage.local.get(["visitedLinks"], (data) => {
-    const visitedLinks = data.visitedLinks || {};
-    for (const href in visitedLinks) {
-      const elms = document.querySelectorAll(`[data-href="${href}"]`);
-      for (const elm of elms) {
-        if (visitedLinks[href]) {
-          elm.classList.add("visited");
-        }
-      }
-    }
-  });
   targetDiv.appendChild(wrapperNode);
 }

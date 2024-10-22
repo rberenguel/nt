@@ -1,5 +1,3 @@
-export { links };
-
 /*
 link = {
   url: "destination", optional, even if it's "links" it can actually be just text
@@ -101,3 +99,9 @@ const links = [
   vscodeLinks,
   vscodeTasks,
 ];
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = { links }; 
+} else {
+  window.links = links;
+}
