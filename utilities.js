@@ -322,11 +322,32 @@ function addTasksToDiv(tasks, targetDivId) {
         extralink.dataset.href = links[i][1];
       }
       extralinkWrapper.appendChild(extralink);
+
       extralink.addEventListener("click", () => {
-        window.open(extralink.dataset.href, "_blank");
+        try {
+          chrome.storage.local.get(["visitedLinks"], (data) => {
+            const visitedLinks = data.visitedLinks || {};
+            visitedLinks[extralink.dataset.href] = true;
+            extralink.classList.add("visited");
+            chrome.storage.local.set({ visitedLinks });
+          });
+        } catch {}
+        // This assumes extra links are "things we might want to open a lot of"
+        // Check "links" are just placeholders to count stuff done (like Inktober drawings left)
+        if (!extralink.dataset.href.startsWith("check-")) {
+          window.open(extralink.dataset.href, "_blank");
+        }
       });
       extralink.addEventListener("contextmenu", (ev) => {
         ev.preventDefault();
+        try {
+          chrome.storage.local.get(["visitedLinks"], (data) => {
+            const visitedLinks = data.visitedLinks || {};
+            visitedLinks[extralink.dataset.href] = false;
+            extralink.classList.remove("visited");
+            chrome.storage.local.set({ visitedLinks });
+          });
+        } catch {}
         extralink.classList.remove("visited");
       });
     }
@@ -337,5 +358,18 @@ function addTasksToDiv(tasks, targetDivId) {
     taskWrapper.appendChild(taskExtra);
     wrapperNode.appendChild(taskWrapper);
   }
+  try {
+    chrome.storage.local.get(["visitedLinks"], (data) => {
+      const visitedLinks = data.visitedLinks || {};
+      for (const href in visitedLinks) {
+        const elms = document.querySelectorAll(`[data-href="${href}"]`);
+        for (const elm of elms) {
+          if (visitedLinks[href]) {
+            elm.classList.add("visited");
+          }
+        }
+      }
+    });
+  } catch {}
   targetDiv.appendChild(wrapperNode);
 }
