@@ -65,7 +65,7 @@ const plotWeather = (location, targetDivId) => {
           labels: data.hourly.time.map((time) => time.slice(11)),
           datasets: [
             {
-              label: "Temperature (°C)",
+              label: "temp",
               data: data.hourly.temperature_2m,
               borderColor: "#d50",
               yAxisID: "temp",
@@ -73,7 +73,7 @@ const plotWeather = (location, targetDivId) => {
               pointStyle: "line",
             },
             {
-              label: "Precipitation (mm)",
+              label: "mm",
               data: data.hourly.precipitation,
               borderColor: "#05d",
               yAxisID: "precip",
@@ -81,7 +81,7 @@ const plotWeather = (location, targetDivId) => {
               pointStyle: "line",
             },
             {
-              label: "Precipitation Probability (%)",
+              label: "prec %",
               type: "bar",
               data: data.hourly.precipitation_probability,
               backgroundColor: "#0033ee99",
