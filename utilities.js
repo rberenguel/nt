@@ -235,6 +235,7 @@ function addTasksToDiv(tasks, targetDivId) {
     console.error("Target div not found:", targetDivId);
     return;
   }
+  let addedDoneSeparator = false;
   targetDiv.addEventListener("mouseover", () => toTop(targetDiv));
   let projects = [];
   targetDiv.innerHTML = "";
@@ -242,7 +243,15 @@ function addTasksToDiv(tasks, targetDivId) {
   wrapperNode.id = "taskWrapper";
   const maxPrio = Math.max(...tasks.map((e) => e.prio ?? 0));
   // This is to allow explicit prio = 0 to be at the bottom
-  const _prio = (a) => (a.prio !== undefined ? a.prio : 1);
+  const _prio = (a) => {
+    if (a.done) {
+      return -42;
+    }
+    if (a.prio !== undefined) {
+      return a.prio;
+    }
+    return 1;
+  };
   for (
     let i = 0;
     i <
@@ -356,6 +365,15 @@ function addTasksToDiv(tasks, targetDivId) {
     }
     taskWrapper.appendChild(taskText);
     taskWrapper.appendChild(taskExtra);
+    if (task.done) {
+      taskWrapper.classList.add("done");
+      if (!addedDoneSeparator) {
+        const done = document.createElement("HR");
+        done.id = "doneSep";
+        wrapperNode.appendChild(done);
+        addedDoneSeparator = true;
+      }
+    }
     wrapperNode.appendChild(taskWrapper);
   }
   try {

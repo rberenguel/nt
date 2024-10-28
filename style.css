@@ -197,3 +197,22 @@ span[data-title]:hover::after {
   order: 2;
   margin-left: auto;
 }
+
+#doneSep {
+  border-color: var(--light-grey-trans) !important;
+}
+
+.done {
+  color: var(--light-grey-trans) !important;
+  text-decoration: line-through;
+  font-size: 70% !important;
+}
+
+.done .taskText {
+  color: var(--light-grey-trans) !important;
+}
+
+.done .taskText > strong {
+  color: var(--light-grey-trans) !important;
+  text-shadow: none !important;
+}
