@@ -187,6 +187,41 @@ span[data-title]:hover::after {
   border-radius: 0.5em;
 }
 
+.taskRow[data-title]:hover::after {
+  content: attr(data-title);
+  display: block;
+  position: absolute;
+  background-color: var(--dark);
+  color: var(--light);
+  padding: 0.5em;
+  border-radius: 0.5em;
+}
+
+.taskRow[data-prio]:hover::after {
+  content: attr(data-prio);
+  display: block;
+  position: absolute;
+  left: 0.1em;
+  color: red;
+  background-color: var(--dark);
+  color: var(--light);
+  padding: 0.2em;
+  margin-top: 0.5em;
+  border-radius: 1em;
+  font-size: 50%;
+}
+
+.taskHr[data-title]:hover::after {
+  content: attr(data-title);
+  font-size: 80%;
+  display: block;
+  position: absolute;
+  background-color: var(--dark);
+  color: var(--light);
+  padding: 0.5em;
+  border-radius: 0.5em;
+}
+
 .taskText span.extralink.visited {
   color: var(--light-grey-trans);
 }

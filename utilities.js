@@ -274,6 +274,23 @@ function addTasksToDiv(tasks, targetDivId) {
     console.info(task);
     const taskWrapper = d();
     taskWrapper.classList.add("taskRow");
+    if (task.prio) {
+      taskWrapper.dataset.prio = task.prio;
+    }
+    if (task.msg) {
+      taskWrapper.dataset.title = task.msg;
+    }
+    if (task.hr) {
+      const hr = document.createElement("HR");
+      if (task.msg) {
+        hr.dataset.title = task.msg;
+      }
+      hr.classList.add("taskHr");
+      const taskColor = task.color ? task.color : "task-default";
+      hr.style.borderColor = `var(--${taskColor})`;
+      wrapperNode.appendChild(hr);
+      continue;
+    }
     const taskText = d();
     const taskExtra = d();
     taskText.classList.add("taskText");

@@ -21,10 +21,10 @@ const gemini = {
   kind: "normal",
 };
 
-const omnivore = {
-  url: "https://omnivore.app/home",
-  display: "Omnivore",
-  shortcut: "o",
+const jellyfin = {
+  url: "http://localhost:8096/web",
+  display: "Jellyfin",
+  shortcut: "j",
   kind: "normal",
 };
 
@@ -88,7 +88,7 @@ const usenixSRE = {
 
 const links = [
   fontsize,
-  omnivore,
+  jellyfin,
   gemini,
   usenixSRE,
   github,
