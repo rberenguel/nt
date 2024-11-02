@@ -43,7 +43,7 @@ the flow would be `Cmd-Tab ESC g o`
 
 ![](media/screenshot.png)
 
-Shortcuts are optional, you can find more about how to set links up in general in the `links.js` file.
+Shortcuts are optional, you can find more about how to set links up in general in the `linkUtils.js` file.
 
 Shortcuts can be more than one letter as long as they do not overlap. So, don't use `gg` for one link
 and `gga` for another: `gg` will capture your keys first. If you want to have a lot of links, you can
@@ -54,11 +54,11 @@ without needing to modify the CSS (even if it is available to edit, it is always
 
 The whole point I had in writing this was having access to everything in the extension without needing to rebuild it.
 By using vanilla, run-of-the-mill JS not only I can avoid a build toolchain, but adding any new functionality is
-as easy as opening any text editor and adding it to `utilities.js`. Changing styles? Just change `style.css`. Adding
+as easy as opening any text editor and adding it to some `Utils.js` file. Changing styles? Just change `style.css`. Adding
 backgrounds? Same, you get the idea.
 
 As such, packaging this as an extension makes no sense: once packed it is _not_ customizable, it has no settings, no
-background worker, no `ObjectStorage`. Configuration _is_ code.
+background worker, no `ObjectStorage` (well, almost no storage). Configuration _is_ code. Or text, because links and tasks can be configured by writing a semi-structured form of Markdown.
 
 ## <a name='Installing'></a>Installing
 
@@ -78,7 +78,7 @@ This is thrown together in one folder on purpose, to make it easier to edit with
 is. Everything is in this folder (except for backgrounds).
 
 I will add some more documentation of the functions you can use at some point, but they should be pretty
-descriptive already.
+descriptive.
 
 ## <a name='Safari'></a>Safari?
 
