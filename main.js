@@ -17,6 +17,6 @@ const locations = {
 plotWeather(locations["Adliswil"], "upper-right");
 
 tasksFromMarkdown(
-  ["common.md", "lego.md", "web.md", "gamedev.md", "pico.md", "done.md"],
+  ["_common.md", "_done.md"],
   (ts) => addTasksToDiv(ts, "lower-left"),
 );
