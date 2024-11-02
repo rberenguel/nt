@@ -187,14 +187,26 @@ span[data-title]:hover::after {
   border-radius: 0.5em;
 }
 
+.taskRow.error > div {
+  color: red !important;
+}
+
+.taskRow.error {
+  border: 1px solid red;
+  border-radius: 0.2em;
+  padding-left: 0.5em;
+}
+
 .taskRow[data-title]:hover::after {
   content: attr(data-title);
   display: block;
   position: absolute;
+  left: 3em;
   background-color: var(--dark);
   color: var(--light);
   padding: 0.5em;
   border-radius: 0.5em;
+  white-space: pre; /* Preserve newline character */
 }
 
 .taskRow[data-prio]:hover::after {
@@ -202,13 +214,17 @@ span[data-title]:hover::after {
   display: block;
   position: absolute;
   left: 0.1em;
-  color: red;
   background-color: var(--dark);
   color: var(--light);
   padding: 0.2em;
   margin-top: 0.5em;
   border-radius: 1em;
   font-size: 50%;
+}
+
+.taskRow[data-title][data-prio]:hover::after {
+  content: "prio:" attr(data-prio) "\A" attr(data-title); /* Combine content */
+  white-space: pre; /* Preserve newline character */
 }
 
 .taskHr[data-title]:hover::after {

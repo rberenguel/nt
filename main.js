@@ -1,5 +1,7 @@
 // Construct whatever you want here.
 
+// Open each file called somethingUtils.js for a brief description of features
+
 addLinksToDiv(links, "center");
 addTimesToDiv(timezones, "upper-left");
 randomBackground(backgrounds);
@@ -13,4 +15,7 @@ const locations = {
 
 plotWeather(locations["Adliswil"], "upper-right");
 
-addTasksToDiv(tasks, "lower-left");
+tasksFromMarkdown(
+  ["common.md", "lego.md", "web.md", "gamedev.md", "pico.md", "done.md"],
+  (ts) => addTasksToDiv(ts, "lower-left"),
+);
