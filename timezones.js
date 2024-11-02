@@ -2,6 +2,11 @@
 
 const timezones = [
   {
+    settings: {
+      fontSize: "3em",
+    },
+  },
+  {
     timezone: "America/Los_Angeles",
     name: "SVL",
   },
