@@ -2,7 +2,8 @@
 
 // Open each file called somethingUtils.js for a brief description of features
 
-addLinksToDiv(links, "center");
+linksFromMarkdown(["links.md"], (ls) => addLinksToDiv(ls, "center"));
+
 addTimesToDiv(timezones, "upper-left");
 randomBackground(backgrounds);
 

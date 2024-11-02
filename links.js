@@ -1,19 +1,3 @@
-/*
-link = {
-  url: "destination", optional, even if it's "links" it can actually be just text
-  display: "text to show, can be HTML (is assumed to be HTML)",
-  shortcut: "One or two letter shortcut to quickly visit this site",
-  kind: "in general, one of title or normal. Title is larger and has different styling. Used as class",
-  url2: "additional URL to show to the right, floating of the first",
-  display2: "additional text to show, can be HTML"
-}
-
-kind can also be:
-- sep to add an HR
-- col to break into a new column
-- settings, then display holds a CSS style rule, named as a Javascript property identifier (no dashes, using capitalisation)
-*/
-
 const gemini = {
   url: "https://gemini.google.com",
   display: "Gemini",
@@ -99,3 +83,35 @@ const links = [
   vscodeLinks,
   vscodeTasks,
 ];
+
+/*
+
+Equivalent markdown file:
+
+# Settings
+
+- fontSize: 20px
+
+## `j` [jellyfin](http://localhost:8096/web)
+
+## `gg` [Gemini](https://gemini.google.com)
+- [Gem manager](https://gemini.google.com/gems/view)
+
+## `u` [usenix SRE](https://www.usenix.org/publications/loginonline?field_lv2_article_type_tid=All&field_lv2_tags_tid=1102)
+
+
+# Github
+
+## `gr` [Repo list](https://github.com/rberenguel?tab=repositories) 
+
+## `gw` [Weave](https://github.com/rberenguel/weave) 
+
+---
+
+# VSCode
+
+## `.l` [Edit links](vscode://file/Users/ruben/fromsource/nt/links.js)
+
+## `.t` [Edit tasks](vscode://file//Users/ruben/Library/Mobile%20Documents/com~apple~CloudDocs/_nt/tasks.js)
+
+*/
