@@ -222,6 +222,14 @@ span[data-title]:hover::after {
   font-size: 50%;
 }
 
+.taskRow.highlight {
+  padding-left: 2em;
+}
+
+.taskRow.dim {
+  filter: grayscale(0.5) opacity(0.7);
+}
+
 .taskRow[data-title][data-prio]:hover::after {
   content: "prio:" attr(data-prio) "\A" attr(data-title); /* Combine content */
   white-space: pre; /* Preserve newline character */
