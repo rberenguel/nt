@@ -224,10 +224,11 @@ span[data-title]:hover::after {
 
 .taskRow.highlight {
   padding-left: 2em;
+  filter: saturate(1.2) brightness(1.2);;
 }
 
 .taskRow.dim {
-  filter: grayscale(0.5) opacity(0.7);
+  filter: grayscale(0.7) opacity(0.5);
 }
 
 .taskRow[data-title][data-prio]:hover::after {
