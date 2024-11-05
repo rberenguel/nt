@@ -247,6 +247,10 @@ span[data-title]:hover::after {
   border-radius: 0.5em;
 }
 
+.taskText > div {
+  display: inline;
+}
+
 .taskText span.extralink.visited {
   color: var(--light-grey-trans);
 }
