@@ -162,7 +162,7 @@ iframe {
   margin-right: 1em;
 }
 
-.taskText > strong {
+.taskText > div > strong {
   text-shadow: -0.06em -0.06em 0;
 }
 
@@ -224,7 +224,7 @@ span[data-title]:hover::after {
 
 .taskRow.highlight {
   padding-left: 2em;
-  filter: saturate(1.2) brightness(1.2);;
+  filter: saturate(1.2) brightness(1.2);
 }
 
 .taskRow.dim {
@@ -276,7 +276,7 @@ span[data-title]:hover::after {
   color: var(--light-grey-trans) !important;
 }
 
-.done .taskText > strong {
+.done .taskText > div > strong {
   color: var(--light-grey-trans) !important;
   text-shadow: none !important;
 }
