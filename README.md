@@ -111,6 +111,10 @@ xcrun safari-web-extension-converter --macos-only --force PATH
 
 All images are algorithmic art pieces I have created, see [mostlymaths.net/sketches](https://mostlymaths.net/sketches)
 
+## Tests
+
+- The task parser has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_parsing.html)
+
 ## <a name='Attribution'></a>Attribution
 
 - Uses the [luxon.js](https://moment.github.io/luxon/#/) datetime library.
