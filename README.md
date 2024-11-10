@@ -117,6 +117,8 @@ All images are algorithmic art pieces I have created, see [mostlymaths.net/sketc
 ## Tests
 
 - The task parser has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_parsing.html)
+- The task renderer has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_rendering.html), it depends on the parser working.
+- Both together [here](https://mostlymaths.net/nt/tests/index.html)
 
 ## <a name='Attribution'></a>Attribution
 
