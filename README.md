@@ -80,6 +80,9 @@ is. Everything is in this folder (except for backgrounds).
 I will add some more documentation of the functions you can use at some point, but they should be pretty
 descriptive.
 
+Note that `index.html` points to `local_main.js`, which is gitignored. This is because I pass my local basepath
+so I can edit tasks with VS Code. Other than that, it is exactly the same as `main.js`.
+
 ## <a name='Safari'></a>Safari?
 
 [Extension auto-porting](https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari),

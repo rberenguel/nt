@@ -5,6 +5,4 @@ const backgrounds = [
   "bubbles.jpg",
   "flows-78259.jpg",
   "creation.jpg",
-  "big-bang.jpg",
-  "underwater.jpg",
 ];
