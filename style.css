@@ -238,10 +238,17 @@ hr.dim {
 .taskRow.someday {
   filter: grayscale(0.1) opacity(0.8);
   font-size: 80% !important;
+  transition:
+    opacity 0.5s ease-in-out,
+    visibility 0.5s ease-in-out,
+    height 0.5s ease-in-out;
 }
 
 .taskRow.someday.hide {
-  display: none;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  transition: none;
 }
 
 #someday {
