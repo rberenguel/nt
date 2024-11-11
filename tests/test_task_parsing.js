@@ -122,6 +122,27 @@ foo`;
     chai.expect(parsed.color).to.eql("ultraviolet");
     chai.expect(parsed.extraColor).to.eql("maroon");
   });
+  it("someday should be handled", function () {
+    const t = `# Something to do (someday)
+  prio: 20
+  - msg1
+  - [l1](foo.com)
+  - [l2](bar.com)
+  extracolor: maroon
+  color: ultraviolet
+  - msg2
+foo`;
+    const parsed = textToTaskObject(t);
+    console.log(parsed);
+    chai.expect(parsed.text).to.eql("Something to do");
+    chai.expect(parsed.prio).to.eql(-1000);
+    chai.expect(parsed.someday).to.be.true;
+    chai.expect(parsed.links[0]).to.eql(["l1", "foo.com"]);
+    chai.expect(parsed.links[1]).to.eql(["l2", "bar.com"]);
+    chai.expect(parsed.msg).to.eql(["msg1", "msg2"]);
+    chai.expect(parsed.color).to.eql("ultraviolet");
+    chai.expect(parsed.extraColor).to.eql("maroon");
+  });
 });
 
 describe("Settings list handling", function () {

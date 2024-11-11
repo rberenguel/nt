@@ -227,8 +227,21 @@ span[data-title]:hover::after {
   filter: saturate(1.2) brightness(1.2);
 }
 
+hr.dim {
+  filter: grayscale(0.7) opacity(0.5);
+}
+
 .taskRow.dim {
   filter: grayscale(0.7) opacity(0.5);
+}
+
+.taskRow.someday {
+  filter: grayscale(0.1) opacity(0.8);
+  font-size: 80% !important;
+}
+
+.taskRow.someday.hide {
+  display: none;
 }
 
 .taskRow[data-title][data-prio]:hover::after {
@@ -279,4 +292,13 @@ span[data-title]:hover::after {
 .done .taskText > div > strong {
   color: var(--light-grey-trans) !important;
   text-shadow: none !important;
+}
+
+.quote {
+}
+
+.author {
+  font-size: 90%;
+  filter: grayscale(0.7) opacity(0.8);
+  float: right;
 }
