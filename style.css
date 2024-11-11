@@ -19,7 +19,7 @@
 
 body {
   background: var(--dark);
-  font-family: "Roboto Mono";
+  font-family: "Monoid";
 }
 
 iframe {
@@ -299,15 +299,20 @@ hr.dim {
 }
 
 .quote {
-  padding-bottom: 2em;
+  padding-bottom: 1em;
 }
 
-.quote.text {
+.quote .text {
+  text-align: right;
+}
 
+.quote .text p {
+  margin: 0.5em;
 }
 
 .quote .author {
   font-size: 90%;
   filter: grayscale(0.7) opacity(0.8);
-  float: right;
+  text-align: center;
+  padding-left: 8em;
 }

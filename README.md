@@ -126,3 +126,9 @@ All images are algorithmic art pieces I have created, see [mostlymaths.net/sketc
 - Uses the [charts.js](https://chartsjs.org) plotting library.
 - Uses the free and awesome [OpenMeteo API](https://open-meteo.com/en/docs).
 - Many thanks to [Google Gemini](http://gemini.google.com") for the help.
+- Added the following open source fonts:
+	- [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)
+	- [Reforma 1969](https://pampatype.com/reforma) (or from [FontSquirrel](https://www.fontsquirrel.com/fonts/reforma) to see the license)
+	- [Inter](https://rsms.me/inter/)
+	- [Monoid](https://larsenwork.com/monoid/)
+
