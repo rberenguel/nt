@@ -244,6 +244,24 @@ hr.dim {
     height 0.5s ease-in-out;
 }
 
+#someday {
+  cursor: pointer;
+}
+
+.taskRow.done.hide {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  transition: none;
+}
+
+.taskRow.done {
+  transition:
+    opacity 0.5s ease-in-out,
+    visibility 0.5s ease-in-out,
+    height 0.5s ease-in-out;
+}
+
 .taskRow.someday.hide {
   opacity: 0 !important;
   visibility: hidden !important;
@@ -327,8 +345,8 @@ hr.dim {
 
 .quote .note {
   display: inline-block;
-  font-style:oblique;
+  font-style: oblique;
   font-size: 70%;
-  filter: grayscale(0.6) ;
+  filter: grayscale(0.6);
   padding-left: 1em;
 }
