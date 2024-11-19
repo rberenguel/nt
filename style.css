@@ -155,6 +155,7 @@ iframe {
 .taskRow {
   display: flex;
   flex-direction: row;
+  cursor: pointer;
 }
 
 .taskText {
@@ -244,7 +245,34 @@ hr.dim {
     height 0.5s ease-in-out;
 }
 
+.taskRow.someday.hide {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  transition: none;
+}
+
 #someday {
+  cursor: pointer;
+}
+
+.taskRow.reference {
+  filter: grayscale(0.05) opacity(0.9);
+  font-size: 90% !important;
+  transition:
+    opacity 0.5s ease-in-out,
+    visibility 0.5s ease-in-out,
+    height 0.5s ease-in-out;
+}
+
+.taskRow.reference.hide {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  transition: none;
+}
+
+#reference {
   cursor: pointer;
 }
 
@@ -260,13 +288,6 @@ hr.dim {
     opacity 0.5s ease-in-out,
     visibility 0.5s ease-in-out,
     height 0.5s ease-in-out;
-}
-
-.taskRow.someday.hide {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  height: 0 !important;
-  transition: none;
 }
 
 #someday {
