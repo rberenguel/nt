@@ -48,12 +48,6 @@ iframe {
   font-size: 40px;
 }
 
-#weather-chart {
-  width: 500px;
-  background-color: #333333ff;
-  border-radius: 0.1em;
-}
-
 #lower-right {
   right: 0.2em;
   bottom: 0.2em;
