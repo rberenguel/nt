@@ -186,6 +186,9 @@ span[data-title]:hover::after {
   color: var(--light);
   padding: 0.5em;
   border-radius: 0.5em;
+  width: 30em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taskRow.error > div {
@@ -208,6 +211,9 @@ span[data-title]:hover::after {
   padding: 0.5em;
   border-radius: 0.5em;
   white-space: pre; /* Preserve newline character */
+  width: 30em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taskRow[data-prio]:hover::after {
