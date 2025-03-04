@@ -5,7 +5,10 @@
 linksFromMarkdown(["links.md"], (ls) => addLinksToDiv(ls, "center"));
 
 addTimesToDiv(timezones, "upper-left");
-randomBackground(backgrounds);
+randomBackground({
+  backgrounds: backgrounds.concat(mwcBackgrounds),
+  today: true, // This will fix the random seed so the background is the same through today
+});
 
 const locations = {
   Adliswil: {
@@ -19,3 +22,16 @@ plotWeather(locations["Adliswil"], "upper-right");
 tasksFromMarkdown(["common.md", "done.md"], (ts) =>
   addTasksToDiv(ts, "lower-left"),
 );
+
+const qfm = () =>
+  quotesFromMarkdown(
+    ["quotes.md"],
+    (ts) => {
+      addQuotesToDiv({
+        quotes: ts,
+        target: "upper-left",
+        today: true, // This will fix the random seed so the background is the same through today
+      });
+    },
+    (basepath = "somewhere"),
+  );

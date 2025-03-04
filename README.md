@@ -2,14 +2,16 @@
 
 <!-- vscode-markdown-toc -->
 
-- [What does it do?](#Whatdoesitdo)
-- [What are quicklinks?](#Whatarequicklinks)
-- [Why vanilla Javascript, and why not publish it as a "real" extension?](#WhyvanillaJavascriptandwhynotpublishitasarealextension)
-- [Installing](#Installing)
-- [Tweaking](#Tweaking)
-- [Safari?](#Safari)
-- [Image credits](#Imagecredits)
-- [Attribution](#Attribution)
+- [NT (new tab)](#nt-new-tab)
+	- [What does it do?](#what-does-it-do)
+	- [What are quicklinks?](#what-are-quicklinks)
+	- [Why vanilla Javascript, and why not publish it as a "real" extension?](#why-vanilla-javascript-and-why-not-publish-it-as-a-real-extension)
+	- [Installing](#installing)
+	- [Tweaking](#tweaking)
+	- [Safari?](#safari)
+	- [Image credits](#image-credits)
+	- [Tests](#tests)
+	- [Attribution](#attribution)
 
 <!-- vscode-markdown-toc-config
 	numbering=false
@@ -81,7 +83,9 @@ I will add some more documentation of the functions you can use at some point, b
 descriptive.
 
 Note that `index.html` points to `local_main.js`, which is gitignored. This is because I pass my local basepath
-so I can edit tasks with VS Code. Other than that, it is exactly the same as `main.js`.
+so I can edit tasks with VS Code. Other than that, it is pretty much the same as `main.js`.
+
+TODO: override/skip for the fixed background for the day in case I get bored with it
 
 ## <a name='Safari'></a>Safari?
 
@@ -112,7 +116,8 @@ xcrun safari-web-extension-converter --macos-only --force PATH
 
 ## <a name='Imagecredits'></a>Image credits
 
-All images are algorithmic art pieces I have created, see [mostlymaths.net/sketches](https://mostlymaths.net/sketches)
+- All images in the root of the `backgrounds` folder are algorithmic art pieces I have created, see [mostlymaths.net/sketches](https://mostlymaths.net/sketches)
+- Images in the `backgroungs/mwc` folder are a selection of images I liked from https://github.com/DenverCoder1/minimalistic-wallpaper-collection
 
 ## Tests
 
