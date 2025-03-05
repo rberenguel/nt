@@ -27,6 +27,15 @@ iframe {
   margin: 0.1em;
 }
 
+#pi {
+  position: absolute;
+  right: 1em;
+  bottom: 1em;
+  cursor: pointer;
+  color: #555;
+  text-shadow: 1px 1px 1px white;
+}
+
 #upper-left {
   left: 0.2em;
   top: 0.2em;

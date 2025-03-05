@@ -82,10 +82,11 @@ is. Everything is in this folder (except for backgrounds).
 I will add some more documentation of the functions you can use at some point, but they should be pretty
 descriptive.
 
-Note that `index.html` points to `local_main.js`, which is gitignored. This is because I pass my local basepath
-so I can edit tasks with VS Code. Other than that, it is pretty much the same as `main.js`.
+You should provide a file named `local_main.js` based on `main.js`. Locally (when the href protocol is not `http`,
+extensions use another protocol) `local_main.js` is used
 
-TODO: override/skip for the fixed background for the day in case I get bored with it
+If you set a random seed fixed per day (with the `today: true` flag for backgrounds or quotes), you can change the seed
+clicking on the `pi` symbol on the lower right corner while pressing `ALT`. This will add a fixed random salt to the seed.
 
 ## <a name='Safari'></a>Safari?
 
@@ -120,6 +121,8 @@ xcrun safari-web-extension-converter --macos-only --force PATH
 - Images in the `backgroungs/mwc` folder are a selection of images I liked from https://github.com/DenverCoder1/minimalistic-wallpaper-collection
 
 ## Tests
+
+The comment sbelow is false… after so many refactors the tests are broken. Well, they exist, but all are red.
 
 - The task parser has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_parsing.html)
 - The task renderer has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_rendering.html), it depends on the parser working.
