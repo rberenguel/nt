@@ -84,8 +84,13 @@ is. Everything is in this folder (except for backgrounds).
 I will add some more documentation of the functions you can use at some point, but they should be pretty
 descriptive.
 
-You should provide a file named `local_main.js` based on `main.js`. Locally (when the href protocol is not `http`,
-extensions use another protocol) `local_main.js` is used
+~You should provide a file named `local_main.js` based on `main.js`. Locally (when the href protocol is not `http`,
+extensions use another protocol) `local_main.js` is used~
+
+**Everything is controlled via a `local.md` or `online.md` file in the config folder.
+This currently can handle weather, timezone, quotes, backgrounds and links.
+Tasks and iframes are still not available, if you wanted them for some reason, check `main.js` in `no_longer_used`. I may support them at some point,
+it should be quick.**
 
 If you set a random seed fixed per day (with the `today: true` flag for backgrounds or quotes), you can change the seed
 clicking on the `pi` symbol on the lower right corner while pressing `ALT`. This will add a fixed random salt to the seed.
@@ -137,8 +142,7 @@ The comment sbelow is false… after so many refactors the tests are broken. Wel
 - Uses the free and awesome [OpenMeteo API](https://open-meteo.com/en/docs).
 - Many thanks to [Google Gemini](http://gemini.google.com") for the help.
 - Added the following open source fonts:
-	- [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)
-	- [Reforma 1969](https://pampatype.com/reforma) (or from [FontSquirrel](https://www.fontsquirrel.com/fonts/reforma) to see the license)
-	- [Inter](https://rsms.me/inter/)
-	- [Monoid](https://larsenwork.com/monoid/)
-
+  - [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)
+  - [Reforma 1969](https://pampatype.com/reforma) (or from [FontSquirrel](https://www.fontsquirrel.com/fonts/reforma) to see the license)
+  - [Inter](https://rsms.me/inter/)
+  - [Monoid](https://larsenwork.com/monoid/)
