@@ -32,6 +32,8 @@ It lets you:
 - Offers _quicklinks_,
 - Can be edited and customized by changing its code (see [Tweaking](#Tweaking).
 
+**DEMO**: You can see how it looks "live" [here](https://mostlymaths.net/nt/)
+
 ## <a name='Whatarequicklinks'></a>What are quicklinks?
 
 In short, they are just URLs in the middle of the new tab (or anywhere you put them). But they can

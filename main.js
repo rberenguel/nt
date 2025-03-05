@@ -2,9 +2,9 @@
 
 // Open each file called somethingUtils.js for a brief description of features
 
-linksFromMarkdown(["links.md"], (ls) => addLinksToDiv(ls, "center"));
+linksFromMarkdown(["links_sample.md"], (ls) => addLinksToDiv(ls, "center"));
 
-addTimesToDiv(timezones, "upper-left");
+addTimesToDiv(timezones, "lower-left");
 randomBackground({
   backgrounds: backgrounds.concat(mwcBackgrounds),
   today: true, // This will fix the random seed so the background is the same through today
@@ -17,15 +17,17 @@ const locations = {
   },
 };
 
-plotWeather(locations["Adliswil"], "upper-right");
+plotWeather("Adliswil", locations["Adliswil"], "upper-right", {
+  width: "400px",
+});
 
-tasksFromMarkdown(["common.md", "done.md"], (ts) =>
+/*tasksFromMarkdown(["common.md", "done.md"], (ts) =>
   addTasksToDiv(ts, "lower-left"),
-);
+);*/
 
 const qfm = () =>
   quotesFromMarkdown(
-    ["quotes.md"],
+    ["quotes_sample.md"],
     (ts) => {
       addQuotesToDiv({
         quotes: ts,
@@ -33,5 +35,7 @@ const qfm = () =>
         today: true, // This will fix the random seed so the background is the same through today
       });
     },
-    (basepath = "somewhere"),
+    (basepath = ""),
   );
+
+qfm();
