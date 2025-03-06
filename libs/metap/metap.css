@@ -38,6 +38,7 @@
   z-index: 1001;
   display: none;
   border: 1px solid #ccc;
+  max-width: 50vw;
 }
 
 .metap-modal-row {
@@ -45,6 +46,12 @@
   padding: 0.5rem 1rem;
   border-radius: 0.2rem;
   white-space: pre;
+  overflow: visible;
+  text-overflow: clip;
+  text-wrap-mode: wrap;
+  word-wrap: break-word;
+  height: auto;
+  max-width: 50vw;
 }
 
 .metap-modal-row:hover {
@@ -73,6 +80,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  width: 90%;
 }
 
 .metap-ellipsis-row {
