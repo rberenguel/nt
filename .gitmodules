@@ -1,3 +1,6 @@
 [submodule "libs/metap"]
 	path = libs/metap
 	url = git@github.com:rberenguel/metap.git
+[submodule "libs/suncalc"]
+	path = libs/suncalc
+	url = https://github.com/mourner/suncalc.git
