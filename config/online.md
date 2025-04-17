@@ -40,3 +40,10 @@
 - today: true
 - config/backgrounds.md
 - config/mwcBackgrounds.md
+
+# Countdowns
+
+## Sabaton
+- target: 20251118 1900
+- div: lower-right
+- precision: minutes

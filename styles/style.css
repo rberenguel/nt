@@ -413,3 +413,23 @@ hr.dim {
     #a02c2c 100%
   );
 }
+
+.countdown {
+  background: var(--grey-trans);
+  border-radius: 0.2em;
+  padding: 0.1em 0.2em 0.1em 0.2em;
+  margin: 0.2em;
+  font-size: 75%;
+}
+
+.countdown-title {
+  display: inline-block;
+}
+
+.countdown-item {
+  float: right;
+  margin-left: 0.5em;
+  color: var(--light);
+  font-size: 50%;
+  margin-top: 0.9em;
+}
