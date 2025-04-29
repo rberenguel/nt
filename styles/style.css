@@ -106,9 +106,21 @@ iframe {
 
 .quicklink-div {
   display: flex;
+  max-height: 5em;
   justify-content: space-between;
   padding: 0.1em 0.15em 0.1em 0.15em;
   margin: 0.1em;
+}
+
+.folded {
+  overflow: hidden;
+  max-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ql-transition {
+  transition: max-height 0.1s ease-in-out;
 }
 
 .quicklink-div.highlight {
