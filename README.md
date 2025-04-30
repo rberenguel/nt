@@ -1,149 +1,223 @@
-# NT (new tab)
+# NT (New Tab)
 
-<!-- vscode-markdown-toc -->
+A highly customizable New Tab page extension for Chrome, built with vanilla JavaScript. Designed for easy tweaking by editing local configuration files and code, allowing for a personalized dashboard experience. This is the author's daily driver new tab page.
 
-- [NT (new tab)](#nt-new-tab)
-	- [What does it do?](#what-does-it-do)
-	- [What are quicklinks?](#what-are-quicklinks)
-	- [Why vanilla Javascript, and why not publish it as a "real" extension?](#why-vanilla-javascript-and-why-not-publish-it-as-a-real-extension)
-	- [Installing](#installing)
-	- [Tweaking](#tweaking)
-	- [Safari?](#safari)
-	- [Image credits](#image-credits)
-	- [Tests](#tests)
-	- [Attribution](#attribution)
+- [NT (New Tab)](#nt-new-tab)
+	- [Overview](#overview)
+	- [Features](#features)
+	- [Configuration](#configuration)
+		- [File Structure](#file-structure)
+		- [Format](#format)
+		- [Widget Kinds](#widget-kinds)
+			- [Weather](#weather)
+			- [Timezones](#timezones)
+			- [Links](#links)
+			- [Quotes](#quotes)
+			- [Backgrounds](#backgrounds)
+			- [Replacements](#replacements)
+			- [Sunrise/Sunset](#sunrisesunset)
+			- [Countdowns](#countdowns)
+			- [Post-its](#post-its)
+	- [Setup / Installation](#setup--installation)
+	- [Tweaking / Customization](#tweaking--customization)
+	- [Safari Conversion](#safari-conversion)
+	- [Known Issues / Notes](#known-issues--notes)
+	- [Dependencies \& Attribution](#dependencies--attribution)
+	- [Image Credits](#image-credits)
 
-<!-- vscode-markdown-toc-config
-	numbering=false
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
+## Overview
 
-A customizable new tab extension for Chrome.
+This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard configured via simple markdown-like text files. It avoids build toolchains, making modifications as simple as editing text files. Configuration *is* code (or rather, structured text).
 
-## <a name='Whatdoesitdo'></a>What does it do?
+**DEMO**: You can see an example configuration "live" [here](https://mostlymaths.net/nt/) (Note: This online demo uses `config/online.md` and post its are not saveable).
 
-This is inspired by something I use _somewhere else_, but way easier to customize and tweak.
-It lets you:
+## Features
 
-- Have large named timezones anywhere,
-- Rotates backgrounds from a list on new tab,
-- Add lists of iframes,
-- Offers _quicklinks_,
-- Can be edited and customized by changing its code (see [Tweaking](#Tweaking).
+* **Weather:** Displays current weather for multiple locations using OpenMeteo API.
+* **Timezones:** Shows clocks for multiple configured timezones.
+* **Links (Quicklinks):** Customizable list of links, optionally with keyboard shortcuts for quick navigation (Press `ESC` then shortcut keys).
+* **Quotes:** Displays quotes from configured files, can be set to rotate daily.
+* **Backgrounds:** Rotates background images from configured lists, can be set to rotate daily. The seed for daily rotation can be changed by Alt-clicking the 'π' symbol.
+* **Sunrise/Sunset:** Displays calculated sunrise and sunset times for specific locations using SunCalc.js.
+* **Countdowns:** Shows countdown timers to specific future dates and times.
+* **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`).
+* **Replacements:** Uses the `metaP` library to perform text replacements. This is specific to some usecases I have and is hard to explain, so just ignore.
 
-**DEMO**: You can see how it looks "live" [here](https://mostlymaths.net/nt/)
+## Configuration
 
-## <a name='Whatarequicklinks'></a>What are quicklinks?
+Configuration is primarily handled by editing markdown-like files within the `config/` directory.
 
-In short, they are just URLs in the middle of the new tab (or anywhere you put them). But they can
-have optionally shortcuts, which makes them way faster to open.
+### File Structure
 
-In the basic examples of the screenshot below, there are a bunch of quicklinks for Google stuff.
-If you want to open Google, you can press `g` (it will highlight all links that match) and
-then `o` to go to Google. To access this functionality after creating a new tab with `Cmd-Tab`
-(or whatever creates a new tab in your computer), press `ESC` to switch focus to the page. So,
-the flow would be `Cmd-Tab ESC g o`
+* The entry point determines which main config file is loaded:
+    * `config/local.md`: Used when accessing via `file://` protocol (typical for local unpacked extensions).
+    * `config/online.md`: Used when accessing via `http://` or `https://` protocols.
+* These main config files define different sections (widgets/features).
+* Some sections (like Links, Quotes, Backgrounds, Replacements) can reference *other* files (e.g., `config/links.md`, `config/quotes.md`) which contain the actual lists of data.
 
-![](media/screenshot.png)
-
-Shortcuts are optional, you can find more about how to set links up in general in the `linkUtils.js` file.
-
-Shortcuts can be more than one letter as long as they do not overlap. So, don't use `gg` for one link
-and `gga` for another: `gg` will capture your keys first. If you want to have a lot of links, you can
-optionally add columns, separators and tweak the font size and any other properties of the container div
-without needing to modify the CSS (even if it is available to edit, it is always a hassle).
-
-## <a name='WhyvanillaJavascriptandwhynotpublishitasarealextension'></a>Why vanilla Javascript, and why not publish it as a "real" extension?
-
-The whole point I had in writing this was having access to everything in the extension without needing to rebuild it.
-By using vanilla, run-of-the-mill JS not only I can avoid a build toolchain, but adding any new functionality is
-as easy as opening any text editor and adding it to some `Utils.js` file. Changing styles? Just change `style.css`. Adding
-backgrounds? Same, you get the idea.
-
-As such, packaging this as an extension makes no sense: once packed it is _not_ customizable, it has no settings, no
-background worker, no `ObjectStorage` (well, almost no storage). Configuration _is_ code. Or text, because links and tasks can be configured by writing a semi-structured form of Markdown.
-
-## <a name='Installing'></a>Installing
-
-- Clone or download (remember then to unzip) this repository somewhere.
-- In **Chrome**, _More tools > Extensions_…
-- In **Chrome > Extensions**, _Enable developer mode_.
-- Click _Load unpacked_, then browse to where you downloaded the repository
-
-When you enable it, the first time you create a new tab it will ask for confirmation that you are happy.
-
-## <a name='Tweaking'></a>Tweaking
-
-Just edit the source you have downloaded, and in the Chrome Extensions manager, click update (many times
-this is not even needed, just a refresh or recreate the new tab).
-
-This is thrown together in one folder on purpose, to make it easier to edit without wondering where anything
-is. Everything is in this folder (except for backgrounds).
-
-I will add some more documentation of the functions you can use at some point, but they should be pretty
-descriptive.
-
-~You should provide a file named `local_main.js` based on `main.js`. Locally (when the href protocol is not `http`,
-extensions use another protocol) `local_main.js` is used~
-
-**Everything is controlled via a `local.md` or `online.md` file in the config folder.
-This currently can handle weather, timezone, quotes, backgrounds and links.
-Tasks and iframes are still not available, if you wanted them for some reason, check `main.js` in `no_longer_used`. I may support them at some point,
-it should be quick.**
-
-If you set a random seed fixed per day (with the `today: true` flag for backgrounds or quotes), you can change the seed
-clicking on the `pi` symbol on the lower right corner while pressing `ALT`. This will add a fixed random salt to the seed.
-
-## <a name='Safari'></a>Safari?
-
-[Extension auto-porting](https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari),
-as I tried for [bestBefore](https://github.com/rberenguel/bestBefore)
-works, although it is not as convenient as direct-edit when using Chrome.
-
-After cloning, run (I did it in another folder at the same level):
+You can check the `config/online.md` file as an example, although it might get outdated quickly, at the time of this writing it looks like this:
 
 ```
-xcrun safari-web-extension-converter ../nt
+# Weather
+
+## Adliswil
+
+- lat: 47.3081
+- lon: 8.5318
+- div: upper-right
+- width: 400px
+
+## Zurich
+
+- lat: 47.3797259
+- lon: 8.529028
+- div: upper-right
+- width: 400px
+
+# Timezones
+- fontSize: 3em
+- div: lower-left
+
+## svl
+- tz: America/Los_Angeles
+
+## ny
+- tz: America/New_York
+
+## zrh
+- tz: Europe/Zurich
+
+# Links
+- div: center
+- config/links_sample.md
+
+# Quotes
+- div: upper-left
+- today: false
+- config/quotes_sample.md
+
+# Backgrounds
+- today: true
+- config/backgrounds.md
+- config/mwcBackgrounds.md
+
+# Countdowns
+
+## Sabaton
+- target: 20251118 1900
+- div: lower-right
+- precision: minutes
 ```
 
-It will automatically open the generated Xcode project: the project references the assets in the original, cloned folder:
-any changes you make to the Chrome extension source can then propagate to the Safari extension by rebuilding the project
-in Xcode.
+### Format
 
-You might need to set up signing (in theory for local running it is not needed), but that is free with an Apple account,
-just a bit annoying to do the first time. If you don't want the iOS extension (I'm interested, but installing extensions
-on iOS is annoying, and requires the 7+ GB of the iOS toolchain) remove the references to the iOS "apps" from the project
-hierarchy in Xcode. Finally, [follow the instructions in the autoporting documentation](<(https://developer.apple.com/documentation/safariservices/converting-a-web-extension-for-safari)>).
+The configuration files use a simple text format parsed by `lib/mainParser.js`:
 
-To avoid creating the iOS version, run instead:
+* `# kind`: Defines the start of a new widget/section type (e.g., `# Weather`, `# Links`). The `kind` name is case-insensitive.
+* `## title`: Defines a specific instance or sub-section within a `kind`. For kinds that support multiple instances (like Weather, Timezones, Countdowns, Sunrise/Sunset), each `## title` starts a new instance.
+* `- key: value`: Defines properties for the current `kind` or `title` instance. Keys and values are trimmed. Values can contain colons.
 
-```
-xcrun safari-web-extension-converter --macos-only --force PATH
-```
+### Widget Kinds
 
-## <a name='Imagecredits'></a>Image credits
+Here are the supported `kind` sections and their common properties based on `config/local.md` and `mainParser.js`:
 
-- All images in the root of the `backgrounds` folder are algorithmic art pieces I have created, see [mostlymaths.net/sketches](https://mostlymaths.net/sketches)
-- Images in the `backgroungs/mwc` folder are a selection of images I liked from https://github.com/DenverCoder1/minimalistic-wallpaper-collection
+#### Weather
+* Starts with `# Weather`.
+* Requires `## Location Name` for each instance.
+* Properties:
+    * `- lat: Latitude`
+    * `- lon: Longitude`
+    * `- div: ID of the target HTML div` (e.g., `upper-right`)
+    * Other `- key: value` pairs are passed as options (e.g., `- width: 400px`).
 
-## Tests
+#### Timezones
+* Starts with `# Timezones`.
+* The *first* item's properties often define settings for the whole block:
+    * `- div: Target HTML div ID`
+    * `- fontSize: CSS font size` (e.g., `3em`)
+* Subsequent items define individual clocks:
+    * `## Short Name` (e.g., `zrh`)
+    * `- tz: TZ Database Name` (e.g., `Europe/Zurich`)
 
-The comment sbelow is false… after so many refactors the tests are broken. Well, they exist, but all are red.
+#### Links
+* Starts with `# Links`.
+* Properties:
+    * `- div: Target HTML div ID`
+    * Other lines define data sources or potentially direct links (e.g., `- config/links.md`). The keys from these properties are passed to `linksFromMarkdown`. Check `lib/linkUtils.js` for details on link/shortcut format within the target file or if keys/values here define them directly.
 
-- The task parser has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_parsing.html)
-- The task renderer has some unit tests [here](https://mostlymaths.net/nt/tests/test_task_rendering.html), it depends on the parser working.
-- Both together [here](https://mostlymaths.net/nt/tests/index.html)
+#### Quotes
+* Starts with `# Quotes`.
+* Properties:
+    * `- div: Target HTML div ID`
+    * `- today: true` (Optional, for daily rotation using a fixed seed)
+    * Other lines specify files containing quotes (e.g., `- config/quotes.md`). Keys are passed to `quotesFromMarkdown`.
 
-## <a name='Attribution'></a>Attribution
+#### Backgrounds
+* Starts with `# Backgrounds`.
+* Properties:
+    * `- today: true` (Optional, for daily rotation using a fixed seed)
+    * Other lines specify files containing background image URLs or data (e.g., `- config/backgrounds.md`). Keys are passed to `backgroundsFromMarkdown`.
 
-- Uses the [luxon.js](https://moment.github.io/luxon/#/) datetime library.
-- Uses the [charts.js](https://chartsjs.org) plotting library.
-- Uses the free and awesome [OpenMeteo API](https://open-meteo.com/en/docs).
-- Many thanks to [Google Gemini](http://gemini.google.com") for the help.
-- Added the following open source fonts:
-  - [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono)
-  - [Reforma 1969](https://pampatype.com/reforma) (or from [FontSquirrel](https://www.fontsquirrel.com/fonts/reforma) to see the license)
-  - [Inter](https://rsms.me/inter/)
-  - [Monoid](https://larsenwork.com/monoid/)
-  - [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker/)
+#### Replacements
+* Starts with `# Replacements`.
+* Properties define data sources (e.g., `- config/replacements.md`). Keys are passed to `replacementsFromMarkdown`. Assumes only one replacement block is used.
+
+#### Sunrise/Sunset
+* Starts with `# Sunrise/sunset`.
+* Requires `## Location Name` for each instance.
+* Properties:
+    * `- lat: Latitude`
+    * `- lon: Longitude`
+    * `- div: Target HTML div ID`
+    * Other `- key: value` pairs are passed as styles to the widget wrapper.
+
+#### Countdowns
+* Starts with `# Countdowns`.
+* Requires `## Event Name` for each instance.
+* Properties:
+    * `- target: YYYYMMDD HHMM` (Target date and time, e.g., `20251118 1900`)
+    * `- div: Target HTML div ID`
+    * `- precision: months | days | hours | minutes | seconds` (Optional, defaults to `seconds`)
+    * Other `- key: value` pairs are passed as styles to the widget wrapper.
+
+#### Post-its
+* No configuration needed in the markdown files.
+* Functionality is enabled by `lib/postit.js`. Notes are created via Alt+Click and stored using `chrome.storage.local`.
+
+## Setup / Installation
+
+1.  Clone or download this repository.
+2.  In Chrome, navigate to `chrome://extensions`.
+3.  Enable **Developer mode** (usually a toggle in the top-right).
+4.  Click **Load unpacked**.
+5.  Browse to and select the directory where you cloned/downloaded this repository.
+6.  The extension should appear and override your New Tab page. The first time, Chrome might ask for confirmation.
+7.  By default (when loaded unpacked), it will use `config/local.md`.
+
+## Tweaking / Customization
+
+* **Configuration:** Edit the `.md` files (`local.md` in general) in the `config/` directory to change widgets, locations, data sources, etc.
+* **Functionality:** Edit the JavaScript files in the `lib/` directory (e.g., `weatherUtils.js`, `linkUtils.js`) to change how widgets behave or add new ones. Here be dragons, of course. You'll need to map any new `kind` in `mainParser.js`.
+* **Styling:** Edit CSS files in the `styles/` directory. I'm trying to split the CSS into per-widget files at the moment
+* **Reloading:** After saving changes, go back to `chrome://extensions` and click the reload icon for the "NT" extension (sometimes needed for JS changes), or often just reloading the _New Tab_ page is enough (for markdown files changed).
+
+## Safari Conversion
+
+It's possible to convert this for Safari using Apple's tools with `xcrun safari-web-extension-converter`, but it defeats the quick iteration in changing/adding to the configuration.
+
+## Known Issues / Notes
+
+* The `tests/` directory contains tests that are currently broken and may not reflect the latest refactorings.
+* Some sections might be fragile, although I use this daily at work and home.
+* Features like Tasks and Iframes mentioned are not currently processed by `mainParser.js`. `Iframes` will come back soon, `Tasks` I'm not sure.
+
+## Dependencies & Attribution
+
+* **Libraries:** [Luxon.js](https://moment.github.io/luxon/#/), [Chart.js](https://chartsjs.org) (+ Annotation plugin), [SunCalc.js](https://github.com/mourner/suncalc), [interact.js](https://interactjs.io/), [metaP.js](https://github.com/rberenguel/metap.js)
+* **APIs:** [Open-Meteo API](https://open-meteo.com/en/docs) (for weather)
+* **Fonts:** Roboto Mono, Reforma 1969, Inter, Monoid, Permanent Marker
+* **Assistance:** Google Gemini
+
+## Image Credits
+* Backgrounds in root `backgrounds` folder by me ([mostlymaths.net/sketches](https://mostlymaths.net/sketches)).
+* Backgrounds in `backgrounds/mwc` folder from [DenverCoder1/minimalistic-wallpaper-collection](https://github.com/DenverCoder1/minimalistic-wallpaper-collection).
