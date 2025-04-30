@@ -31,7 +31,7 @@ This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard
 
 **DEMO**: You can see an example configuration "live" [here](https://mostlymaths.net/nt/) (Note: This online demo uses `config/online.md` and post its are not saveable).
 
-![](https://raw.githubusercontent.com/rberenguel/nt/refs/heads/gh-pages/media/screenshot.png)
+![](https://raw.githubusercontent.com/rberenguel/nt/gh-pages/media/screenshot.png)
 
 ## Features
 
