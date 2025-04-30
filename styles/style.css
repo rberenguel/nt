@@ -29,11 +29,12 @@ iframe {
 
 #pi {
   position: absolute;
-  right: 1em;
+  left: 1em;
   bottom: 1em;
   cursor: pointer;
   color: #555;
   text-shadow: 1px 1px 1px white;
+  z-index: 1000000;
 }
 
 #upper-left {

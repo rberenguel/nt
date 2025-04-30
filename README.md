@@ -184,7 +184,9 @@ Here are the supported `kind` sections and their common properties based on `con
 
 #### Post-its
 * No configuration needed in the markdown files.
-* Functionality is enabled by `lib/postit.js`. Notes are created via Alt+Click and stored using `chrome.storage.local`.
+* Functionality is enabled by `lib/postit.js`. Notes are created via `Alt+Click` and stored using `chrome.storage.local`.
+* Five colours available: yellow, red, green, blue, white. To switch colours press `Ctrl+first letter of the colour` while editing.
+* Font size can be changed by pressing `Ctrl+.` (increase by 8%) and `Ctrl+,` (decrease by 8%).
 
 ## Setup / Installation
 

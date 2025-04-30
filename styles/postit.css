@@ -33,6 +33,10 @@
   background-color: #97d7ff;
 }
 
+.postit-white {
+  background-color: #e7e7e7;
+}
+
 body.user-select-none {
   user-select: none;
   -webkit-user-select: none;
