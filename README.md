@@ -14,10 +14,10 @@ A highly customizable New Tab page extension for Chrome, built with vanilla Java
 			- [Links](#links)
 			- [Quotes](#quotes)
 			- [Backgrounds](#backgrounds)
-			- [Replacements](#replacements)
 			- [Sunrise/Sunset](#sunrisesunset)
 			- [Countdowns](#countdowns)
 			- [Post-its](#post-its)
+			- [Replacements](#replacements)
 	- [Setup / Installation](#setup--installation)
 	- [Tweaking / Customization](#tweaking--customization)
 	- [Safari Conversion](#safari-conversion)
@@ -42,7 +42,7 @@ This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard
 * **Backgrounds:** Rotates background images from configured lists, can be set to rotate daily. The seed for daily rotation can be changed by Alt-clicking the 'π' symbol.
 * **Sunrise/Sunset:** Displays calculated sunrise and sunset times for specific locations using SunCalc.js.
 * **Countdowns:** Shows countdown timers to specific future dates and times.
-* **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`).
+* **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`). Colors and font size can be changed.
 * **Replacements:** Uses the `metaP` library to perform text replacements. This is specific to some usecases I have and is hard to explain, so just ignore.
 
 ## Configuration
@@ -156,13 +156,11 @@ Here are the supported `kind` sections and their common properties based on `con
 
 #### Backgrounds
 * Starts with `# Backgrounds`.
-* Properties:
-    * `- today: true` (Optional, for daily rotation using a fixed seed)
-    * Other lines specify files containing background image URLs or data (e.g., `- config/backgrounds.md`). Keys are passed to `backgroundsFromMarkdown`.
 
-#### Replacements
-* Starts with `# Replacements`.
-* Properties define data sources (e.g., `- config/replacements.md`). Keys are passed to `replacementsFromMarkdown`. Assumes only one replacement block is used.
+* Properties:
+    * `- today: true` (Optional, for daily rotation using a fixed seed per day)
+    * Alt-clicking the `pi` symbol on the lower left (or wherever you place it via CSS) changes the seed for today.
+    * Other lines specify files containing background image URLs or data (e.g., `- config/backgrounds.md`). Keys are passed to `backgroundsFromMarkdown`.
 
 #### Sunrise/Sunset
 * Starts with `# Sunrise/sunset`.
@@ -188,6 +186,13 @@ Here are the supported `kind` sections and their common properties based on `con
 * Five colours available: yellow, red, green, blue, white. To switch colours press `Ctrl+first letter of the colour` while editing.
 * Font size can be changed by pressing `Ctrl+.` (increase by 8%) and `Ctrl+,` (decrease by 8%).
 
+
+#### Replacements
+* These are weird and for something I wanted. You may never want to use them
+* Starts with `# Replacements`.
+* Properties define data sources (e.g., `- config/replacements.md`). Keys are passed to `replacementsFromMarkdown`. Assumes only one replacement block is used.
+
+
 ## Setup / Installation
 
 1.  Clone or download this repository.
@@ -195,8 +200,8 @@ Here are the supported `kind` sections and their common properties based on `con
 3.  Enable **Developer mode** (usually a toggle in the top-right).
 4.  Click **Load unpacked**.
 5.  Browse to and select the directory where you cloned/downloaded this repository.
-6.  The extension should appear and override your New Tab page. The first time, Chrome might ask for confirmation.
-7.  By default (when loaded unpacked), it will use `config/local.md`.
+6.  The extension should appear and override your _New Tab_ page. The first time, Chrome might ask for confirmation.
+7.  By default (when loaded unpacked), it will use `config/local.md`. Edit it!
 
 ## Tweaking / Customization
 
