@@ -1,6 +1,6 @@
 # NT (New Tab)
 
-A highly customizable New Tab page extension for Chrome, built with vanilla JavaScript. Designed for easy tweaking by editing local configuration files and code, allowing for a personalized dashboard experience. This is the author's daily driver new tab page.
+A highly customizable New Tab page extension for Chrome, built with vanilla JavaScript. Designed for easy tweaking by editing local configuration files and code, allowing for a personalized dashboard experience. This is my daily driver new tab page at work and home.
 
 - [NT (New Tab)](#nt-new-tab)
 	- [Overview](#overview)
