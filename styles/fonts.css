@@ -50,3 +50,7 @@
   font-weight: normal;
   font-style: italic;
 }
+@font-face {
+  font-family: "PermanentMarker";
+  src: url("../fonts/PermanentMarker-Regular.ttf");
+}

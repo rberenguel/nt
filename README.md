@@ -146,3 +146,4 @@ The comment sbelow is false… after so many refactors the tests are broken. Wel
   - [Reforma 1969](https://pampatype.com/reforma) (or from [FontSquirrel](https://www.fontsquirrel.com/fonts/reforma) to see the license)
   - [Inter](https://rsms.me/inter/)
   - [Monoid](https://larsenwork.com/monoid/)
+  - [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker/)

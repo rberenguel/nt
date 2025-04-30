@@ -1,0 +1,113 @@
+.post-it {
+  position: absolute;
+  z-index: 1000;
+  padding: 15px;
+  border-radius: 1px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+  min-width: 2em;
+  min-height: 1em;
+  font-family: "PermanentMarker";
+  font-size: 16pt;
+  color: #333;
+  word-wrap: break-word;
+  overflow: hidden;
+
+  cursor: default;
+  padding: 25px 15px 15px 15px;
+
+  touch-action: none;
+
+  outline: none;
+}
+
+.postit-yellow {
+  background-color: #ffffb7;
+}
+.postit-red {
+  background-color: #ffb7b7;
+}
+.postit-green {
+  background-color: #b7ff97;
+}
+.postit-blue {
+  background-color: #97d7ff;
+}
+
+body.user-select-none {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 20px;
+  height: 20px;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  padding: 4px 0;
+  box-sizing: border-box;
+  z-index: 1002;
+}
+
+.drag-handle::before,
+.drag-handle::after {
+  content: "";
+  display: block;
+  width: 60%;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 1px;
+}
+
+.post-it .delete-button {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 20px;
+  text-align: center;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease-in-out,
+    background-color 0.2s ease-in-out,
+    color 0.2s ease-in-out;
+  z-index: 10002;
+}
+
+.post-it:hover .delete-button,
+.post-it:focus-within .delete-button {
+  opacity: 1;
+}
+
+.post-it .delete-button:hover {
+  background-color: rgba(220, 50, 50, 0.8);
+  color: white;
+}
+
+.post-it .content-area {
+  min-height: 50px;
+  outline: none;
+  cursor: text;
+
+  color: #333;
+  background-color: transparent;
+  white-space: pre-wrap;
+
+  word-wrap: break-word;
+}
