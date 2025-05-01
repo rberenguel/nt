@@ -48,7 +48,7 @@ body.user-select-none {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 20px;
+  width: calc(100% - 2em);
   height: 20px;
   cursor: grab;
   display: flex;
@@ -58,16 +58,6 @@ body.user-select-none {
   padding: 4px 0;
   box-sizing: border-box;
   z-index: 1002;
-}
-
-.drag-handle::before,
-.drag-handle::after {
-  content: "";
-  display: block;
-  width: 60%;
-  height: 2px;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 1px;
 }
 
 .post-it .delete-button {
