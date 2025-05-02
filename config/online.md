@@ -47,3 +47,11 @@
 - target: 20251118 1900
 - div: lower-right
 - precision: minutes
+
+# iframes
+
+## Example Site
+- src: https://example.com
+- div: lower-right
+- width: 90%
+- height: 100

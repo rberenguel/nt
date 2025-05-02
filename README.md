@@ -16,6 +16,7 @@ A highly customizable New Tab page extension for Chrome, built with vanilla Java
 			- [Backgrounds](#backgrounds)
 			- [Sunrise/Sunset](#sunrisesunset)
 			- [Countdowns](#countdowns)
+			- [Iframes](#iframes)
 			- [Post-its](#post-its)
 			- [Replacements](#replacements)
 	- [Setup / Installation](#setup--installation)
@@ -42,6 +43,7 @@ This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard
 * **Backgrounds:** Rotates background images from configured lists, can be set to rotate daily. The seed for daily rotation can be changed by Alt-clicking the 'π' symbol.
 * **Sunrise/Sunset:** Displays calculated sunrise and sunset times for specific locations using SunCalc.js.
 * **Countdowns:** Shows countdown timers to specific future dates and times.
+* **Iframes:** embeds an iframe. Like, random example, the current oncaller of an oncall rotation.
 * **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`). Colors and font size can be changed.
 * **Replacements:** Uses the `metaP` library to perform text replacements. This is specific to some usecases I have and is hard to explain, so just ignore.
 
@@ -109,6 +111,14 @@ You can check the `config/online.md` file as an example, although it might get o
 - target: 20251118 1900
 - div: lower-right
 - precision: minutes
+
+# iframes
+
+## Example Site
+- src: https://example.com
+- div: lower-right
+- width: 90%
+- height: 24px
 ```
 
 ### Format
@@ -180,6 +190,14 @@ Here are the supported `kind` sections and their common properties based on `con
     * `- precision: months | days | hours | minutes | seconds` (Optional, defaults to `seconds`)
     * Other `- key: value` pairs are passed as styles to the widget wrapper.
 
+#### Iframes
+* Starts with `# iframes`
+* Requires `## title` for each instance.
+* Properties:
+  * `- src: URL` URL of the iframe, can be local
+  * `- div: Target HTML div ID`
+  * width, height, frameborder are usually needed but can be ignored
+
 #### Post-its
 * No configuration needed in the markdown files.
 * Functionality is enabled by `lib/postit.js`. Notes are created via `Alt+Click` and stored using `chrome.storage.local`.
@@ -218,7 +236,7 @@ It's possible to convert this for Safari using Apple's tools with `xcrun safari-
 
 * The `tests/` directory contains tests that are currently broken and may not reflect the latest refactorings.
 * Some sections might be fragile, although I use this daily at work and home.
-* Features like Tasks and Iframes mentioned are not currently processed by `mainParser.js`. `Iframes` will come back soon, `Tasks` I'm not sure.
+* Features like Tasks and Iframes mentioned are not currently processed by `mainParser.js`.
 
 ## Dependencies & Attribution
 
