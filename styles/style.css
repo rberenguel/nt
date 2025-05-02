@@ -25,6 +25,8 @@ body {
 iframe {
   display: block;
   margin: 0.1em;
+  border-width: 0;
+  border: none;
 }
 
 #pi {
