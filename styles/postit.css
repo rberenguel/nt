@@ -16,7 +16,7 @@
   padding: 25px 15px 15px 15px;
 
   touch-action: none;
-
+    box-sizing: border-box;
   outline: none;
 }
 
@@ -44,64 +44,75 @@ body.user-select-none {
   -ms-user-select: none;
 }
 
-.drag-handle {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  width: calc(100% - 2em);
-  height: 20px;
-  cursor: grab;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  align-items: center;
-  padding: 4px 0;
-  box-sizing: border-box;
-  z-index: 1002;
-}
-
-.post-it .delete-button {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: rgba(0, 0, 0, 0.15);
-  color: rgba(0, 0, 0, 0.6);
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  line-height: 20px;
-  text-align: center;
-  opacity: 0;
-  transition:
-    opacity 0.2s ease-in-out,
-    background-color 0.2s ease-in-out,
-    color 0.2s ease-in-out;
-  z-index: 10002;
-}
-
-.post-it:hover .delete-button,
-.post-it:focus-within .delete-button {
-  opacity: 1;
-}
-
-.post-it .delete-button:hover {
-  background-color: rgba(220, 50, 50, 0.8);
-  color: white;
-}
-
-.post-it .content-area {
-  min-height: 50px;
-  outline: none;
-  cursor: text;
-
-  color: #333;
-  background-color: transparent;
-  white-space: pre-wrap;
-
-  word-wrap: break-word;
-}
+  
+  /* --- CONDITIONAL PADDING using :has() --- */
+  /* Add padding-top ONLY when handle has title */
+  .post-it:has(.drag-handle.has-title) {
+     /* Value = handle height (20px per your CSS) + buffer (e.g., 3px) */
+    padding-top: 23px;
+  }
+  
+  
+  .drag-handle {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    /* width: calc(100% - 2em); */ /* Let's span full width and use padding instead */
+    width: 100%;
+    right: 0;
+    height: 20px; /* Your specified height */
+    cursor: grab;
+    display: flex;
+    align-items: center; /* Vertically center title */
+    /* justify-content: space-around; */ /* Changed from column props */
+    padding: 0 5px; /* Horizontal padding inside handle */
+    box-sizing: border-box;
+    z-index: 1002;
+    /* Optional: add subtle background/border if needed */
+    /* background-color: rgba(0,0,0,0.03); */
+  }
+  
+  .handle-title {
+     flex-grow: 1; /* Allow title to take available space */
+     padding-left: 5px; /* Small left padding */
+     /* Add padding-right to leave space for absolutely positioned delete button */
+     padding-right: 25px; /* Adjust based on delete button size+pos */
+     white-space: nowrap; /* Keep title on one line */
+     overflow: hidden; /* Hide overflow */
+     text-overflow: ellipsis; /* Add '...' for overflow */
+     font-size: 0.8em; /* Example: Smaller font for title */
+     line-height: 20px; /* Match handle height for vertical centering */
+     color: #555; /* Example text color */
+     display: none; /* Hide title div by default */
+  }
+  
+  /* Show the title div only when the handle has the class */
+  .drag-handle.has-title .handle-title {
+      display: inline; /* Or block, depending on desired layout */
+  }
+  
+  .delete-button {
+     position: absolute; /* Position relative to .post-it corner */
+     top: 2px;  /* Fine-tune position */
+     right: 3px;
+     width: 16px; /* Slightly smaller? Adjust as needed */
+     height: 16px;
+     line-height: 16px; /* Match height */
+     font-size: 12px; /* Adjust 'X' size */
+     z-index: 1003; /* Above handle */
+     border-radius: 50%; background: rgba(0,0,0,0.15); border:none; cursor:pointer; text-align:center; opacity:0;
+     transition: opacity 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  }
+  /* Make delete button visible on hover/focus */
+  .post-it:hover .delete-button,
+  .post-it:focus-within .delete-button {
+      opacity: 1;
+  }
+  .delete-button:hover { background-color: rgba(220, 50, 50, 0.8); color: white; }
+  
+  
+  .content-area {
+    /* Should render correctly below padding added conditionally by :has() */
+    /* ... existing styles ... */
+     min-height: 50px; outline: none; cursor: text; white-space: pre-wrap; word-wrap: break-word;
+  }
