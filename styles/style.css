@@ -24,7 +24,10 @@ body {
 
 iframe {
   display: block;
-  margin: 0.1em;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+  margin-top: 0;
+  margin-bottom: 0;
   border-width: 0;
   border: none;
 }
