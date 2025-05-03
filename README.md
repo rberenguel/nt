@@ -205,6 +205,7 @@ Here are the supported `kind` sections and their common properties based on `con
 * Font size can be changed by pressing `Ctrl+.` (increase by 8%) and `Ctrl+,` (decrease by 8%).
 * Add a title by creating a line starting with `# `, like `# Title` and pressing enter.
 * Create a line with a checkbox by typing a line like `[ ] this is a task` and pressing enter.
+* Select some text and paste a link to make it a link. Cmd/ctrl (Mac/Otherwise) click to open it.
 
 
 #### Replacements
