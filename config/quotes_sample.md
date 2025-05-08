@@ -51,3 +51,11 @@ Sun Tzu (The Art of War)
 > The users deserve an error-free site. I am an SRE, I fight for the users.
 
 Jos Visser
+
+---
+
+> Don't wish it were easier, wish you were better.
+> Don't wish for fewer problems, wish for more skills.
+> Don't wish for less challenge, wish for more wisdom.
+
+Jim Rohn
