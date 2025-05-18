@@ -453,3 +453,70 @@ hr.dim {
   font-size: 50%;
   margin-top: 0.9em;
 }
+
+/* ------  */
+
+/* Styling for the post-it when an alarm is active */
+.post-it.postit-alarm-active {
+  border-left: 5px solid #e74c3c; /* A more distinct alarm color, e.g., a red */
+  box-shadow: 0 0 12px rgba(231, 76, 60, 0.3); /* Optional subtle glow */
+}
+
+/*
+When an alarm is active, the contentArea itself will display the timer.
+We'll make it non-editable via JS.
+*/
+.post-it.postit-alarm-active .content-area {
+  cursor: default;
+  display: flex; /* To help center content if desired */
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5em; /* Make timer text larger, adjust as needed */
+  font-weight: bold;
+  text-align: center;
+  padding: 10px; /* Adjust padding for timer display */
+  min-height: 50px; /* Ensure it has some height for the timer text */
+}
+
+/* Styling for the div we'll inject into contentArea for the timer text */
+.timer-content-display {
+  width: 100%;
+  text-align: center;
+}
+
+/* Specific styling for the "done" state of the timer text */
+.timer-content-display.timer-text-done {
+  font-size: 1em; /* Revert to a smaller size for the "done" message */
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+/* Adjust text color for timer display based on post-it color for contrast */
+.postit-yellow.postit-alarm-active .content-area {
+  color: #a0522d;
+}
+.postit-red.postit-alarm-active .content-area {
+  color: #ffffff;
+}
+.postit-green.postit-alarm-active .content-area {
+  color: #ffffff;
+}
+.postit-blue.postit-alarm-active .content-area {
+  color: #ffffff;
+}
+.postit-white.postit-alarm-active .content-area {
+  color: #e74c3c;
+}
+
+/* When timer is done and contentArea becomes editable again,
+   it might contain the "done" message. The following styles are for normal editing. */
+.post-it:not(.postit-alarm-active) .content-area {
+  /* Revert to your standard contentArea styles if they were overridden by the alarm active state */
+  /* For example, if you changed text-align, justify-content etc. */
+  display: block; /* Or whatever your default is */
+  text-align: left; /* Or your default */
+  font-size: 100%; /* Back to user-set/default font size from dataset.fontSizePercent */
+  font-weight: normal;
+  min-height: initial; /* Or your default min-height for contentArea */
+  /* Ensure padding is reset if it was changed for timer display */
+}
