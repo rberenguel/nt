@@ -27,3 +27,12 @@
 ## `,i` [Instagram](https://www.instagram.com/)
 ## `,b` [Bluesky](https://bsky.app/)
 
+---
+
+# Noises <
+
+## `bn` [Brown noise](#startBrownNoise)
+## `b4` [Binaural 40Hz](#startB40)
+## `bh` [Both](#startB40&&startBrownNoise)
+
+---
