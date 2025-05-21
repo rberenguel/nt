@@ -37,7 +37,7 @@ iframe {
   position: absolute;
   cursor: move;
   -webkit-user-select: none;
-  user-select: none;  
+  user-select: none;
 }
 
 #pi {
