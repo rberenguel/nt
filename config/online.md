@@ -55,3 +55,11 @@
 - div: lower-right
 - width: 90%
 - height: 100
+
+## Rotator
+- src: https://mostlymaths.net/rotator
+- width: 600px
+- height: 400px
+- left: 300px
+- top: 300px
+- hidden: true

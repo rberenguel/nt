@@ -32,6 +32,14 @@ iframe {
   border: none;
 }
 
+.iframe-wrapper {
+  padding: 1em;
+  position: absolute;
+  cursor: move;
+  -webkit-user-select: none;
+  user-select: none;  
+}
+
 #pi {
   position: absolute;
   left: 1em;
