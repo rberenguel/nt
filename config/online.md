@@ -63,3 +63,4 @@
 - left: 300px
 - top: 300px
 - hidden: true
+- command: Play rotator
