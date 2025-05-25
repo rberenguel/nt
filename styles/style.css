@@ -528,3 +528,71 @@ We'll make it non-editable via JS.
   min-height: initial; /* Or your default min-height for contentArea */
   /* Ensure padding is reset if it was changed for timer display */
 }
+
+.audio-slider-container {
+  position: fixed; /* Will be positioned by ID specific rules */
+  min-width: 50px;
+  background-color: var(--dark);
+  border: 1px solid #cc0;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px; /* Increased padding slightly */
+  box-sizing: border-box;
+  z-index: 1000;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* transform is used by interact.js for dragging the container */
+}
+
+/* Unique IDs for initial positioning */
+#binaural-slider {
+  left: calc(100vw * 2 / 3);
+  top: calc(50vh - 160px);
+}
+
+#brown-noise-slider {
+  left: calc(100vw * 2 / 3 + 100px);
+  top: calc(50vh - 160px);
+}
+
+#mp3-loop-slider {
+  left: calc(100vw * 2 / 3);
+  top: calc(50vh);
+}
+
+.audio-slider-label {
+  font-size: 11px; /* Slightly larger */
+  margin-bottom: 8px; /* Increased margin */
+  color: #c60;
+  cursor: grab; /* Indicate the label can be used for dragging */
+  font-weight: bold;
+}
+
+.audio-slider-track {
+  width: 10px;
+  height: 100px; /* Fixed height for JS calculations */
+  background-color: #066;
+  position: relative;
+  border-radius: 5px;
+}
+
+.audio-slider-knob {
+  width: 22px; /* Slightly wider for easier grabbing */
+  height: 22px; /* Slightly taller */
+  background-color: grey;
+  border: 1px solid #555;
+  border-radius: 3px;
+  position: absolute;
+  cursor: ns-resize; /* North-South resize cursor */
+  left: -6px; /* Center knob on track ( (22-10)/2 = 6 ) */
+  /* 'top' style is set dynamically by JavaScript */
+}
+
+.audio-slider-knob.dragging,
+.audio-slider-knob:active {
+  background-color: #555; /* Darker when dragging knob */
+}

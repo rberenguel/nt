@@ -213,6 +213,9 @@ Here are the supported `kind` sections and their common properties based on `con
 * Starts with `# Replacements`.
 * Properties define data sources (e.g., `- config/replacements.md`). Keys are passed to `replacementsFromMarkdown`. Assumes only one replacement block is used.
 
+#### Audio stuff
+
+* 40Hz binaural beats, brown noise and single-audio-file looping are available as links and command palette commands (see the example in `links_sample.md`)
 
 ## Setup / Installation
 
@@ -247,6 +250,7 @@ It's possible to convert this for Safari using Apple's tools with `xcrun safari-
 * **APIs:** [Open-Meteo API](https://open-meteo.com/en/docs) (for weather)
 * **Fonts:** Roboto Mono, Reforma 1969, Inter, Monoid, Permanent Marker
 * **Assistance:** Google Gemini
+* Audio example: [JS Bach and Kimiko Ishizaka, CC0, via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Kimiko_Ishizaka_-_J.S._Bach-_-Open-_Goldberg_Variations,_BWV_988_(Piano)_-_01_Aria.mp3)
 
 ## Image Credits
 * Backgrounds in root `backgrounds` folder by me ([mostlymaths.net/sketches](https://mostlymaths.net/sketches)).
