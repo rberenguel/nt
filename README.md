@@ -207,6 +207,7 @@ Here are the supported `kind` sections and their common properties based on `con
 * Add a title by creating a line starting with `# `, like `# Title` and pressing enter.
 * Create a line with a checkbox by typing a line like `[ ] this is a task` and pressing enter.
 * Select some text and paste a link to make it a link. Cmd/ctrl (Mac/Otherwise) click to open it.
+* Add (only) a text like `foo bar baz @15:00` to create a timer that will ring in 15 minutes (if you have a new tab open). You can add as many as you want, with whatever timings you want
 
 
 #### Replacements
