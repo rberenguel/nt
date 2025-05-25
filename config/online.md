@@ -58,8 +58,8 @@
 
 ## Rotator
 - src: https://mostlymaths.net/rotator
-- width: 600px
-- height: 400px
+- width: 500px
+- height: 900px
 - left: 300px
 - top: 300px
 - hidden: true

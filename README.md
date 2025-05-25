@@ -196,6 +196,7 @@ Here are the supported `kind` sections and their common properties based on `con
 * Properties:
   * `- src: URL` URL of the iframe, can be local
   * `- div: Target HTML div ID`
+  * `- hidden` and `- command` these go together to add iframes that are only shown via the command palette, see the example in `online.md`
   * width, height, frameborder are usually needed but can be ignored
 
 #### Post-its
@@ -215,7 +216,8 @@ Here are the supported `kind` sections and their common properties based on `con
 
 #### Audio stuff
 
-* 40Hz binaural beats, brown noise and single-audio-file looping are available as links and command palette commands (see the example in `links_sample.md`)
+* 40Hz binaural beats, brown noise and single-audio-file looping are available as links and command palette commands (see the example in `links_sample.md`).
+* Note that stopping/starting the looper will layer on top, just refresh the new tab to clean the audio contexts.
 
 ## Setup / Installation
 
