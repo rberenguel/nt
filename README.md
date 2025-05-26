@@ -206,6 +206,8 @@ For Google calendar I don't like adding it to any particular div, so I just leav
 - `overlay-style`: Add a div overlay with a backdrop filter on the iframe. This overlay turns it into a dark mode embed 💪
 - `wrapper-style`: Add additional positioning directives so it does not appear wherever but in a particular place. Only useful for floating iframes.
 
+Make sure you match the size of the embed (in the URL) with the size of the iframe in the configuration.
+
 ```
 ## Calendar
 
