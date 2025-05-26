@@ -550,17 +550,17 @@ We'll make it non-editable via JS.
 
 /* Unique IDs for initial positioning */
 #binaural-slider {
-  left: calc(100vw * 2 / 3);
+  left: calc(100vw * 3 / 4);
   top: calc(50vh - 160px);
 }
 
 #brown-noise-slider {
-  left: calc(100vw * 2 / 3 + 100px);
+  left: calc(100vw * 3 / 4 + 100px);
   top: calc(50vh - 160px);
 }
 
 #mp3-loop-slider {
-  left: calc(100vw * 2 / 3);
+  left: calc(100vw * 3 / 4);
   top: calc(50vh);
 }
 

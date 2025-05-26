@@ -34,6 +34,6 @@
 ## `bn` [Brown noise](#startBrownNoise)
 ## `b4` [Binaural 40Hz](#startB40)
 ## `bh` [Both](#startB40&&startBrownNoise)
-## `aria` [Bach: Aria](#loop:Back-Goldberg-Aria-Ishizaka.mp3:Aria:0.1)
+## `aria` [Bach: Aria](#loop:Bach-Goldberg-Aria-Ishizaka.mp3:Aria:0.1)
 
 ---
