@@ -40,6 +40,13 @@ iframe {
   user-select: none;
 }
 
+.iframe-overlay {
+  height: 100%;
+  position: absolute;
+  pointer-events: none; /* act as an overlay */
+  transform: translate(1px, 0); /* no bloody idea why */
+}
+
 #pi {
   position: absolute;
   left: 1em;
