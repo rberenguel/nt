@@ -199,6 +199,28 @@ Here are the supported `kind` sections and their common properties based on `con
   * `- hidden` and `- command` these go together to add iframes that are only shown via the command palette, see the example in `online.md`
   * width, height, frameborder are usually needed but can be ignored
 
+##### Google Calendar embed tip
+
+For Google calendar I don't like adding it to any particular div, so I just leave it floating and absolutely positioned like the following. The magic stuff about `overlay` and `wrapper-style` you can see below means:
+
+- `overlay-style`: Add a div overlay with a backdrop filter on the iframe. This overlay turns it into a dark mode embed 💪
+- `wrapper-style`: Add additional positioning directives so it does not appear wherever but in a particular place. Only useful for floating iframes.
+
+```
+## Calendar
+
+- src: https://calendar.google.com/calendar/embed?height=300REST_OF_YOUR_CALENDAR_EMBED_STUFF
+- style: border-width: 0; border-radius: 0;
+- width: 300px
+- height: 300px
+- frameborder: 0
+- overlay: true
+- overlay-style: backdrop-filter: invert(1)
+- wrapper-style: left: calc(100vw * 3 / 4); top: calc(50vh - 150px);
+```
+
+![](https://raw.githubusercontent.com/rberenguel/nt/gh-pages/media/calendar-example.png)
+
 #### Post-its
 * No configuration needed in the markdown files.
 * Functionality is enabled by `lib/postit.js`. Notes are created via `Alt+Click` or `click+hold` and stored using `chrome.storage.local`.
