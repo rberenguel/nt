@@ -1,10 +1,19 @@
 {
   "manifest_version": 3,
   "name": "NT",
-  "version": "0.8",
+  "version": "1.0",
   "description": "Replaces the default new tab page with a custom one",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage"]
+  "permissions": ["storage", "notifications"],
+  "web_accessible_resources": [
+    {
+      "resources": ["media/icon.png"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "512": "media/icon.png"
+  }
 }
