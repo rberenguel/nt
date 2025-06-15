@@ -1,6 +1,7 @@
 # Settings
 
 - fontSize: 17px
+- edit: foo
 
 ## `.j` [jellyfin](http://localhost:8096/web)
 

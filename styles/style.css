@@ -123,6 +123,7 @@ iframe {
 
 .quicklink-column {
   flex: 1;
+  position: relative;
 }
 
 .quicklink-div {
@@ -606,8 +607,8 @@ We'll make it non-editable via JS.
 
 .edit-link-section {
   position: absolute;
-  bottom: 0.4em;
-  left: 0.4em;
+  bottom: -1em;
+  left: -1em;
   font-size: 80%;
   color: var(--light-trans);
 }
