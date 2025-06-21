@@ -242,6 +242,7 @@ Make sure you match the size of the embed (in the URL) with the size of the ifra
 #### Audio stuff
 
 * 40Hz binaural beats, brown noise and single-audio-file looping are available as links and command palette commands (see the example in `links_sample.md`).
+* Web streams can also be played. See the example in `links_sample.md`
 * Note that stopping/starting the looper will layer on top, just refresh the new tab to clean the audio contexts.
 
 ## Setup / Installation

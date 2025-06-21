@@ -572,6 +572,11 @@ We'll make it non-editable via JS.
   top: calc(50vh);
 }
 
+#stream-slider {
+  left: calc(100vw * 3 / 4 + 100px);
+  top: calc(50vh);
+}
+
 .audio-slider-label {
   font-size: 11px; /* Slightly larger */
   margin-bottom: 8px; /* Increased margin */
