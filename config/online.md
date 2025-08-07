@@ -64,3 +64,13 @@
 - top: 300px
 - hidden: true
 - command: Play rotator
+
+## SBB
+- wrapper-id: sbb
+- src: sbb-iframe.html?from=Zurich&to=Geneva
+- width: 400px
+- height: 800px
+- left: 900px
+- top: 300px
+- hidden: true
+- command: SBB

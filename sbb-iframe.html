@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swiss Transport Connections</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <style>
+      /* General Body Styles */
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #111827; /* Dark gray background */
+        color: #d1d5db; /* Light gray text */
+        margin: 0;
+        padding: 1rem;
+        display: flex;
+        align-items: flex-start; /* Align to top */
+        justify-content: center;
+        min-height: 100vh;
+      }
+
+      body::-webkit-scrollbar {
+        width: 10px; /* Adjust width as needed */
+      }
+
+      /* For the scrollbar track (the background) */
+      body::-webkit-scrollbar-track {
+        background: #1f2937; /* Dark gray track */
+        border-radius: 5px;
+      }
+
+      /* For the draggable scrolling handle (the thumb) */
+      body::-webkit-scrollbar-thumb {
+        background-color: #eb0000; /* SBB Red */
+        border-radius: 5px;
+        border: 2px solid #1f2937; /* Creates padding around thumb */
+      }
+
+      /* Handle on hover */
+      body::-webkit-scrollbar-thumb:hover {
+        background-color: #c80000; /* Slightly darker red on hover */
+      }
+
+      /* Main container for all connection cards */
+      #connections-container {
+        width: 100%;
+        max-width: 380px; /* Reduced max-width for compactness */
+      }
+
+      /* Spacing between connection cards */
+      .connection-card + .connection-card {
+        margin-top: 0.5rem; /* Reduced margin between cards */
+      }
+
+      /* Individual Connection Card */
+      .connection-card {
+        background-color: #1f2937; /* Slightly lighter dark background */
+        border-radius: 0.5rem;
+        padding: 0.7rem;
+        box-shadow:
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+      .connection-card:hover {
+        background-color: #374151;
+        box-shadow:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Header: Times and Duration */
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .time-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+      .time-info .time {
+        font-size: 1.125rem; /* Reduced font size */
+        font-weight: 700;
+        color: #ffffff;
+      }
+      .time-info .arrow-icon {
+        width: 1.125rem;
+        height: 1.125rem;
+        color: #6b7280;
+      }
+      .delay-info {
+        position: relative;
+      }
+      .delay {
+        position: absolute;
+        bottom: -0.75rem;
+        right: -0.25rem;
+        font-size: 0.625rem;
+        font-weight: 600;
+        color: #eb0000; /* SBB Red */
+      }
+      .duration-info {
+        text-align: right;
+      }
+      .duration-info .duration {
+        font-size: 0.875rem; /* Reduced font size */
+        font-weight: 600;
+        color: #f3f4f6;
+      }
+      .duration-info .transfers {
+        font-size: 0.75rem; /* Reduced font size */
+        color: #9ca3af;
+      }
+
+      /* Timeline for journey legs */
+      .timeline {
+        display: flex;
+        flex-wrap: wrap; /* Allow items to wrap */
+        align-items: center;
+        /* row-gap: 0.5rem; Vertical gap for wrapped rows */
+        /* margin-bottom: 0.75rem; */
+      }
+      .timeline-leg {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        background-color: rgba(17, 24, 39, 0.7);
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .timeline-leg .transport-icon {
+        height: 0.875rem;
+        width: 0.875rem;
+        color: #eb0000; /* SBB Red */
+      }
+      .timeline-leg .walk-icon {
+        height: 0.875rem;
+        width: 0.875rem;
+        color: #9ca3af;
+      }
+      .timeline-leg .transport-name {
+        font-weight: 600;
+        font-size: 0.75rem; /* Reduced font size */
+      }
+
+      /* Separator for interchanges */
+      .timeline-separator {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        min-width: 2rem; /* Minimum width before wrapping */
+      }
+      .timeline-connector {
+        flex-grow: 1;
+        height: 1px;
+        background-color: #4b5563;
+      }
+      .interchange {
+        text-align: center;
+        padding: 0 0.5rem;
+      }
+      .interchange .station {
+        font-size: 0.75rem; /* Reduced font size */
+        font-weight: 500;
+        color: #f3f4f6;
+        white-space: nowrap;
+      }
+      .interchange .times {
+        font-size: 0.625rem; /* Reduced font size */
+        color: #9ca3af;
+        white-space: nowrap;
+      }
+
+      /* Footer: Platform info */
+      .card-footer {
+        font-size: 0.75rem; /* Reduced font size */
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid #374151;
+        padding-top: 0.5rem; /* Reduced padding */
+      }
+      .platform-info {
+        font-weight: 700;
+        color: #ffffff;
+        background-color: #4b5563;
+        padding: 0.125rem 0.375rem;
+        border-radius: 0.25rem;
+      }
+      .red {
+        color: #eb0000; /* SBB Red */
+        background-color: rgba(17, 24, 39, 0.7);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="connections-container">
+      <p style="color: #9ca3af">Loading connections...</p>
+    </div>
+
+    <script src="lib/sbb.js"></script>
+  </body>
+</html>
