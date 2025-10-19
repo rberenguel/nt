@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/fonts.css">
+    <style>
+      :root {
+        /* Solarized Dark Palette */
+        --base03:  #002b36;
+        --base02:  #073642; /* Added for scrollbar track */
+        --base0:   #839496;
+        --yellow:  #b58900;
+        --orange:  #cb4b16;
+        --red:     #dc322f;
+        --magenta: #d33682;
+        --violet:  #6c71c4;
+        --blue:    #268bd2;
+        --cyan:    #2aa198;
+        --green:   #859900;
+
+        /* Mapped to UI elements */
+        --bg: var(--base03);
+        --fg: var(--base0);
+        --caret: var(--green);
+      }
+
+      html {
+        box-sizing: border-box;
+      }
+      *, *:before, *:after {
+        box-sizing: inherit;
+      }
+      body {
+        /* Enforce dark background */
+        background: var(--bg);
+        color: var(--fg);
+        caret-color: var(--caret);
+        font-family: 'Monoid', 'Roboto Mono', monospace;
+        font-size: 1.2rem;
+        line-height: 1.6;
+        max-width: 90ch;
+        padding: 5vh 8vw;
+        margin: 0 auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      body:focus {
+        outline: none;
+      }
+      body.styling-mode {
+        cursor: help;
+      }
+
+      /* Color Styling Classes */
+      .color-violet  { color: var(--violet); }
+      .color-magenta { color: var(--magenta); }
+      .color-blue    { color: var(--blue); }
+      .color-cyan    { color: var(--cyan); }
+      .color-green   { color: var(--green); }
+      .color-yellow  { color: var(--yellow); }
+      .color-orange  { color: var(--orange); }
+      .color-red     { color: var(--red); }
+      
+      /* Custom Scrollbar Styling */
+      body::-webkit-scrollbar {
+        width: 14px;
+      }
+      body::-webkit-scrollbar-track {
+        background: var(--base02);
+      }
+      body::-webkit-scrollbar-thumb {
+        background-color: var(--blue);
+      }
+    </style>
+</head>
+<body contenteditable="true" spellcheck="false" autofocus>
+</body>
+<script src="lib/notes.js">
+</script>
+</html>
+
