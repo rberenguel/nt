@@ -1,0 +1,182 @@
+// ==================== CONFIGURATION ====================
+const FONT_SIZE_REM = 1.0;           // Character size in rem units (ADJUST THIS)
+const UPDATE_INTERVAL = 70;          // milliseconds between frames
+
+// Character set (Katakana for classic Matrix look)
+const CHARS = "ア ァ カ サ タ ナ ハ マ ヤ ャ ラ ワ ガ ザ ダ バ パ イ ィ キ シ チ ニ ヒ ミ リ ヰ ギ ジ ヂ ビ ピ ウ ゥ ク ス ツ ヌ フ ム ユ ュ ル グ ズ ブ ヅ プ エ ェ ケ セ テ ネ ヘ メ レ ヱ ゲ ゼ デ ベ ペ オ ォ コ ソ ト ノ ホ モ ヨ ョ ロ ヲ ゴ ゾ ド ボ ポ ヴ ッ ン".split(" ");
+
+// Green shades (from darkest to brightest)
+const GREEN_SHADES = [
+    '#001a00',  // darkest green
+    '#003300',
+    '#004d00',
+    '#007700',
+    '#00aa00'   // brightest green
+];
+
+const HEAD_COLOR = '#ffffff';        // Bright white for drop head
+const RED_COLOR = '#ff0000';         // Occasional red character
+const RED_PROBABILITY = 0.001;       // 0.1% chance of red character
+// =======================================================
+
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('brightness-overlay');
+
+let fontSize;
+let columns;
+let rows;
+let drops = [];
+let speeds = [];
+let brightnessLevel = 0;
+let grid = [];  // Track what's drawn where
+
+function calculateFontSize() {
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return FONT_SIZE_REM * rootFontSize;
+}
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    fontSize = calculateFontSize();
+    ctx.font = `${fontSize}px monospace`;
+
+    columns = Math.floor(canvas.width / fontSize);
+    rows = Math.floor(canvas.height / fontSize);
+
+    drops = [];
+    speeds = [];
+    grid = [];
+    for (let i = 0; i < columns; i++) {
+        drops[i] = -Math.floor(Math.random() * rows);
+        speeds[i] = Math.floor(Math.random() * 3) + 1;
+        grid[i] = [];
+    }
+}
+
+function randomChar() {
+    return CHARS[Math.floor(Math.random() * CHARS.length)];
+}
+
+function randomGreen() {
+    return GREEN_SHADES[Math.floor(Math.random() * GREEN_SHADES.length)];
+}
+
+function clearCell(x, y) {
+    if (x >= 0 && x < columns && y >= 0 && y < rows) {
+        ctx.fillStyle = '#000000';
+        // Clear a slightly larger area to ensure no artifacts
+        ctx.fillRect(
+            x * fontSize - 1,
+            (y - 1) * fontSize - 1,
+            fontSize + 2,
+            fontSize + 2
+        );
+        grid[x][y] = null;
+    }
+}
+
+function drawCell(x, y, char, color) {
+    if (x >= 0 && x < columns && y >= 0 && y < rows) {
+        ctx.fillStyle = color;
+        ctx.fillText(char, x * fontSize, y * fontSize);
+        grid[x][y] = {char, color};
+    }
+}
+
+function draw() {
+    for (let x = 0; x < columns; x++) {
+        const char = randomChar();
+        const dropY = drops[x];
+        const speed = speeds[x];
+
+        // Erase the character at the top of the trail
+        const eraseY = dropY - speed;
+        clearCell(x, eraseY);
+
+        // Draw the head of the drop in bright white
+        if (dropY >= 0 && dropY < rows) {
+            drawCell(x, dropY, char, HEAD_COLOR);
+        }
+
+        // Draw the character just behind the head in green (or rarely red)
+        const trailY = dropY - 1;
+        if (trailY >= 0 && trailY < rows) {
+            const color = Math.random() < RED_PROBABILITY ? RED_COLOR : randomGreen();
+            drawCell(x, trailY, randomChar(), color);
+        }
+
+        // Update drop position
+        drops[x] += speed;
+
+        // Reset drop if it goes off screen
+        if (drops[x] > rows + 20) {
+            drops[x] = -Math.floor(Math.random() * rows);
+            speeds[x] = Math.floor(Math.random() * 3) + 1;
+        }
+    }
+}
+
+// Brightness control
+function adjustBrightness(delta) {
+    brightnessLevel = Math.max(0, Math.min(10, brightnessLevel + delta));
+    overlay.style.opacity = brightnessLevel * 0.1;
+}
+
+// Fullscreen functionality
+function enterFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => {
+            console.log('Fullscreen request failed:', err);
+        });
+    } else if (elem.webkitRequestFullscreen) { // Safari/older Chrome
+        elem.webkitRequestFullscreen();
+    }
+}
+
+// Attempt to go fullscreen on first interaction
+let hasInteracted = false;
+function tryFullscreen() {
+    if (!hasInteracted) {
+        hasInteracted = true;
+        enterFullscreen();
+    }
+}
+
+// Keyboard controls: , decreases brightness, . increases brightness
+// F or f for manual fullscreen toggle
+document.addEventListener('keydown', (e) => {
+    tryFullscreen(); // Try on first keypress
+
+    if (e.key === ',') {
+        adjustBrightness(1);  // Darker
+    } else if (e.key === '.') {
+        adjustBrightness(-1); // Brighter
+    } else if (e.key === 'f' || e.key === 'F') {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            enterFullscreen();
+        }
+    }
+});
+
+// Also try on first click
+document.addEventListener('click', tryFullscreen, { once: true });
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    resizeCanvas();
+    // Clear to black on resize
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+});
+
+// Initialize and start
+resizeCanvas();
+ctx.fillStyle = '#000000';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+setInterval(draw, UPDATE_INTERVAL);

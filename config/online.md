@@ -67,7 +67,7 @@
 
 ## SBB
 - wrapper-id: sbb
-- src: sbb-iframe.html?from=Zurich&to=Geneva
+- src: extras/sbb/index.html?from=Zurich&to=Geneva
 - width: 400px
 - height: 800px
 - left: 900px

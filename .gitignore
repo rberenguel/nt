@@ -2,3 +2,5 @@
 *.md
 local_*
 config/*.mp3
+misc/*
+!misc/README.md
