@@ -41,3 +41,10 @@
 ## `rsc` [Radio Swiss Classic 🇩🇪](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsc_de%2Fmp3_128:Radio Swiss Classic)
 
 ---
+
+# Controls
+
+## `z` [Zen Mode](#zen)
+## ` ` [Random Background](#randomBackground)
+
+---

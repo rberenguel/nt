@@ -40,11 +40,12 @@ This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard
 * **Timezones:** Shows clocks for multiple configured timezones.
 * **Links (Quicklinks):** Customizable list of links, optionally with keyboard shortcuts for quick navigation (Press `ESC` then shortcut keys).
 * **Quotes:** Displays quotes from configured files, can be set to rotate daily.
-* **Backgrounds:** Rotates background images from configured lists, can be set to rotate daily. The seed for daily rotation can be changed by Alt-clicking the 'π' symbol.
+* **Backgrounds:** Rotates background images from configured lists, can be set to rotate daily. The seed for daily rotation can be changed by clicking the 'π' symbol (bottom-left) or using the keyboard shortcut.
 * **Sunrise/Sunset:** Displays calculated sunrise and sunset times for specific locations using SunCalc.js.
 * **Countdowns:** Shows countdown timers to specific future dates and times.
 * **Iframes:** embeds an iframe. Like, random example, the current oncaller of an oncall rotation.
 * **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`). Colors and font size can be changed.
+* **Zen Mode:** Toggle visibility of all widgets and post-its to enjoy a clean background-only view. Click the 'ε' symbol (top-left) or use the keyboard shortcut. The state persists across page reloads.
 * **Replacements:** Uses the `metaP` library to perform text replacements. This is specific to some usecases I have and is hard to explain, so just ignore.
 
 ## Configuration

@@ -22,6 +22,17 @@ body {
   font-family: "Monoid";
 }
 
+#background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
 iframe {
   display: block;
   margin-left: 0.1em;
@@ -55,6 +66,27 @@ iframe {
   color: #555;
   text-shadow: 1px 1px 1px white;
   z-index: 1000000;
+}
+
+#epsilon {
+  position: absolute;
+  left: 1em;
+  top: 0.5em;
+  cursor: pointer;
+  color: #555;
+  text-shadow: 1px 1px 1px white;
+  z-index: 1000000;
+}
+
+.zen-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.8s ease-in-out;
+}
+
+#upper-left, #upper-right, #lower-left, #lower-right, #center, .iframe-wrapper, .post-it {
+  transition: opacity 0.8s ease-in-out;
+  opacity: 1;
 }
 
 #upper-left {
