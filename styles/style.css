@@ -84,7 +84,13 @@ iframe {
   transition: opacity 0.8s ease-in-out;
 }
 
-#upper-left, #upper-right, #lower-left, #lower-right, #center, .iframe-wrapper, .post-it {
+#upper-left,
+#upper-right,
+#lower-left,
+#lower-right,
+#center,
+.iframe-wrapper,
+.post-it {
   transition: opacity 0.8s ease-in-out;
   opacity: 1;
 }
@@ -140,7 +146,7 @@ iframe {
 
 #center {
   position: absolute;
-  display: flex;
+  display: none;
   top: 25%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -151,6 +157,10 @@ iframe {
   border: 2px solid #c60;
   flex-direction: row;
   gap: 1em; /* gap between the columns */
+}
+
+#center.started {
+  display: flex;
 }
 
 .quicklink-column {
