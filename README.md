@@ -141,6 +141,7 @@ Here are the supported `kind` sections and their common properties based on `con
     * `- lat: Latitude`
     * `- lon: Longitude`
     * `- div: ID of the target HTML div` (e.g., `upper-right`)
+    * `- plz: Swiss postal code` (Optional, makes the weather chart clickable to open MeteoSwiss forecast)
     * Other `- key: value` pairs are passed as options (e.g., `- width: 400px`).
 
 #### Timezones
