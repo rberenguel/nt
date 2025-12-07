@@ -77,14 +77,15 @@
 
 # 8 ball
 ## 8
-- I’m sorry, but I can't help with that request
+- #111111
+- I’m sorry, but\nI can't help with that request
 - You are absolutely right!
 - // ... (code omitted for brevity)
 - Rate limit exceeded
-- I apologize for the confusion
 - Here are some alternatives
 - I appreciate your patience
 - That's a great question!
 - Brilliant idea!
+- I apologize\nfor the confusion
 - left: 25%
 - top: 25%
