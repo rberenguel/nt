@@ -36,7 +36,7 @@
   justify-content: center;
   transition:
     transform 0.3s ease,
-    opacity 0.3s ease;
+    opacity 0.8s ease;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
 }
 /* Slight yellowish tint */
@@ -75,7 +75,7 @@
   font-size: 14px;
   font-weight: bold;
   opacity: 0;
-  transition: opacity 1s ease;
+  transition: opacity 2s ease-in;
   /* Triangle shape for typical 8ball answer fluid */
   background: radial-gradient(triangle at center, #000044, #000022);
   /* Since implementing a real triangle fluid floating in blue liquid is hard, 
@@ -94,7 +94,7 @@
   justify-content: center;
   opacity: 0;
   transition:
-    opacity 0.4s ease,
+    opacity 3s ease-in,
     transform 0.4s ease; /* Faster dismissal to match incoming "8" */
   z-index: 20; /* Ensure on top */
   transform: translateX(150px); /* Default: hidden to right */
@@ -132,7 +132,8 @@
 .eight-ball-wrapper.state-answering .eight-ball-triangle {
   opacity: 1;
   transform: translateX(0);
-  transition: opacity 1s ease; /* Only animate opacity when appearing */
+  /* TODO There are too many transition properties around */
+  transition: opacity 1.5s ease-in; /* Only animate opacity when appearing */
 }
 .eight-ball-wrapper.state-answering .eight-ball-number-bg {
   /* Hide number */
