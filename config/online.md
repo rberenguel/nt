@@ -85,5 +85,6 @@
 - Here are some alternatives
 - I appreciate your patience
 - That's a great question!
+- Brilliant idea!
 - left: 25%
 - top: 25%
