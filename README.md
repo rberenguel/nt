@@ -19,6 +19,7 @@ A highly customizable New Tab page extension for Chrome, built with vanilla Java
       - [Iframes](#iframes)
       - [Post-its](#post-its)
       - [Replacements](#replacements)
+      - [Screensaver](#screensaver)
   - [Setup / Installation](#setup--installation)
   - [Tweaking / Customization](#tweaking--customization)
   - [Safari Conversion](#safari-conversion)
@@ -46,6 +47,7 @@ This extension replaces Chrome's default _New Tab_ page with a dynamic dashboard
 * **Iframes:** embeds an iframe. Like, random example, the current oncaller of an oncall rotation.
 * **Post-its:** Allows creating draggable, editable, persistent sticky notes directly on the page (uses `interact.js` and `chrome.storage.local`). Colors and font size can be changed.
 * **Zen Mode:** Toggle visibility of all widgets and post-its to enjoy a clean background-only view. Click the 'ε' symbol (top-left) or use the keyboard shortcut. The state persists across page reloads.
+* **Screensaver:** Launch fullscreen screensavers across all connected displays. Auto-detects monitors in extension mode. Includes a Matrix rain screensaver.
 * **Replacements:** Uses the `metaP` library to perform text replacements. This is specific to some usecases I have and is hard to explain, so just ignore.
 
 ## Configuration
@@ -240,6 +242,32 @@ Make sure you match the size of the embed (in the URL) with the size of the ifra
 * These are weird and for something I wanted. You may never want to use them
 * Starts with `# Replacements`.
 * Properties define data sources (e.g., `- config/replacements.md`). Keys are passed to `replacementsFromMarkdown`. Assumes only one replacement block is used.
+
+#### Screensaver
+
+* Starts with `# Screensaver`.
+* Requires `## Name` for each screensaver.
+* Properties:
+    * `- url: URL` Path to the screensaver page (e.g., `extras/matrix/index.html`)
+    * `- screens: Number` (Optional fallback for web demo, extension auto-detects displays)
+* Triggered via hash link: `#screensaver:Name`
+* In the extension context, uses `chrome.system.display` to detect all monitors and opens a window on each display. Falls back to configured `screens` count for the web demo.
+* Example configuration:
+
+```
+# Screensaver
+
+## Matrix
+- url: extras/matrix/index.html
+- screens: 2
+```
+
+* Example link in your links file: `` `mx` [Matrix screensaver](#screensaver:Matrix) ``
+* The included Matrix screensaver (`extras/matrix/`) supports:
+    * Click or any key to enter fullscreen
+    * `q` to close the window
+    * `f` to toggle fullscreen
+    * `,` / `.` to adjust brightness (darker/brighter)
 
 #### Audio stuff
 

@@ -143,21 +143,12 @@ function enterFullscreen() {
   }
 }
 
-// Attempt to go fullscreen on first interaction
-let hasInteracted = false;
-function tryFullscreen() {
-  if (!hasInteracted) {
-    hasInteracted = true;
-    enterFullscreen();
-  }
-}
-
 // Keyboard controls: , decreases brightness, . increases brightness
 // F or f for manual fullscreen toggle
 document.addEventListener("keydown", (e) => {
-  tryFullscreen(); // Try on first keypress
-
-  if (e.key === ",") {
+  if (e.key === "q" || e.key === "Q") {
+    window.close();
+  } else if (e.key === ",") {
     adjustBrightness(1); // Darker
   } else if (e.key === ".") {
     adjustBrightness(-1); // Brighter
@@ -167,11 +158,18 @@ document.addEventListener("keydown", (e) => {
     } else {
       enterFullscreen();
     }
+  } else if (!document.fullscreenElement) {
+    // Any other key enters fullscreen if not already
+    enterFullscreen();
   }
 });
 
-// Also try on first click
-document.addEventListener("click", tryFullscreen, { once: true });
+// Click anywhere to enter fullscreen (repeatable)
+document.addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    enterFullscreen();
+  }
+});
 
 // Handle window resize
 window.addEventListener("resize", () => {
