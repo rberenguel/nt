@@ -260,14 +260,29 @@ Make sure you match the size of the embed (in the URL) with the size of the ifra
 ## Matrix
 - url: extras/matrix/index.html
 - screens: 2
+
+## Lightning
+- url: extras/storm/screensaver.html?mode=lightning
+- screens: 2
+
+## Storm
+- url: extras/storm/screensaver.html?mode=storm
+- screens: 2
 ```
 
-* Example link in your links file: `` `mx` [Matrix screensaver](#screensaver:Matrix) ``
-* The included Matrix screensaver (`extras/matrix/`) supports:
+* Example links in your links file:
+    * `` `mx` [Matrix screensaver](#screensaver:Matrix) ``
+    * `` `li` [Lightning](#screensaver:Lightning) ``
+    * `` `st` [Storm](#screensaver:Storm) ``
+* The included screensavers (`extras/matrix/`, `extras/storm/`) support:
     * Click or any key to enter fullscreen
     * `q` to close the window
     * `f` to toggle fullscreen
     * `,` / `.` to adjust brightness (darker/brighter)
+* The Storm screensaver has two modes:
+    * `lightning` - Dark background with lightning bolts only
+    * `storm` - Full storm with rain, wind, and lightning
+* Multi-monitor support: flashes are synchronized across all screens, with lightning bolts randomly appearing on one screen at a time
 
 #### Audio stuff
 
