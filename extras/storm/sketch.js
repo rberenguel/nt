@@ -88,10 +88,16 @@ function initStorm({ rain: enableRain = false, disableDefaultKeyHandler = false,
     // 1. Create the low-res "Skeleton" (Big Zig-Zags)
     const skeleton = createSkeleton(x, 0, h);
 
+    // Randomize fractal detail: 2-6 iterations (lower = sparser/cleaner)
+    const fractalIter = 2 + Math.floor(Math.random() * 5);
+
     // 2. Add Branches (attached to skeleton nodes)
+    // Sparse bolts (low fractal) get fewer branches
     const branches = [];
-    if (Math.random() < CFG.branchProb) {
-      const num = 2 + Math.floor(Math.random() * 3);
+    const branchProb = fractalIter <= 3 ? 0.3 : CFG.branchProb;
+    if (Math.random() < branchProb) {
+      const maxBranches = fractalIter <= 3 ? 2 : 4;
+      const num = 1 + Math.floor(Math.random() * maxBranches);
       for (let i = 0; i < num; i++) {
         // Pick a random spot on the skeleton
         const idx = Math.floor(skeleton.length * (0.2 + Math.random() * 0.6));
@@ -112,12 +118,12 @@ function initStorm({ rain: enableRain = false, disableDefaultKeyHandler = false,
           { x: start.x + drift, y: endY },
         ];
 
-        branches.push(fractalize(branchSkel, CFG.fractalIter));
+        branches.push(fractalize(branchSkel, fractalIter));
       }
     }
 
     // 3. Fractalize the skeleton to add the "Electric" look
-    const finalPath = fractalize(skeleton, CFG.fractalIter);
+    const finalPath = fractalize(skeleton, fractalIter);
 
     return { life: 1.0, path: finalPath, branches };
   }
