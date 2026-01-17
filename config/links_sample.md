@@ -36,9 +36,9 @@
 ## `b4` [Binaural 40Hz](#startB40)
 ## `bh` [Both](#startB40&&startBrownNoise)
 ## `aria` [Bach: Aria](#loop:Bach-Goldberg-Aria-Ishizaka.mp3:Aria:0.1)
-## `rsj` [Radio Swiss Jazz](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsj%2Fmp3_128:Radio Swiss Jazz)
-## `rsp` [Radio Swiss Pop](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsp%2Fmp3_128:Radio Swiss Pop)
-## `rsc` [Radio Swiss Classic 🇩🇪](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsc_de%2Fmp3_128:Radio Swiss Classic)
+## `rsj` [Radio Swiss Jazz](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsj%2Fmp3_128:Radio Swiss Jazz:https%3A%2F%2Fapi.radioswissjazz.ch%2Fapi%2Fv1%2Frsj%2Fen%2Fcurrent)
+## `rsp` [Radio Swiss Pop](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsp%2Fmp3_128:Radio Swiss Pop:https%3A%2F%2Fapi.radioswisspop.ch%2Fapi%2Fv1%2Frsp%2Fen%2Fcurrent)
+## `rsc` [Radio Swiss Classic 🇩🇪](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsc_de%2Fmp3_128:Radio Swiss Classic:https%3A%2F%2Fapi.radioswissclassic.ch%2Fapi%2Fv1%2Frsc_de%2Fen%2Fcurrent)
 
 ---
 

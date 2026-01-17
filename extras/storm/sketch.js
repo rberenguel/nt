@@ -1,4 +1,10 @@
-function initStorm({ rain: enableRain = false, disableDefaultKeyHandler = false, disableClickHandler = false, screenIndex = 0, totalScreens = 1 } = {}) {
+function initStorm({
+  rain: enableRain = false,
+  disableDefaultKeyHandler = false,
+  disableClickHandler = false,
+  screenIndex = 0,
+  totalScreens = 1,
+} = {}) {
   const canvas = document.getElementById("c");
   const ctx = canvas.getContext("2d", { alpha: false });
 
@@ -11,10 +17,10 @@ function initStorm({ rain: enableRain = false, disableDefaultKeyHandler = false,
   // Seeded PRNG for synchronized randomness across screens
   // mulberry32 algorithm
   function seededRandom(seed) {
-    let t = seed + 0x6D2B79F5;
-    t = Math.imul(t ^ t >>> 15, t | 1);
-    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    let t = seed + 0x6d2b79f5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   }
 
   // Get a seed that changes roughly every 50ms (sync window)

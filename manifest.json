@@ -1,12 +1,17 @@
 {
   "manifest_version": 3,
   "name": "NT",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Replaces the default new tab page with a custom one",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
   "permissions": ["storage", "notifications", "system.display", "windows"],
+  "host_permissions": [
+    "https://api.radioswissjazz.ch/*",
+    "https://api.radioswisspop.ch/*",
+    "https://api.radioswissclassic.ch/*"
+  ],
   "web_accessible_resources": [
     {
       "resources": ["media/icon.png"],
