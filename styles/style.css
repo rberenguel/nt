@@ -723,12 +723,12 @@ We'll make it non-editable via JS.
 .now-playing-title span,
 .now-playing-artist span {
   display: inline-block;
-  padding-right: 2em;
 }
 
 .now-playing-title span.marquee,
 .now-playing-artist span.marquee {
   animation: np-marquee 8s linear infinite;
+  padding-right: 2em;
 }
 
 @keyframes np-marquee {
