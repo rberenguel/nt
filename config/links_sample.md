@@ -3,6 +3,10 @@
 - fontSize: 17px
 - edit: foo
 
+## `bb` [blinker](#blinker)
+
+---
+
 ## `.j` [jellyfin](http://localhost:8096/web)
 
 ## `gg` [Gemini](https://gemini.google.com)
