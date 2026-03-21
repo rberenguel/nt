@@ -8,6 +8,7 @@ const totalScreens = parseInt(params.get("screens") || "1", 10);
 // Initialize storm with handlers disabled for screensaver mode
 initStorm({
   rain: enableRain,
+  thunder: true,
   disableDefaultKeyHandler: true,
   disableClickHandler: true,
   screenIndex,
@@ -35,9 +36,15 @@ function enterFullscreen() {
   }
 }
 
+const stormChannel = new BroadcastChannel("storm-screensaver");
+stormChannel.onmessage = (e) => {
+  if (e.data === "close") window.close();
+};
+
 // Keyboard controls matching matrix screensaver
 document.addEventListener("keydown", (e) => {
   if (e.key === "q" || e.key === "Q") {
+    stormChannel.postMessage("close");
     window.close();
   } else if (e.key === ",") {
     adjustBrightness(1); // Darker

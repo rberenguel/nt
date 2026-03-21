@@ -1,5 +1,6 @@
 function initStorm({
   rain: enableRain = false,
+  thunder: enableThunder = false,
   disableDefaultKeyHandler = false,
   disableClickHandler = false,
   screenIndex = 0,
@@ -13,6 +14,11 @@ function initStorm({
   let rain = [];
   let skyFlash = 0;
   let windTime = 0;
+  let audioCtx = null;
+  let thunderBuffer = null;
+  let rainBuffer = null;
+  let rainNode = null;
+  let thunderActive = false;
 
   // Seeded PRNG for synchronized randomness across screens
   // mulberry32 algorithm
@@ -45,6 +51,67 @@ function initStorm({
     baseWind: -2,
     color: "rgba(160, 180, 220, 0.15)",
   };
+
+  function startRain(ac) {
+    if (!enableRain || !thunderActive || !rainBuffer || rainNode) return;
+    const gain = ac.createGain();
+    gain.gain.value = 0.4;
+    rainNode = ac.createBufferSource();
+    rainNode.buffer = rainBuffer;
+    rainNode.loop = true;
+    rainNode.connect(gain).connect(ac.destination);
+    rainNode.start();
+  }
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      fetch("thunder.mp3")
+        .then((r) => r.arrayBuffer())
+        .then((ab) => audioCtx.decodeAudioData(ab))
+        .then((buf) => { thunderBuffer = buf; console.log("thunder loaded", buf.duration); })
+        .catch((e) => console.error("thunder load failed", e));
+      if (enableRain) {
+        fetch("rain.mp3")
+          .then((r) => r.arrayBuffer())
+          .then((ab) => audioCtx.decodeAudioData(ab))
+          .then((buf) => { rainBuffer = buf; startRain(audioCtx); })
+          .catch(() => {});
+      }
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().then(() => startRain(audioCtx));
+    }
+    return audioCtx;
+  }
+
+  function triggerThunder(boltX) {
+    if (!enableThunder || !thunderActive || !thunderBuffer) {
+      console.log("triggerThunder skip", { enableThunder, thunderActive, hasBuffer: !!thunderBuffer });
+      return;
+    }
+    const ac = getAudioCtx();
+    const now = ac.currentTime;
+    const delay = 0.3 + Math.random() * 2.2;
+    const pan = Math.max(-1, Math.min(1, (boltX / w) * 2 - 1));
+
+    // Pick a random start offset so the file's different thunder claps get used
+    const maxOffset = Math.max(0, thunderBuffer.duration - 8);
+    const offset = Math.random() * maxOffset;
+
+    const src = ac.createBufferSource();
+    src.buffer = thunderBuffer;
+    src.playbackRate.value = 0.9 + Math.random() * 0.2; // slight pitch variation
+
+    const gainNode = ac.createGain();
+    gainNode.gain.value = 0.7 + Math.random() * 0.5;
+
+    const panner = ac.createStereoPanner();
+    panner.pan.value = pan * 0.6;
+
+    src.connect(gainNode).connect(panner).connect(ac.destination);
+    src.start(now + delay, offset);
+  }
 
   function fractalize(path, iterations) {
     let currentPath = path;
@@ -220,6 +287,7 @@ function initStorm({
         if (chosenScreen === screenIndex) {
           const boltX = seededRandom(seed + 2) * w;
           bolts.push(createBolt(boltX));
+          triggerThunder(boltX);
         }
       }
     } else {
@@ -242,6 +310,7 @@ function initStorm({
         if (chosenScreen === screenIndex) {
           const boltX = seededRandom(seed + 2) * w;
           bolts.push(createBolt(boltX));
+          triggerThunder(boltX);
         }
       }
     }
@@ -290,7 +359,9 @@ function initStorm({
     if (cx === undefined && e.touches && e.touches.length > 0)
       cx = e.touches[0].clientX;
     if (cx !== undefined) {
+      if (enableThunder) getAudioCtx(); // resume on user gesture
       bolts.push(createBolt(cx * dpr));
+      triggerThunder(cx * dpr);
       if (enableRain) skyFlash = 1.0; // Only affect skyFlash if rain/storm mode is on
     }
   }
@@ -308,9 +379,29 @@ function initStorm({
   }
 
   window.addEventListener("resize", resize);
+  if (enableThunder) {
+    // Resume AudioContext on any user gesture, regardless of disableClickHandler
+    const resumeAudio = () => getAudioCtx();
+    window.addEventListener("mousedown", resumeAudio, { once: true });
+    window.addEventListener("touchstart", resumeAudio, { once: true, passive: true });
+    window.addEventListener("keydown", resumeAudio, { once: true });
+  }
   if (!disableClickHandler) {
     window.addEventListener("mousedown", handleInput);
     window.addEventListener("touchstart", handleInput, { passive: false });
+  }
+  if (enableThunder) {
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "t") {
+        thunderActive = !thunderActive;
+        if (thunderActive) {
+          startRain(getAudioCtx());
+        } else if (rainNode) {
+          rainNode.stop();
+          rainNode = null;
+        }
+      }
+    });
   }
   if (!disableDefaultKeyHandler) {
     window.addEventListener("keydown", handleKey);

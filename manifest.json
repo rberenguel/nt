@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "NT",
-  "version": "1.6.1",
+  "version": "1.6.3",
   "description": "Replaces the default new tab page with a custom one",
   "chrome_url_overrides": {
     "newtab": "index.html"
@@ -10,7 +10,8 @@
   "host_permissions": [
     "https://api.radioswissjazz.ch/*",
     "https://api.radioswisspop.ch/*",
-    "https://api.radioswissclassic.ch/*"
+    "https://api.radioswissclassic.ch/*",
+    "https://nightride.fm/*"
   ],
   "web_accessible_resources": [
     {
