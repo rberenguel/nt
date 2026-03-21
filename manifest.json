@@ -11,7 +11,9 @@
     "https://api.radioswissjazz.ch/*",
     "https://api.radioswisspop.ch/*",
     "https://api.radioswissclassic.ch/*",
-    "https://nightride.fm/*"
+    "https://nightride.fm/*",
+    "https://www.rockantenne.de/*",
+    "https://api.laut.fm/*"
   ],
   "web_accessible_resources": [
     {

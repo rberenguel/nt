@@ -78,7 +78,16 @@ iframe {
   z-index: 1000000;
 }
 
-.zen-hidden {
+.zen-hidden,
+body.zen-mode #upper-left,
+body.zen-mode #upper-right,
+body.zen-mode #lower-left,
+body.zen-mode #lower-right,
+body.zen-mode #center,
+body.zen-mode .iframe-wrapper,
+body.zen-mode .post-it,
+body.zen-mode .eight-ball-wrapper,
+body.zen-mode #quoteWrapper {
   opacity: 0 !important;
   pointer-events: none !important;
   transition: opacity 0.8s ease-in-out;
@@ -157,6 +166,11 @@ iframe {
   border: 2px solid #c60;
   flex-direction: row;
   gap: 1em; /* gap between the columns */
+  cursor: grab;
+}
+
+#center:active {
+  cursor: grabbing;
 }
 
 #center.started {
@@ -698,7 +712,23 @@ We'll make it non-editable via JS.
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid #444;
-  max-width: 120px;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.now-playing-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 3px;
+  object-fit: cover;
+}
+
+.now-playing-text {
+  width: 100%;
   text-align: center;
 }
 
