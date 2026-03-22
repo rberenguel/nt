@@ -45,6 +45,8 @@
 ## `rsc` [Radio Swiss Classic 🇩🇪](#stream:https%3A%2F%2Fstream.srg-ssr.ch%2Fm%2Frsc_de%2Fmp3_128:Radio Swiss Classic:https%3A%2F%2Fapi.radioswissclassic.ch%2Fapi%2Fv1%2Frsc_de%2Fen%2Fcurrent)
 ## `nrf` [Nightride FM](#stream:https%3A%2F%2Fstream.nightride.fm%2Fnightride.m4a:Nightride FM:sse%3Anightride)
 ## `nds` [Nightride Darksynth](#stream:https%3A%2F%2Fstream.nightride.fm%2Fdarksynth.m4a:Nightride Darksynth:sse%3Adarksynth)
+## `ran` [Rock Antenne](#stream:https%3A%2F%2Fstream.rockantenne.de%2Fheavy-metal%2Fstream/mp3:Rock Antenne Heavy Metal:antenne%3Aheavy-metal)
+## `lfm` [Laut FM Metal Earth](#stream:https%3A%2F%2Fmetalearth.stream.laut.fm/metalearth:Metal Earth:laut%3Ametalearth)
 
 ---
 
