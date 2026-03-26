@@ -69,13 +69,19 @@ function initStorm({
       fetch("thunder.mp3")
         .then((r) => r.arrayBuffer())
         .then((ab) => audioCtx.decodeAudioData(ab))
-        .then((buf) => { thunderBuffer = buf; console.log("thunder loaded", buf.duration); })
+        .then((buf) => {
+          thunderBuffer = buf;
+          console.log("thunder loaded", buf.duration);
+        })
         .catch((e) => console.error("thunder load failed", e));
       if (enableRain) {
         fetch("rain.mp3")
           .then((r) => r.arrayBuffer())
           .then((ab) => audioCtx.decodeAudioData(ab))
-          .then((buf) => { rainBuffer = buf; startRain(audioCtx); })
+          .then((buf) => {
+            rainBuffer = buf;
+            startRain(audioCtx);
+          })
           .catch(() => {});
       }
     }
@@ -87,7 +93,11 @@ function initStorm({
 
   function triggerThunder(boltX) {
     if (!enableThunder || !thunderActive || !thunderBuffer) {
-      console.log("triggerThunder skip", { enableThunder, thunderActive, hasBuffer: !!thunderBuffer });
+      console.log("triggerThunder skip", {
+        enableThunder,
+        thunderActive,
+        hasBuffer: !!thunderBuffer,
+      });
       return;
     }
     const ac = getAudioCtx();
@@ -383,7 +393,10 @@ function initStorm({
     // Resume AudioContext on any user gesture, regardless of disableClickHandler
     const resumeAudio = () => getAudioCtx();
     window.addEventListener("mousedown", resumeAudio, { once: true });
-    window.addEventListener("touchstart", resumeAudio, { once: true, passive: true });
+    window.addEventListener("touchstart", resumeAudio, {
+      once: true,
+      passive: true,
+    });
     window.addEventListener("keydown", resumeAudio, { once: true });
   }
   if (!disableClickHandler) {

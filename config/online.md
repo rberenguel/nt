@@ -30,6 +30,7 @@
 # Links
 - div: center
 - config/links_sample.md
+- config/screensavers_noises_sample.md
 
 # Quotes
 - div: upper-left
@@ -41,7 +42,20 @@
 - config/backgrounds.md
 - config/mwcBackgrounds.md
 
+# Sunrise/sunset
+
+## Adliswil
+
+- lat: 47.3081
+- lon: 8.5318
+- div: lower-left
+
 # Countdowns
+
+## 2026 eclipse
+- target: 20260812 1746
+- div: lower-right
+- precision: minutes
 
 ## Sabaton
 - target: 20251118 1900
@@ -74,6 +88,40 @@
 - top: 300px
 - hidden: true
 - command: SBB
+
+## Online Notice
+- src: extras/online-notice/index.html
+- width: 900px
+- height: 200px
+- left: calc(50vw - 450px)
+- bottom: 1em
+- style: background: transparent;
+- wrapper-style: background: transparent; padding: 0;
+- allowtransparency: true
+
+## Notes
+- wrapper-id: notes
+- src: extras/notes/index.html
+- width: 600px
+- height: 600px
+- left: calc(100vw - 30vw)
+- top: 300px
+- hidden: true
+- command: notes
+
+# Screensaver
+
+## Matrix
+- url: extras/matrix/index.html
+- screens: 2
+
+## Lightning
+- url: extras/storm/screensaver.html?mode=lightning
+- screens: 2
+
+## Storm
+- url: extras/storm/screensaver.html?mode=storm
+- screens: 2
 
 # 8 ball
 ## 8
