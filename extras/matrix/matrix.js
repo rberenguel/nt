@@ -143,10 +143,16 @@ function enterFullscreen() {
   }
 }
 
+const matrixChannel = new BroadcastChannel("matrix-screensaver");
+matrixChannel.onmessage = (e) => {
+  if (e.data === "close") window.close();
+};
+
 // Keyboard controls: , decreases brightness, . increases brightness
 // F or f for manual fullscreen toggle
 document.addEventListener("keydown", (e) => {
   if (e.key === "q" || e.key === "Q") {
+    matrixChannel.postMessage("close");
     window.close();
   } else if (e.key === ",") {
     adjustBrightness(1); // Darker
