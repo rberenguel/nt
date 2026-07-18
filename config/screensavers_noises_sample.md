@@ -3,6 +3,7 @@
 ## `mx` [Matrix](#screensaver:Matrix)
 ## `li` [Lightning](#screensaver:Lightning)
 ## `st` [Storm](#screensaver:Storm)
+## `gol` [Game of Life](#screensaver:Life)
 
 ---
 

@@ -123,6 +123,10 @@
 - url: extras/storm/screensaver.html?mode=storm
 - screens: 2
 
+## Life
+- url: extras/life/index.html
+- screens: 2
+
 # 8 ball
 ## 8
 - #111111
