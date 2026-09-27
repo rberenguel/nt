@@ -34,13 +34,14 @@
 
 ---
 
-# Screensavers (full functionality needs the extension)
+# Screensavers'
 
 ## [Aquarium](extras/aquarium/index.html)
 ## [Matrix](extras/matrix/index.html)
 ## [Storm](extras/storm/screensaver.html?mode=storm)
 ## [Life](extras/matrix/index.html)
 ## [Flip](extras/flip/index.html)
+## [' They only work completely on the extension itself]()
 
 ---
 
