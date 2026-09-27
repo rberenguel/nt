@@ -530,15 +530,17 @@ if (isPrimary) {
     tiltSmooth += (gx - tiltSmooth) * 0.08;
     step();
     render();
-    bc.postMessage({ cellType: cellType.slice(), gx });
+    bc.postMessage({ cellType: cellType.slice(), gx, paletteIdx: _paletteIdx });
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
 } else {
   bc.onmessage = ({ data }) => {
+    if (data.quit) { window.close(); return; }
     cellType.set(data.cellType);
     gx = data.gx;
     tiltSmooth += (gx - tiltSmooth) * 0.08;
+    if (data.paletteIdx !== _paletteIdx) applyPalette(data.paletteIdx);
     render();
   };
 }
@@ -554,7 +556,11 @@ document.addEventListener("click", () => {
   if (!document.fullscreenElement) enterFullscreen();
 });
 
+bc.addEventListener("message", ({ data }) => {
+  if (data.quit) window.close();
+});
+
 document.addEventListener("keydown", e => {
-  if (e.key === "q" || e.key === "Q") window.close();
+  if (e.key === "q" || e.key === "Q") { bc.postMessage({ quit: true }); window.close(); }
   if (e.key === "p" || e.key === "P") applyPalette(_paletteIdx + 1);
 });
