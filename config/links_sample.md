@@ -34,6 +34,16 @@
 
 ---
 
+# Screensavers (full functionality needs the extension)
+
+## [Aquarium](extras/aquarium/index.html)
+## [Matrix](extras/matrix/index.html)
+## [Storm](extras/storm/screensaver.html?mode=storm)
+## [Life](extras/matrix/index.html)
+## [Flip](extras/flip/index.html)
+
+---
+
 # Noises <
 
 ## `bn` [Brown noise](#startBrownNoise)

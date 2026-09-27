@@ -127,6 +127,14 @@
 - url: extras/life/index.html
 - screens: 2
 
+## Aquarium
+- url: extras/aquarium/index.html
+- screens: 2
+
+## Flip
+- url: extras/flip/index.html
+- screens: 2
+
 # 8 ball
 ## 8
 - #111111
