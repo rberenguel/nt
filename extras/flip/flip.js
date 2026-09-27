@@ -2,6 +2,44 @@ const params = new URLSearchParams(window.location.search);
 const screenIndex = parseInt(params.get("screen") || "0", 10);
 const totalScreens = parseInt(params.get("screens") || "1", 10);
 
+// ── Palettes ──────────────────────────────────────────────────────────────────
+// colors: ordered surface → deep (index 0 = foam/crest, last = abyss).
+// bg: gradient stops top → bottom; single entry = solid.
+const PALETTES = {
+  wave: {
+    colors: ["#ffffff", "#b8dbe8", "#4a8db5", "#2060a0", "#1a4880", "#163870"],
+    bg: ["#ccb06a", "#a88848", "#7a5828", "#3e2208"],
+  },
+  lava: {
+    colors: ["#ffffff", "#ffe066", "#ff6600", "#cc2200", "#660000", "#1a0000"],
+    bg: ["#060000", "#110200", "#1e0600"],
+  },
+  night: {
+    colors: ["#e8ffff", "#40ffdd", "#00bbaa", "#006677", "#002233", "#000d1a"],
+    bg: ["#000408", "#000d1e", "#001226"],
+  },
+  ink: {
+    colors: ["#f8f8f0", "#c8c8e8", "#6060c0", "#202080", "#080840", "#000010"],
+    bg: ["#f0ead8", "#ddd0b0", "#bda882", "#a08860"],
+  },
+  sunset: {
+    colors: ["#ffffff", "#ffe0a0", "#ff8040", "#cc2040", "#880040", "#220010"],
+    bg: ["#ff9940", "#cc4420", "#881030", "#220020"],
+  },
+  absinthe: {
+    colors: ["#f0ffe0", "#c8ff60", "#60cc20", "#208800", "#0a4000", "#031800"],
+    bg: ["#0e1604", "#151e06", "#1c2808", "#0a0e02"],
+  },
+};
+
+const PALETTE_NAMES = Object.keys(PALETTES);
+let _paletteIdx = (() => {
+  const i = PALETTE_NAMES.indexOf(params.get("palette"));
+  return i >= 0 ? i : Math.floor(Math.random() * PALETTE_NAMES.length);
+})();
+
+let PALETTE, PALETTE_BG, COLOR_LUT;
+
 const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 
@@ -92,6 +130,7 @@ function p2g(dt) {
     const x = posX[p], y = posY[p];
     const ci = Math.floor(x), ri = Math.floor(y);
     if (ci < 0 || ci >= gc || ri < 0 || ri >= gr) continue;
+    if (cellType[ri * gc + ci] === SOLID) continue;  // pushParticlesApart can nudge into walls
     cellType[ri * gc + ci] = FLUID;
     cellCounts[ri * gc + ci]++;
 
@@ -347,9 +386,44 @@ function updateImpulse(now) {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
-const DOT     = Math.max(2, CELL - 4);
-const PAD     = (CELL - DOT) / 2;
+const DOT      = Math.max(2, CELL - 4);
+const PAD      = (CELL - DOT) / 2;
 const OFFSET_X = screenIndex * cols;
+
+const LUT_SIZE = 64;
+
+function hexToRgb(hex) {
+  return [
+    parseInt(hex.slice(1, 3), 16),
+    parseInt(hex.slice(3, 5), 16),
+    parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function buildColorLUT(colors, steps) {
+  const rgbs = colors.map(hexToRgb);
+  const lut = [];
+  for (let i = 0; i <= steps; i++) {
+    const t  = i / steps;
+    const s  = t * (rgbs.length - 1);
+    const lo = Math.min(Math.floor(s), rgbs.length - 2);
+    const fr = s - lo;
+    const c0 = rgbs[lo], c1 = rgbs[lo + 1];
+    lut.push(`rgb(${Math.round(c0[0] + (c1[0]-c0[0])*fr)},${
+                    Math.round(c0[1] + (c1[1]-c0[1])*fr)},${
+                    Math.round(c0[2] + (c1[2]-c0[2])*fr)})`);
+  }
+  return lut;
+}
+
+function applyPalette(idx) {
+  _paletteIdx = ((idx % PALETTE_NAMES.length) + PALETTE_NAMES.length) % PALETTE_NAMES.length;
+  const p = PALETTES[PALETTE_NAMES[_paletteIdx]];
+  PALETTE    = p.colors;
+  PALETTE_BG = p.bg ?? ["#000000"];
+  COLOR_LUT  = buildColorLUT(PALETTE, LUT_SIZE);
+}
+applyPalette(_paletteIdx);
 
 let tiltSmooth = 0;
 
@@ -369,21 +443,73 @@ function drawIndicator() {
 }
 
 function render() {
-  ctx.fillStyle = "#000";
+  if (PALETTE_BG.length === 1) {
+    ctx.fillStyle = PALETTE_BG[0];
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    PALETTE_BG.forEach((c, i) => grad.addColorStop(i / (PALETTE_BG.length - 1), c));
+    ctx.fillStyle = grad;
+  }
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.fillStyle = "#00aaff";
   const gc = totalCols, gr = rows;
+  const maxDepth = Math.max(1, Math.floor(gr * FILL_FRAC));
+
+  // Topmost fluid row per local column, for depth-from-surface coloring
+  const surfaceJ = new Int16Array(cols).fill(gr);
   for (let j = 0; j < gr - 1; j++) {
-    for (let i = OFFSET_X; i < OFFSET_X + cols; i++) {
-      if (cellType[j * gc + i] === FLUID) {
-        const cx = (i - OFFSET_X) * CELL + CELL / 2;
-        const cy = j * CELL + CELL / 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, DOT / 2, 0, Math.PI * 2);
-        ctx.fill();
+    for (let li = 0; li < cols; li++) {
+      if (surfaceJ[li] === gr && cellType[j * gc + li + OFFSET_X] === FLUID) {
+        surfaceJ[li] = j;
       }
     }
+  }
+
+  // AIR cells connected to at least one other AIR cell — filters isolated sim gaps
+  const connectedAir = new Uint8Array(gc * gr);
+  for (let j = 0; j < gr; j++) {
+    for (let i = 0; i < gc; i++) {
+      if (cellType[j * gc + i] !== AIR) continue;
+      if (
+        (j > 0    && cellType[(j-1) * gc + i] === AIR) ||
+        (j < gr-1 && cellType[(j+1) * gc + i] === AIR) ||
+        (i > 0    && cellType[j * gc + (i-1)] === AIR) ||
+        (i < gc-1 && cellType[j * gc + (i+1)] === AIR)
+      ) connectedAir[j * gc + i] = 1;
+    }
+  }
+
+  // Bucket fluid cells by LUT index for smooth gradient
+  const buckets = Array.from({ length: LUT_SIZE + 1 }, () => []);
+  for (let j = 0; j < gr - 1; j++) {
+    for (let li = 0; li < cols; li++) {
+      const i = li + OFFSET_X;
+      if (cellType[j * gc + i] !== FLUID) continue;
+
+      const hasAirNeighbor =
+        (j > 0    && connectedAir[(j-1) * gc + i]) ||
+        (j < gr-1 && connectedAir[(j+1) * gc + i]) ||
+        (i > 0    && connectedAir[j * gc + (i-1)]) ||
+        (i < gc-1 && connectedAir[j * gc + (i+1)]);
+
+      const depth  = hasAirNeighbor ? 0 : j - surfaceJ[li];
+      const lutIdx = Math.round(Math.min(1, depth / maxDepth) * LUT_SIZE);
+      buckets[lutIdx].push(li, j);
+    }
+  }
+
+  // Draw each LUT bucket in a single path
+  for (let c = 0; c <= LUT_SIZE; c++) {
+    if (buckets[c].length === 0) continue;
+    ctx.fillStyle = COLOR_LUT[c];
+    ctx.beginPath();
+    for (let k = 0; k < buckets[c].length; k += 2) {
+      const cx = buckets[c][k] * CELL + CELL / 2;
+      const cy = buckets[c][k + 1] * CELL + CELL / 2;
+      ctx.moveTo(cx + DOT / 2, cy);
+      ctx.arc(cx, cy, DOT / 2, 0, Math.PI * 2);
+    }
+    ctx.fill();
   }
 
   drawIndicator();
@@ -430,4 +556,5 @@ document.addEventListener("click", () => {
 
 document.addEventListener("keydown", e => {
   if (e.key === "q" || e.key === "Q") window.close();
+  if (e.key === "p" || e.key === "P") applyPalette(_paletteIdx + 1);
 });
