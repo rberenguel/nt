@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const CONFIG = {
   generations:          2000,
-  stepsPerGen:          1500,   // 75 sim-seconds @ 20 Hz
+  stepsPerGen:          2000,   // 100 sim-seconds @ 20 Hz (extra time for slower fish)
   dt:                   0.05,
   worldWidth:           1000,
   worldHeight:          600,
@@ -15,7 +15,7 @@ const CONFIG = {
   mutationRate:         0.07,
   mutationScale:        0.22,
   crossoverRate:        0.6,
-  starvationThreshold:  400,    // steps without a kill before penalty
+  starvationThreshold:  350,    // training pressure threshold (sim death is at 300)
 };
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -75,15 +75,15 @@ class Brain {
 
 // ── Entities ──────────────────────────────────────────────────────────────────
 class Entity {
-  constructor(x, y, maxSpeed) {
+  constructor(x, y, maxSpeed, turnRate = 2.2) {
     this.x = x; this.y = y;
     this.heading = Math.random() * Math.PI * 2;
-    this.speed = 0; this.maxSpeed = maxSpeed;
+    this.speed = 0; this.maxSpeed = maxSpeed; this.turnRate = turnRate;
     this.alive = true; this.fitness = 0;
   }
 
   step(turn, throttle) {
-    this.heading = wrapAngle(this.heading + turn * 3.5 * CONFIG.dt);
+    this.heading = wrapAngle(this.heading + turn * this.turnRate * CONFIG.dt);
     this.speed   = clamp(this.speed + throttle * this.maxSpeed * CONFIG.dt, 0, this.maxSpeed);
     this.x += Math.cos(this.heading) * this.speed * CONFIG.dt;
     this.y += Math.sin(this.heading) * this.speed * CONFIG.dt;
@@ -98,7 +98,7 @@ class Entity {
 // Prey: [food_dist, food_angle, pred_dist, pred_angle, wall_x, wall_y, peer_dist, peer_angle] → [turn, throttle]
 class Prey extends Entity {
   constructor(x, y, brain = null) {
-    super(x, y, 140);
+    super(x, y, 95, 2.2);
     this.brain = brain || new Brain([8, 14, 2]);
   }
 
@@ -133,7 +133,7 @@ class Prey extends Entity {
 // Predator: [prey_dist, prey_angle, prey_speed, wall_x, wall_y, hunger, peer_dist, peer_angle] → [turn, throttle]
 class Predator extends Entity {
   constructor(x, y, brain = null) {
-    super(x, y, 170);
+    super(x, y, 120, 3.2);
     this.brain = brain || new Brain([8, 12, 2]);
     this.kills = 0;
     this.stepsSinceKill = 0;
@@ -230,7 +230,7 @@ function runSimulation() {
         let nearestPredDist = Infinity;
         for (const pred of predPool) { const d = Math.hypot(pred.x-p.x, pred.y-p.y); if (d < nearestPredDist) nearestPredDist = d; }
         const prevMaxSpeed = p.maxSpeed;
-        if (nearestPredDist < 60) p.maxSpeed = 200;
+        if (nearestPredDist < 60) p.maxSpeed = 155;
         p.step(turn, throttle);
         p.maxSpeed = prevMaxSpeed;
         for (let i = food.length - 1; i >= 0; i--) {
@@ -252,9 +252,15 @@ function runSimulation() {
         // Sprint penalty: select for efficient stalks, not aimless dashes
         pred.fitness -= (pred.speed / pred.maxSpeed) * 0.01;
 
+        // Wall-proximity penalty: discourage bouncing along edges
+        const wallMargin = 60;
+        const wx = Math.max(0, wallMargin - Math.min(pred.x, CONFIG.worldWidth  - pred.x));
+        const wy = Math.max(0, wallMargin - Math.min(pred.y, CONFIG.worldHeight - pred.y));
+        pred.fitness -= ((wx + wy) / wallMargin) * 0.035;
+
         // Starvation pressure: ramps up after threshold
         if (pred.stepsSinceKill > CONFIG.starvationThreshold)
-          pred.fitness -= 0.8;
+          pred.fitness -= 0.15;
 
         // Clustering penalty: discourage pile-ups on the same prey
         for (const other of predPool) {
@@ -271,7 +277,7 @@ function runSimulation() {
               pred.kills++;
               pred.stepsSinceKill = 0;
               pred.satiatedTicks = 80;
-              pred.fitness += 10;
+              pred.fitness += 20;
               break;
             }
           }
