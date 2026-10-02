@@ -225,7 +225,7 @@ function initGrid() {
   cellBase = Array.from({length: COLS}, () =>
     Array.from({length: ROWS}, (_, r) => {
       if (r < SURF_ROWS) return lerpColor("#1b2e2e", "#141414", r / SURF_ROWS);
-      if (r >= ROWS - SAND_ROWS) return "#231f10";
+      if (r >= ROWS - SAND_ROWS) return lerpColor("#141414", "#231f10", (r - (ROWS - SAND_ROWS)) / (SAND_ROWS - 1));
       return "#141414";
     })
   );
