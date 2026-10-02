@@ -4,3 +4,4 @@ local_*
 config/*.mp3
 misc/*
 !misc/README.md
+backgrounds/anas-abdin/
