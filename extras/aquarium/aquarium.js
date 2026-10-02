@@ -134,6 +134,7 @@ class Prey extends Entity {
     super(x, y, 95);
     this.brain = brain; this.variant = variant; this.energy = 0;
     this.color = jitterColor(PREY_COLORS[variant], 4);
+    this.panicTimer = 0; this.panicCooldown = 0; this.panicX = 0; this.panicY = 0;
   }
   think(foods, preds, peers) {
     let nf = null, nfd = Infinity;
@@ -435,7 +436,8 @@ function drawEntities() {
     if (!p.alive) continue;
     const [gc, gr] = simToGrid(p.x, p.y);
     const dc = -Math.cos(p.heading), dr = -Math.sin(p.heading);
-    const color = p.color;
+    const panicBright = p.panicTimer > 0 ? (p.panicTimer / 40) * 0.85 : 0;
+    const color = panicBright > 0.05 ? lerpColor(p.color, "#ffffff", panicBright) : p.color;
     for (let i = 0; i < 3; i++)
       paintTrailCell(Math.round(gc + dc * i), Math.round(gr + dr * i), color);
   }
@@ -567,7 +569,7 @@ function initSim(nPrey = NUM_PREY, nPred = NUM_PRED) {
 // ── Multi-screen state sync ───────────────────────────────────────────────────
 function serializeState() {
   return {
-    prey:        preyList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color })),
+    prey:        preyList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, pt: p.panicTimer, pc: p.panicCooldown, px: p.panicX, py: p.panicY })),
     pred:        predList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, hunger: p.hunger })),
     food:        foodList.map(f => ({ x: f.x, y: f.y })),
     splashes:    deathSplashes.map(s => ({ x: s.x, y: s.y, frames: s.frames, dy: s.dy, cells: s.cells.slice() })),
@@ -584,6 +586,7 @@ function applyState(data) {
   for (let i = 0; i < data.prey.length; i++) {
     const p = preyList[i], d = data.prey[i];
     p.x = d.x; p.y = d.y; p.heading = d.h; p.alive = d.a; p.variant = d.v; p.color = d.c;
+    p.panicTimer = d.pt || 0; p.panicCooldown = d.pc || 0; p.panicX = d.px || 0; p.panicY = d.py || 0;
   }
   while (predList.length < data.pred.length) predList.push(new Predator(0, 0, null, 0));
   predList.length = data.pred.length;
@@ -604,6 +607,17 @@ function applyState(data) {
 }
 
 function stepOnce() {
+  // Panic scatter: predator entering a cluster of 3+ prey triggers simultaneous radial burst
+  for (const pred of predList) {
+    if (!pred.alive) continue;
+    const cluster = preyList.filter(p => p.alive && p.panicCooldown === 0 && Math.hypot(p.x - pred.x, p.y - pred.y) < 80);
+    if (cluster.length >= 3) {
+      for (const p of cluster) {
+        p.panicTimer = 40; p.panicCooldown = 120; p.panicX = pred.x; p.panicY = pred.y;
+      }
+    }
+  }
+
   for (const p of preyList) {
     if (!p.alive) continue;
     const [gc, gr] = simToGrid(p.x, p.y);
@@ -624,6 +638,17 @@ function stepOnce() {
       throttle = Math.max(throttle, fleeFactor * 0.9);
     }
 
+    // Panic scatter override
+    if (p.panicTimer > 0) {
+      p.panicTimer--;
+      const pf = p.panicTimer / 40;
+      const awayA = Math.atan2(p.y - p.panicY, p.x - p.panicX);
+      const awayRel = wrapAngle(awayA - p.heading) / Math.PI;
+      turn = turn * (1 - pf * 0.9) + awayRel * pf * 0.9;
+      throttle = Math.max(throttle, pf);
+    }
+    if (p.panicCooldown > 0) p.panicCooldown--;
+
     let nearestPredDist = Infinity;
     for (const pred of predList) {
       if (!pred.alive) continue;
@@ -632,6 +657,7 @@ function stepOnce() {
     }
     const prevMaxSpeed = p.maxSpeed;
     if (nearestPredDist < 60 || md < 80) p.maxSpeed = 155;
+    if (p.panicTimer > 0) p.maxSpeed = Math.max(p.maxSpeed, 200);
     p.step(turn, throttle);
     p.maxSpeed = prevMaxSpeed;
 
