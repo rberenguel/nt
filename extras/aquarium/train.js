@@ -249,18 +249,18 @@ function runSimulation() {
         pred.stepsSinceKill++;
         if (pred.satiatedTicks > 0) pred.satiatedTicks--;
 
-        // Sprint penalty: select for efficient stalks, not aimless dashes
-        pred.fitness -= (pred.speed / pred.maxSpeed) * 0.01;
-
-        // Wall-proximity penalty: discourage bouncing along edges
-        const wallMargin = 60;
+        // Wall-proximity penalty
+        const wallMargin = 120;
         const wx = Math.max(0, wallMargin - Math.min(pred.x, CONFIG.worldWidth  - pred.x));
         const wy = Math.max(0, wallMargin - Math.min(pred.y, CONFIG.worldHeight - pred.y));
-        pred.fitness -= ((wx + wy) / wallMargin) * 0.035;
+        const wf = (wx + wy) / wallMargin;
+        pred.fitness -= wf * wf * 0.18;
+        if (pred.x < 25 || pred.x > CONFIG.worldWidth - 25 || pred.y < 25 || pred.y > CONFIG.worldHeight - 25)
+          pred.fitness -= 9.0;
 
-        // Starvation pressure: ramps up after threshold
-        if (pred.stepsSinceKill > CONFIG.starvationThreshold)
-          pred.fitness -= 0.15;
+        // Starvation: quadratic pressure, escalates fast the longer since last kill
+        const sf = pred.stepsSinceKill / CONFIG.starvationThreshold;
+        pred.fitness -= sf * sf * 0.25;
 
         // Clustering penalty: discourage pile-ups on the same prey
         for (const other of predPool) {
@@ -277,7 +277,7 @@ function runSimulation() {
               pred.kills++;
               pred.stepsSinceKill = 0;
               pred.satiatedTicks = 80;
-              pred.fitness += 20;
+              pred.fitness += 80;
               break;
             }
           }

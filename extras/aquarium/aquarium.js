@@ -132,7 +132,7 @@ class Entity {
 class Prey extends Entity {
   constructor(x, y, brain, variant) {
     super(x, y, 95);
-    this.brain = brain; this.variant = variant; this.energy = 0;
+    this.brain = brain; this.variant = variant; this.energy = 0; this.hungerTimer = 500;
     this.color = jitterColor(PREY_COLORS[variant], 4);
     this.panicTimer = 0; this.panicCooldown = 0; this.panicX = 0; this.panicY = 0;
   }
@@ -161,7 +161,7 @@ class Prey extends Entity {
 class Predator extends Entity {
   constructor(x, y, brain, variant) {
     super(x, y, 120, 3.2);
-    this.brain = brain; this.variant = variant; this.hunger = 0; this.satiatedTicks = 0;
+    this.brain = brain; this.variant = variant; this.hunger = 0; this.satiatedTicks = 0; this.kills = 0;
     this.color = jitterColor(PRED_COLORS[variant], 4);
   }
   think(preyList, predList) {
@@ -510,9 +510,12 @@ function drawPredDeathAnims() {
 let preyRespawnCooldown = 0;
 let predRespawnCooldown = 0;
 let predMigrationTimer = 0;
+let schoolPhase = 'idle';
+let schoolCountdown = 3600 + Math.floor(Math.random() * 3600);
+let schoolDuration = 0;
 const NUM_PREY = 28 * totalScreens;
 const NUM_PRED =  4 * totalScreens;
-const NUM_FOOD = 24 * totalScreens;
+const NUM_FOOD = 14 * totalScreens;
 let preyBrain, predBrain, preyList, predList, foodList;
 const deathSplashes = [];
 
@@ -569,8 +572,9 @@ function initSim(nPrey = NUM_PREY, nPred = NUM_PRED) {
 // ── Multi-screen state sync ───────────────────────────────────────────────────
 function serializeState() {
   return {
-    prey:        preyList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, pt: p.panicTimer, pc: p.panicCooldown, px: p.panicX, py: p.panicY })),
-    pred:        predList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, hunger: p.hunger })),
+    prey:        preyList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, pt: p.panicTimer, pc: p.panicCooldown, px: p.panicX, py: p.panicY, ht: p.hungerTimer })),
+    pred:        predList.map(p => ({ x: p.x, y: p.y, h: p.heading, a: p.alive, v: p.variant, c: p.color, hunger: p.hunger, kills: p.kills })),
+    schoolPhase, schoolCountdown, schoolDuration,
     food:        foodList.map(f => ({ x: f.x, y: f.y })),
     splashes:    deathSplashes.map(s => ({ x: s.x, y: s.y, frames: s.frames, dy: s.dy, cells: s.cells.slice() })),
     predAnims:   predDeathAnims.map(s => ({ ...s })),
@@ -586,14 +590,15 @@ function applyState(data) {
   for (let i = 0; i < data.prey.length; i++) {
     const p = preyList[i], d = data.prey[i];
     p.x = d.x; p.y = d.y; p.heading = d.h; p.alive = d.a; p.variant = d.v; p.color = d.c;
-    p.panicTimer = d.pt || 0; p.panicCooldown = d.pc || 0; p.panicX = d.px || 0; p.panicY = d.py || 0;
+    p.panicTimer = d.pt || 0; p.panicCooldown = d.pc || 0; p.panicX = d.px || 0; p.panicY = d.py || 0; p.hungerTimer = d.ht || 500;
   }
   while (predList.length < data.pred.length) predList.push(new Predator(0, 0, null, 0));
   predList.length = data.pred.length;
   for (let i = 0; i < data.pred.length; i++) {
     const p = predList[i], d = data.pred[i];
-    p.x = d.x; p.y = d.y; p.heading = d.h; p.alive = d.a; p.variant = d.v; p.color = d.c; p.hunger = d.hunger;
+    p.x = d.x; p.y = d.y; p.heading = d.h; p.alive = d.a; p.variant = d.v; p.color = d.c; p.hunger = d.hunger; p.kills = d.kills || 0;
   }
+  if (data.schoolPhase !== undefined) { schoolPhase = data.schoolPhase; schoolCountdown = data.schoolCountdown; schoolDuration = data.schoolDuration; }
   foodList.length = 0;
   data.food.forEach(f => foodList.push(f));
   deathSplashes.length = 0;
@@ -607,6 +612,13 @@ function applyState(data) {
 }
 
 function stepOnce() {
+  // Schooling event management
+  if (schoolPhase === 'idle') {
+    if (--schoolCountdown <= 0) { schoolPhase = 'active'; schoolDuration = 600; }
+  } else {
+    if (--schoolDuration <= 0) { schoolPhase = 'idle'; schoolCountdown = 3600 + Math.floor(rng() * 3600); }
+  }
+
   // Panic scatter: predator entering a cluster of 3+ prey triggers simultaneous radial burst
   for (const pred of predList) {
     if (!pred.alive) continue;
@@ -638,6 +650,21 @@ function stepOnce() {
       throttle = Math.max(throttle, fleeFactor * 0.9);
     }
 
+    // Schooling Boids forces (panic overrides these below)
+    if (schoolPhase === 'active' && p.panicTimer <= 0) {
+      let cx = 0, cy = 0, ax = 0, ay = 0, n = 0;
+      for (const b of preyList) {
+        if (!b.alive) continue;
+        cx += b.x; cy += b.y; ax += Math.cos(b.heading); ay += Math.sin(b.heading); n++;
+      }
+      if (n > 0) {
+        const cohRel = wrapAngle(Math.atan2(cy/n - p.y, cx/n - p.x) - p.heading) / Math.PI;
+        const alignRel = wrapAngle(Math.atan2(ay, ax) - p.heading) / Math.PI;
+        turn = turn * 0.3 + alignRel * 0.5 + cohRel * 0.2;
+        throttle = Math.max(throttle, 0.65);
+      }
+    }
+
     // Panic scatter override
     if (p.panicTimer > 0) {
       p.panicTimer--;
@@ -666,11 +693,18 @@ function stepOnce() {
     p.x = clamp(p.x + dx, 20, SIM_W - 20);
     p.y = clamp(p.y + dy, 20, SIM_H - 20);
 
+    p.hungerTimer--;
+    if (p.hungerTimer <= 0) {
+      p.alive = false;
+      deathSplashes.push({ x: p.x, y: p.y, frames: 30, dy: 0, cells: randomSplashCells() });
+    }
+
     for (let i = foodList.length-1; i >= 0; i--) {
       if (Math.hypot(foodList[i].x-p.x, foodList[i].y-p.y) < 12) {
         foodList[i] = spawnFood();
+        p.hungerTimer = 500;
         p.energy++;
-        if (p.energy >= 5 && preyList.filter(q => q.alive).length < NUM_PREY) {
+        if (p.energy >= 5) {
           p.energy = 0;
           const nx = clamp(p.x + (rng()-0.5)*50, 20, SIM_W-20);
           const ny = clamp(p.y + (rng()-0.5)*50, 20, SIM_H-20);
@@ -707,8 +741,19 @@ function stepOnce() {
         if (Math.hypot(p.x-pred.x, p.y-pred.y) < 14) {
           p.alive = false;
           pred.hunger = 0;
-          pred.satiatedTicks = 80;
+          pred.satiatedTicks = schoolPhase === 'active' ? 40 : 80;
+          pred.kills++;
           deathSplashes.push({ x: p.x, y: p.y, frames: 60, dy: 0, cells: randomSplashCells() });
+          const killsToBreed = preyList.filter(q => q.alive).length > NUM_PREY * 1.5 ? 2 : 3;
+          if (pred.kills >= killsToBreed && predList.filter(q => q.alive).length < NUM_PRED * 2
+              && preyList.filter(q => q.alive).length > NUM_PREY * 0.6) {
+            pred.kills = 0;
+            const nx = clamp(pred.x + (rng()-0.5)*100, 20, SIM_W-20);
+            const ny = clamp(pred.y + (rng()-0.5)*100, 20, SIM_H-20);
+            const dead = predList.findIndex(q => !q.alive);
+            const offspring = new Predator(nx, ny, predBrain, Math.floor(rng()*2));
+            if (dead >= 0) predList[dead] = offspring; else predList.push(offspring);
+          }
           break;
         }
       }
@@ -720,28 +765,21 @@ function stepOnce() {
   const alivePrey = preyList.filter(p => p.alive).length;
   const alivePred = predList.filter(p => p.alive).length;
 
-  if (preyRespawnCooldown === 0) {
-    if (alivePrey < Math.floor(NUM_PREY * 0.3)) {
-      const count = 3 + Math.floor(rng() * 3);
-      for (let i = 0; i < count; i++) respawnPrey();
-      preyRespawnCooldown = 60;
-    } else if (alivePrey < NUM_PREY) {
-      respawnPrey();
-      preyRespawnCooldown = 20;
-    }
+  if (preyRespawnCooldown === 0 && alivePrey < Math.floor(NUM_PREY * 0.1)) {
+    const count = 4 + Math.floor(rng() * 4);
+    for (let i = 0; i < count; i++) respawnPrey();
+    preyRespawnCooldown = 200;
   }
 
   if (predatorsEnabled) {
-    if (alivePred === 0 && predMigrationTimer === 0) predMigrationTimer = 300;
+    if (alivePred === 0 && predMigrationTimer === 0) predMigrationTimer = 600;
     if (predMigrationTimer > 0) {
       predMigrationTimer--;
-      if (predMigrationTimer === 0 && alivePrey > NUM_PREY * 0.5) {
-        respawnPredator();
-        predRespawnCooldown = 150;
+      if (predMigrationTimer === 0 && alivePrey > NUM_PREY * 0.4) {
+        const count = 1 + Math.floor(rng() * 3);
+        for (let i = 0; i < count; i++) respawnPredator();
+        predRespawnCooldown = 200;
       }
-    } else if (predRespawnCooldown === 0 && alivePred < NUM_PRED && alivePrey > NUM_PREY * 0.5) {
-      respawnPredator();
-      predRespawnCooldown = 150;
     }
   }
   noiseT += 0.015;
