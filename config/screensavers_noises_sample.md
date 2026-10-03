@@ -4,6 +4,9 @@
 ## `li` [Lightning](#screensaver:Lightning)
 ## `st` [Storm](#screensaver:Storm)
 ## `gol` [Game of Life](#screensaver:Life)
+## [Flip](#screensaver:Flip)
+## [Aquarium](#screensaver:Aquarium)
+## [Arabesque](#screensaver:Arabesque)
 
 ---
 

@@ -135,6 +135,10 @@
 - url: extras/flip/index.html
 - screens: 2
 
+## Arabesque
+- url: extras/arabesque/index.html
+- screens: 2
+
 # 8 ball
 ## 8
 - #111111

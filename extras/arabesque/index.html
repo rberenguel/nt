@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Arabesque</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+#hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      color: rgba(255,255,255,0.75);
+      background: rgba(0,0,0,0.55);
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud" style="display:none">
+    [B/Space] Borders: <span id="borderState">OFF</span> |
+    [[ / ]] Speed: <span id="speedVal">0.3x</span>
+  </div>
+<canvas id="glcanvas"></canvas>
+  <script src="arabesque.js"></script>
+</body>
+</html>
