@@ -126,6 +126,8 @@ async function init() {
   let paletteSpeed = 0.3;
   let paletteTime  = 0.0;
   let lastTime     = 0;
+  let lastDrawNow  = 0;
+  let lastDrawPal  = 0;
 
   let fromIdx     = Math.floor(Math.random() * PALETTES.length);
   let toIdx       = fromIdx;
@@ -169,6 +171,8 @@ async function init() {
   }
 
   function draw(now, palTime) {
+    lastDrawNow = now;
+    lastDrawPal = palTime;
     gl.uniform2f(uVirtualRes, canvas.width * totalScreens, canvas.height);
     gl.uniform1f(uScreenOff,  screenIndex * canvas.width);
     gl.uniform1f(uTime,       now * 0.001);
@@ -177,11 +181,14 @@ async function init() {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
+  function redraw() { draw(lastDrawNow, lastDrawPal); }
+
   // ── Multi-screen sync via BroadcastChannel ──────────────────────────────────
   const bc = new BroadcastChannel("arabesque");
 
   bc.addEventListener("message", ({ data }) => {
     if (data.quit) { window.close(); return; }
+    if (data.cmd === "borders") { showBorders = data.showBorders; redraw(); return; }
     if (data.cmd === "palette") {
       fromIdx = data.fromIdx; toIdx = data.toIdx;
       blend = data.blend; paletteTick = data.paletteTick;
@@ -228,11 +235,14 @@ async function init() {
       bc.postMessage({ cmd: "palette", fromIdx, toIdx, blend, paletteTick });
       return;
     }
-    if (!isPrimary) return;
     if (e.code === "KeyB" || e.code === "Space") {
       showBorders = showBorders === 1.0 ? 0.0 : 1.0;
-      document.getElementById("borderState").textContent = showBorders ? "ON" : "OFF";
-    } else if (e.key === "]") {
+      bc.postMessage({ cmd: "borders", showBorders });
+      redraw();
+      return;
+    }
+    if (!isPrimary) return;
+    if (e.key === "]") {
       paletteSpeed = Math.min(paletteSpeed + 0.5, 10.0);
       document.getElementById("speedVal").textContent = paletteSpeed.toFixed(1) + "x";
     } else if (e.key === "[") {
