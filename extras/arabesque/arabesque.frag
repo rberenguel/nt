@@ -10,6 +10,8 @@ uniform vec3  u_warm_high;
 uniform vec3  u_warm_accent;
 uniform vec3  u_cool_low;
 uniform vec3  u_cool_high;
+uniform float u_ripple_on;
+uniform vec3  u_drops[8];   // .xy = UV center, .z = age (< 0 inactive)
 
 #define PI 3.14159265359
 
@@ -40,6 +42,20 @@ void main() {
   vec2 uv = (virtualFrag - 0.5 * u_virtual_resolution)
             / min(u_virtual_resolution.x, u_virtual_resolution.y);
   uv *= 14.0;
+
+  // Water-drop ripple distortion — displace uv before hex sampling for refraction look
+  for (int i = 0; i < 8; i++) {
+    float age    = u_drops[i].z;
+    float active = step(0.0, age) * u_ripple_on;
+    float a0     = max(age, 0.0);
+    vec2  delta  = uv - u_drops[i].xy;
+    float dist   = length(delta) + 0.001;
+    float wave   = sin(dist * 6.0 - a0 * 9.0)
+                 * exp(-a0  * 1.5)
+                 * exp(-dist * 0.7)
+                 * active;
+    uv += (delta / dist) * wave * 0.14;
+  }
 
   float t = u_time * 0.35;
   vec4 hex = getSeamlessHex(uv);

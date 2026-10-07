@@ -120,6 +120,31 @@ async function init() {
   const uWarmAccent  = gl.getUniformLocation(prog, "u_warm_accent");
   const uCoolLow     = gl.getUniformLocation(prog, "u_cool_low");
   const uCoolHigh    = gl.getUniformLocation(prog, "u_cool_high");
+  const uRippleOn    = gl.getUniformLocation(prog, "u_ripple_on");
+  const uDrops       = gl.getUniformLocation(prog, "u_drops[0]");
+
+  // ── Ripple state ──────────────────────────────────────────────────────────
+  const MAX_DROPS = 8;
+  let rippleOn    = Math.random() < 0.5 ? 1.0 : 0.0;
+  const dropData  = new Float32Array(MAX_DROPS * 3);
+  for (let i = 0; i < MAX_DROPS; i++) dropData[i * 3 + 2] = -1.0;
+  let nextDropTime = 0;
+
+  function spawnDrop() {
+    const minDim = Math.min(canvas.width * totalScreens, canvas.height);
+    const halfH  = canvas.height * 0.5 / minDim * 14.0;
+    const halfW  = canvas.width * totalScreens * 0.5 / minDim * 14.0;
+    const x = (Math.random() * 2.0 - 1.0) * halfW;
+    const y = (Math.random() * 2.0 - 1.0) * halfH;
+    for (let i = 0; i < MAX_DROPS; i++) {
+      if (dropData[i * 3 + 2] < 0) {
+        dropData[i * 3 + 0] = x;
+        dropData[i * 3 + 1] = y;
+        dropData[i * 3 + 2] = 0.0;
+        break;
+      }
+    }
+  }
 
   // ── Palette blending state ─────────────────────────────────────────────────
   let showBorders  = 0.0;
@@ -178,6 +203,8 @@ async function init() {
     gl.uniform1f(uTime,       now * 0.001);
     gl.uniform1f(uPalTime,    palTime);
     gl.uniform1f(uBorders,    showBorders);
+    gl.uniform1f(uRippleOn,   rippleOn);
+    gl.uniform3fv(uDrops,     dropData);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
@@ -195,10 +222,17 @@ async function init() {
       uploadPalette();
       return;
     }
+    if (data.cmd === "ripple") {
+      rippleOn = data.rippleOn;
+      dropData.set(data.drops);
+      redraw();
+      return;
+    }
     if (isPrimary) return;
     showBorders = data.showBorders;
     fromIdx = data.fromIdx; toIdx = data.toIdx;
     blend = data.blend;
+    if (data.drops) { rippleOn = data.rippleOn; dropData.set(data.drops); }
     uploadPalette();
     draw(data.time, data.paletteTime);
   });
@@ -211,8 +245,18 @@ async function init() {
       lastTime = now;
       paletteTime += dt * paletteSpeed;
       tickPalette(dt);
+      for (let i = 0; i < MAX_DROPS; i++) {
+        if (dropData[i * 3 + 2] >= 0) {
+          dropData[i * 3 + 2] += dt;
+          if (dropData[i * 3 + 2] > 5.0) dropData[i * 3 + 2] = -1.0;
+        }
+      }
+      if (rippleOn && now * 0.001 >= nextDropTime) {
+        spawnDrop();
+        nextDropTime = now * 0.001 + 0.4 + Math.random() * 1.2;
+      }
       draw(now, paletteTime);
-      bc.postMessage({ time: now, paletteTime, showBorders, fromIdx, toIdx, blend });
+      bc.postMessage({ time: now, paletteTime, showBorders, fromIdx, toIdx, blend, rippleOn, drops: Array.from(dropData) });
       requestAnimationFrame(loop);
     }
     requestAnimationFrame(loop);
@@ -238,6 +282,13 @@ async function init() {
     if (e.code === "KeyB" || e.code === "Space") {
       showBorders = showBorders === 1.0 ? 0.0 : 1.0;
       bc.postMessage({ cmd: "borders", showBorders });
+      redraw();
+      return;
+    }
+    if (e.key === "d" || e.key === "D") {
+      rippleOn = rippleOn === 1.0 ? 0.0 : 1.0;
+      if (rippleOn === 0.0) for (let i = 0; i < MAX_DROPS; i++) dropData[i * 3 + 2] = -1.0;
+      bc.postMessage({ cmd: "ripple", rippleOn, drops: Array.from(dropData) });
       redraw();
       return;
     }
