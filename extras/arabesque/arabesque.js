@@ -213,8 +213,20 @@ async function init() {
   // ── Multi-screen sync via BroadcastChannel ──────────────────────────────────
   const bc = new BroadcastChannel("arabesque");
 
+  function saveCanvas() {
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `arabesque-screen${screenIndex}-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
   bc.addEventListener("message", ({ data }) => {
     if (data.quit) { window.close(); return; }
+    if (data.cmd === "save") { saveCanvas(); return; }
     if (data.cmd === "borders") { showBorders = data.showBorders; redraw(); return; }
     if (data.cmd === "palette") {
       fromIdx = data.fromIdx; toIdx = data.toIdx;
@@ -273,6 +285,7 @@ async function init() {
 
   document.addEventListener("keydown", e => {
     if (e.key === "q" || e.key === "Q") { bc.postMessage({ quit: true }); window.close(); return; }
+    if (e.key === "s" || e.key === "S") { bc.postMessage({ cmd: "save" }); saveCanvas(); return; }
     if (e.key === "p" || e.key === "P") {
       advancePalette();
       uploadPalette();

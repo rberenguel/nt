@@ -319,7 +319,7 @@ It's possible to convert this for Safari using Apple's tools with `xcrun safari-
 
 ## Dependencies & Attribution
 
-* **Libraries:** [Luxon.js](https://moment.github.io/luxon/#/), [Chart.js](https://chartsjs.org) (+ Annotation plugin), [SunCalc.js](https://github.com/mourner/suncalc), [interact.js](https://interactjs.io/), [metaP.js](https://github.com/rberenguel/metap.js)
+* **Libraries:** [Luxon.js](https://moment.github.io/luxon/#/), [Chart.js](https://chartsjs.org) (+ Annotation plugin), [SunCalc.js](https://github.com/mourner/suncalc), [interact.js](https://interactjs.io/), [metaP.js](https://github.com/rberenguel/metap.js), [fishdraw](https://github.com/LingDong-/fishdraw) (MIT, used in extras/fishdraw screensaver)
 * **APIs:** [Open-Meteo API](https://open-meteo.com/en/docs) (for weather)
 * **Fonts:** Roboto Mono, Reforma 1969, Inter, Monoid, Permanent Marker
 * **Assistance:** Google Gemini

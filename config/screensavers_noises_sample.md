@@ -7,6 +7,7 @@
 ## [Flip](#screensaver:Flip)
 ## [Aquarium](#screensaver:Aquarium)
 ## [Arabesque](#screensaver:Arabesque)
+## [Fishdraw](#screensaver:Fishdraw)
 
 ---
 

@@ -139,6 +139,10 @@
 - url: extras/arabesque/index.html
 - screens: 2
 
+## Fishdraw
+- url: extras/fishdraw/index.html
+- screens: 2
+
 # 8 ball
 ## 8
 - #111111
