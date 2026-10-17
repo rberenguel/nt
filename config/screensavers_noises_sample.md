@@ -14,6 +14,7 @@
 ## `co` [Comics](#screensaver:Comics)
 ## `wc` [Watercolor](#screensaver:Watercolor)
 ## `du` [Dunes](#screensaver:Dunes)
+## `et` [Etching](#screensaver:Etching)
 
 ---
 

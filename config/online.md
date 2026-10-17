@@ -167,6 +167,10 @@
 - url: extras/dunes/index.html
 - screens: 2
 
+## Etching
+- url: extras/etching/index.html
+- screens: 2
+
 # 8 ball
 ## 8
 - #111111
