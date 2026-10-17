@@ -79,13 +79,13 @@ iframe {
   z-index: 1000000;
 }
 
-.zen-hidden,
+.zen-hidden:not(#notes),
 body.zen-mode #upper-left,
 body.zen-mode #upper-right,
 body.zen-mode #lower-left,
 body.zen-mode #lower-right,
 body.zen-mode #center,
-body.zen-mode .iframe-wrapper,
+body.zen-mode .iframe-wrapper:not(#notes),
 body.zen-mode .post-it,
 body.zen-mode .eight-ball-wrapper,
 body.zen-mode #quoteWrapper {
