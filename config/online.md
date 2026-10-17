@@ -155,6 +155,10 @@
 - url: extras/tunnel/index.html
 - screens: 2
 
+## Comics
+- url: extras/astronomic/index.html
+- screens: 2
+
 
 
 

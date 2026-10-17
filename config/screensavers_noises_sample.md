@@ -11,6 +11,7 @@
 ## `bh` [Black hole](#screensaver:Black hole)
 ## `mb` [Metaballs](#screensaver:Metaballs)
 ## `tu` [Tunnel](#screensaver:Tunnel)
+## `co` [Comics](#screensaver:Comics)
 
 
 
