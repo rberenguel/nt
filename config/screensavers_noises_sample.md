@@ -9,6 +9,7 @@
 ## [Arabesque](#screensaver:Arabesque)
 ## [Fishdraw](#screensaver:Fishdraw)
 ## `bh` [Accretion (Black Hole)](#screensaver:Accretion)
+## `mb` [Metaballs (Topographic Slices)](#screensaver:Metaballs)
 
 
 

@@ -147,6 +147,10 @@
 - url: extras/accretion/index.html
 - screens: 2
 
+## Metaballs
+- url: extras/metaballs/index.html
+- screens: 2
+
 
 
 
