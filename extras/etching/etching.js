@@ -971,8 +971,9 @@ function loop(timestamp) {
     simTime += dt;
   }
 
-  // Auto-advance to a new landscape every 90 seconds
-  if (isPrimary && Math.floor(simTime / 90.0) !== Math.floor((simTime - dt) / 90.0)) {
+  // Auto-advance to a new landscape every 15 seconds
+  const ROTATION_INTERVAL = 15.0;
+  if (isPrimary && Math.floor(simTime / ROTATION_INTERVAL) !== Math.floor((simTime - dt) / ROTATION_INTERVAL)) {
     landscapeSeed = Math.floor(Math.random() * 10000000);
     paletteIdx = (paletteIdx + 1) % PALETTES.length;
     generateLandscape(canvas.width * totalScreens, canvas.height, landscapeSeed);
