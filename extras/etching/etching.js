@@ -104,32 +104,30 @@ for (let i = 0; i < 256 * 256; i++) {
 }
 pCtx.putImageData(imgData, 0, 0);
 
-// Parallel laid-paper horizontal wire ribs (watermark ribs in antique paper)
-pCtx.strokeStyle = "rgba(60, 40, 20, 0.06)";
-pCtx.lineWidth = 1.0;
-for (let y = 0; y < 256; y += 6) {
-  pCtx.beginPath();
-  pCtx.moveTo(0, y + 0.5);
-  pCtx.lineTo(256, y + 0.5);
-  pCtx.stroke();
-}
-
-// Chain lines (vertical wire ribs spaced wider)
-pCtx.strokeStyle = "rgba(60, 40, 20, 0.04)";
-pCtx.lineWidth = 1.2;
-for (let x = 0; x < 256; x += 48) {
-  pCtx.beginPath();
-  pCtx.moveTo(x + 0.5, 0);
-  pCtx.lineTo(x + 0.5, 256);
-  pCtx.stroke();
-}
-
 let laidPattern = null;
 function getLaidPattern() {
   if (!laidPattern && ctx) {
     laidPattern = ctx.createPattern(paperCanvas, "repeat");
   }
   return laidPattern;
+}
+
+// ── Offscreen Panoramic Etching Canvas (Aquatint Texture Filter) ──────────────
+const offscreenCanvas = document.createElement("canvas");
+const offscreenCtx = offscreenCanvas.getContext("2d");
+
+function applyAquatintGrain(targetCtx, w, h, amount, seed) {
+  const imgData = targetCtx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+  const rng = createRNG(seed ^ 0x9e3779b9);
+  const len = data.length;
+  for (let i = 0; i < len; i += 4) {
+    const n = (rng() - 0.5) * (amount * 2);
+    data[i] = Math.max(0, Math.min(255, data[i] + n));
+    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + n));
+    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + n));
+  }
+  targetCtx.putImageData(imgData, 0, 0);
 }
 
 // ── Procedural Fractal 1D Noise ───────────────────────────────────────────────
@@ -197,7 +195,10 @@ function fbm2D(x, y, octaves = 3) {
 // ── Landscape Layer Structure ─────────────────────────────────────────────────
 let mountainLayers = [];
 let sunPos = { x: 0, y: 0, rad: 0 };
+let sunStyle = 0;
 let cloudCircles = [];
+let skyPaths = null;
+let skySegments = null;
 
 function generateCloudLobes(cx, cy, spanW, spanH, rng, style) {
   const lobes = [];
@@ -292,12 +293,13 @@ function generateLandscape(totalW, totalH, seed) {
   const layers = [];
   const numLayers = 6;
 
-  // Sun Position: placed in upper sky
+  // Sun Position & Celestial Style (0: Black Burst, 1: Sol Invictus, 2: Woodcut Halo)
   sunPos = {
     x: totalW * (0.22 + rng() * 0.56),
     y: totalH * (0.16 + rng() * 0.12),
     rad: Math.min(totalW, totalH) * (0.046 + rng() * 0.018),
   };
+  sunStyle = Math.floor(rng() * 3);
 
   // Generate 6 mountain ridge layers occupying lower 42% of vertical space (leaving upper 58% for sky)
   for (let l = 0; l < numLayers; l++) {
@@ -325,6 +327,7 @@ function generateLandscape(totalW, totalH, seed) {
     layers.push({
       depth: depthFrac,
       baseY,
+      heightScale,
       pts,
       stepX,
       seedOffset,
@@ -457,86 +460,185 @@ function generateLandscape(totalW, totalH, seed) {
 
   // Sort by z so paper fill circles carve borders into arches
   cloudCircles.sort((a, b) => a.z - b.z);
+
+  // Precompute quantized continuous/stippled sky line paths
+  generateSkyPaths(totalW, totalH, seed);
+
+  // Pre-render full panoramic intaglio etching onto offscreen canvas with aquatint grain
+  renderOffscreenScene(totalW, totalH, seed);
 }
 
 // ── Drawing Engine ────────────────────────────────────────────────────────────
 
-// 1. Woodcut Sun & Radiating Engraved Beams
-function drawSunAndRays(ctx, totalW, totalH, time, pal) {
+// 1. Multiple Celestial Sun Designs & Radiating Engraved Rays/Beams
+function drawSunAndRays(ctx, totalW, totalH, pal, style, rng) {
   const { x, y, rad } = sunPos;
-
-  // Concentric engraved sun halo rings
   ctx.save();
-  ctx.strokeStyle = pal.ink;
-  ctx.lineWidth = 1.4;
+  ctx.lineCap = "round";
 
-  const numHaloRings = 7;
-  for (let i = 1; i <= numHaloRings; i++) {
-    const r = rad + i * 8.5;
-    ctx.setLineDash(i % 2 === 0 ? [6, 8] : [12, 10]);
+  if (style === 0) {
+    // ── Style 0: "Black Burst / Intaglio Eclipse" (Original reference) ──
+    // Solid dark circle
+    ctx.fillStyle = pal.ink;
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fill();
 
-  // Solid Sun Disc with inner etched shading
-  ctx.fillStyle = pal.paper;
-  ctx.beginPath();
-  ctx.arc(x, y, rad, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = 2.4;
-  ctx.stroke();
+    // Uneven burst ray lines radiating directly from the rim without halo rings
+    const numRays = 72;
+    for (let i = 0; i < numRays; i++) {
+      const angle = (i / numRays) * Math.PI * 2;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const rVal = rng();
 
-  // Fine horizontal parallel lines filling lower half of sun disc
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, rad - 2, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.lineWidth = 1.0;
-  for (let py = y - rad; py <= y + rad; py += 3.5) {
-    if (py > y - rad * 0.1) {
+      let rayLen;
+      let strokeW;
+      if (rVal < 0.35) {
+        rayLen = rad * (0.15 + rng() * 0.35);
+        strokeW = 1.0 + rng() * 0.8;
+      } else if (rVal < 0.80) {
+        rayLen = rad * (0.50 + rng() * 0.70);
+        strokeW = 1.5 + rng() * 1.2;
+      } else {
+        rayLen = rad * (1.30 + rng() * 1.40);
+        strokeW = 2.2 + rng() * 1.6;
+      }
+
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = pal.ink;
       ctx.beginPath();
-      ctx.moveTo(x - rad, py);
-      ctx.lineTo(x + rad, py);
+      ctx.moveTo(x + cosA * (rad + 1.5), y + sinA * (rad + 1.5));
+      ctx.lineTo(x + cosA * (rad + 1.5 + rayLen), y + sinA * (rad + 1.5 + rayLen));
+      ctx.stroke();
+    }
+  } else if (style === 1) {
+    // ── Style 1: "Sol Invictus / Flame Wedges" ──
+    // Inner dark disc
+    ctx.fillStyle = pal.ink;
+    ctx.beginPath();
+    ctx.arc(x, y, rad * 0.82, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Clear paper halo ring with thin outer rim
+    ctx.strokeStyle = pal.ink;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.stroke();
+
+    const numSpikes = 44;
+    for (let i = 0; i < numSpikes; i++) {
+      const angle = (i / numSpikes) * Math.PI * 2;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+      const isMajor = i % 2 === 0;
+      const rayLen = isMajor ? rad * (0.9 + rng() * 0.8) : rad * (0.35 + rng() * 0.35);
+      const strokeW = isMajor ? 2.4 : 1.2;
+
+      ctx.lineWidth = strokeW;
+      ctx.strokeStyle = pal.ink;
+      ctx.beginPath();
+      ctx.moveTo(x + cosA * (rad + 3.0), y + sinA * (rad + 3.0));
+      ctx.lineTo(x + cosA * (rad + 3.0 + rayLen), y + sinA * (rad + 3.0 + rayLen));
+      ctx.stroke();
+    }
+  } else {
+    // ── Style 2: "Woodcut Halo" (Concentric dashed rings and spoke rays) ──
+    const numHaloRings = 7;
+    ctx.strokeStyle = pal.ink;
+    ctx.lineWidth = 1.4;
+    for (let i = 1; i <= numHaloRings; i++) {
+      const r = rad + i * 8.5;
+      ctx.setLineDash(i % 2 === 0 ? [6, 8] : [12, 10]);
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // Solid paper disc with inner etched horizontal hatching
+    ctx.fillStyle = pal.paper;
+    ctx.beginPath();
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, rad - 2, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.lineWidth = 1.0;
+    for (let py = y - rad; py <= y + rad; py += 3.5) {
+      if (py > y - rad * 0.1) {
+        ctx.beginPath();
+        ctx.moveTo(x - rad, py);
+        ctx.lineTo(x + rad, py);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // Radiating engraved sunbeams spanning sky
+    const numBeams = 48;
+    ctx.lineWidth = 1.0;
+    ctx.strokeStyle = pal.ink;
+    for (let i = 0; i < numBeams; i++) {
+      const angle = (i / numBeams) * Math.PI * 2;
+      const innerR = rad + numHaloRings * 8.5 + 10;
+      const outerR = innerR + 60 + ((i * 37) % 180);
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * innerR, y + Math.sin(angle) * innerR);
+      ctx.lineTo(x + Math.cos(angle) * outerR, y + Math.sin(angle) * outerR);
       ctx.stroke();
     }
   }
   ctx.restore();
-
-  // Radiating engraved sunbeams spanning sky
-  const numBeams = 48;
-  const maxBeamLen = Math.hypot(totalW, totalH);
-  ctx.lineWidth = 1.0;
-
-  for (let i = 0; i < numBeams; i++) {
-    const angle = (i / numBeams) * Math.PI * 2 + time * 0.008;
-    const innerR = rad + numHaloRings * 8.5 + 10;
-    const outerR = innerR + 60 + ((i * 37) % 180);
-
-    ctx.strokeStyle = pal.ink;
-    ctx.beginPath();
-    ctx.moveTo(x + Math.cos(angle) * innerR, y + Math.sin(angle) * innerR);
-    ctx.lineTo(x + Math.cos(angle) * outerR, y + Math.sin(angle) * outerR);
-    ctx.stroke();
-  }
-  ctx.restore();
 }
 
-// 2. Atmospheric Continuous Engraved Vertical Lines (eventually broken)
-function drawVerticalBrokenSky(ctx, totalW, totalH, pal, time, seed) {
+// 2. Invisible Large-Scale Perlin Noise Field + Quantized Intaglio Sky Engine
+// Evaluates lightness scalar field V(x, y) in [0.0, 1.0]:
+//   0.0 = Deepest sky tone (long continuous solid intaglio lines)
+//   1.0 = Brightest highlight (clear empty paper / sun disc clearing)
+function getLightness(x, y, totalW, totalH, horizonY, seed) {
+  // Distance from sun
+  const dSun = Math.hypot(x - sunPos.x, y - sunPos.y);
+  const sunClearR = sunPos.rad + 55;
+  if (dSun < sunClearR) return 1.0; // Completely empty inside sun clearing
+
+  // Sun radial glow: reaches out ~16% of total panoramic width
+  const glowRadius = Math.max(300, totalW * 0.16);
+  const sunGlow = Math.max(0.0, 1.0 - (dSun - sunClearR) / glowRadius);
+
+  // Large-scale 2D Perlin noise: scale ~350px horizontally, ~250px vertically
+  // Guides coherent, organic transitions across contiguous columns
+  const pNoise = fbm2D(x * 0.0028, y * 0.0038 + seed * 0.05, 3);
+
+  // Crepuscular angled shafts radiating from sun
+  const angle = Math.atan2(y - sunPos.y, x - sunPos.x);
+  const beam = Math.pow(0.5 + 0.5 * Math.sin(angle * 12.0), 3) * sunGlow;
+
+  // Altitude: darker at zenith (top y=14), naturally brighter near mountain horizon
+  const alt = (y / horizonY) * 0.28;
+
+  const V = 0.22 + sunGlow * 0.50 + beam * 0.30 + pNoise * 0.38 + alt;
+  return Math.max(0.0, Math.min(1.0, V));
+}
+
+function generateSkyPaths(totalW, totalH, seed) {
   if (mountainLayers.length === 0) return;
   const backLayer = mountainLayers[0];
   const stepX = backLayer.stepX;
 
-  ctx.save();
-  ctx.strokeStyle = pal.ink;
-  ctx.lineWidth = 0.90;
+  const usePath2D = typeof Path2D !== "undefined";
+  const pathContinuous = usePath2D ? new Path2D() : null;
+  const pathDiscontinuous = usePath2D ? new Path2D() : null;
+  const pathDots = usePath2D ? new Path2D() : null;
+  const segs = usePath2D ? null : { continuous: [], discontinuous: [], dots: [] };
 
-  const colStep = 4.8;
-  const sunClearR = sunPos.rad + 55;
+  const colStep = 13.0;
 
-  ctx.beginPath();
   for (let x = 14; x < totalW - 14; x += colStep) {
     // Find horizon Y at column x along back ridge
     const ptIdx = Math.max(0, Math.min(backLayer.pts.length - 2, Math.floor(x / stepX)));
@@ -545,58 +647,117 @@ function drawVerticalBrokenSky(ctx, totalW, totalH, pal, time, seed) {
     const t = (x - pA.x) / (pB.x - pA.x);
     const horizonY = pA.y + (pB.y - pA.y) * t;
 
-    const colRng = createRNG(Math.floor(x * 1000 + seed * 17));
-    const dxSun = Math.abs(x - sunPos.x);
-    const shaft = 0.5 + 0.35 * Math.sin(x * 0.0035 + seed * 0.07) + 0.15 * Math.sin(x * 0.0085);
-    const distNorm = Math.min(1.0, dxSun / (totalW * 0.12));
-    const darkness = (0.35 + 0.65 * distNorm) * (0.6 + 0.4 * shaft);
+    let y = 14;
+    const colRng = createRNG(Math.floor(x * 1337 + seed * 91));
 
-    const gaps = [];
+    while (y < horizonY) {
+      const V = getLightness(x, y, totalW, totalH, horizonY, seed);
 
-    // Sun clearing
-    if (dxSun < sunClearR) {
-      const dy = Math.sqrt(sunClearR * sunClearR - dxSun * dxSun);
-      gaps.push({ y1: Math.max(14, sunPos.y - dy), y2: Math.min(horizonY, sunPos.y + dy) });
-    }
-
-    // Natural staggered breaks:
-    // In dense/dark areas: lines run long (most columns unbroken or 1-2 breaks)
-    // Towards horizon and sun: lines break more frequently
-    const numBreaks = darkness > 0.8 && colRng() < 0.35
-      ? 0
-      : Math.floor((1.0 - darkness) * 6 + colRng() * 3);
-
-    for (let b = 0; b < numBreaks; b++) {
-      const breakY = 22 + colRng() * (horizonY - 32);
-      const gapLen = 4.0 + (1.0 - darkness) * 8.0 + colRng() * 5.0;
-      gaps.push({ y1: breakY, y2: breakY + gapLen });
-    }
-
-    gaps.sort((a, b) => a.y1 - b.y1);
-    const merged = [];
-    for (const g of gaps) {
-      if (merged.length > 0 && g.y1 <= merged[merged.length - 1].y2) {
-        merged[merged.length - 1].y2 = Math.max(merged[merged.length - 1].y2, g.y2);
+      if (V >= 0.76) {
+        // ── TIER 4: EMPTY (Luminous windows / paper gaps across contiguous lines) ──
+        y += 8 + colRng() * 6;
+      } else if (V >= 0.54) {
+        // ── TIER 3: STIPPLE DOTS (Delicate intaglio stippling) ──
+        const dotLen = 2.5 + colRng() * 2.5;
+        const dotGap = 11.0 + colRng() * 9.0;
+        const dotEnd = Math.min(horizonY, y + dotLen);
+        if (usePath2D) {
+          pathDots.moveTo(x, y);
+          pathDots.lineTo(x, dotEnd);
+        } else {
+          segs.dots.push({ x1: x, y1: y, x2: x, y2: dotEnd });
+        }
+        y += dotLen + dotGap;
+      } else if (V >= 0.32) {
+        // ── TIER 2: DISCONTINUOUS SEGMENTS (Varied random dashes) ──
+        const segLen = 18.0 + (0.54 - V) * 80.0 + colRng() * 20.0;
+        const segEnd = Math.min(horizonY, y + segLen);
+        if (usePath2D) {
+          pathDiscontinuous.moveTo(x, y);
+          pathDiscontinuous.lineTo(x, segEnd);
+        } else {
+          segs.discontinuous.push({ x1: x, y1: y, x2: x, y2: segEnd });
+        }
+        const gap = 5.0 + (V - 0.32) * 14.0 + colRng() * 4.0;
+        y = segEnd + gap;
       } else {
-        merged.push({ y1: g.y1, y2: g.y2 });
+        // ── TIER 1: CONTINUOUS SOLID INTAGLIO LINES ──
+        const segLen = 75.0 + (0.32 - V) * 250.0 + colRng() * 40.0;
+        const segEnd = Math.min(horizonY, y + segLen);
+        if (usePath2D) {
+          pathContinuous.moveTo(x, y);
+          pathContinuous.lineTo(x, segEnd);
+        } else {
+          segs.continuous.push({ x1: x, y1: y, x2: x, y2: segEnd });
+        }
+        const gap = 2.5 + colRng() * 2.5;
+        y = segEnd + gap;
       }
-    }
-
-    // Draw continuous vertical line segments between gaps
-    let curY = 14;
-    for (const g of merged) {
-      if (g.y1 > curY + 2) {
-        ctx.moveTo(x, curY);
-        ctx.lineTo(x, g.y1);
-      }
-      curY = Math.max(curY, g.y2);
-    }
-    if (curY < horizonY - 2) {
-      ctx.moveTo(x, curY);
-      ctx.lineTo(x, horizonY);
     }
   }
-  ctx.stroke();
+
+  if (usePath2D) {
+    skyPaths = {
+      continuous: pathContinuous,
+      discontinuous: pathDiscontinuous,
+      dots: pathDots,
+    };
+    skySegments = null;
+  } else {
+    skyPaths = null;
+    skySegments = segs;
+  }
+}
+
+function drawVerticalBrokenSky(ctx, pal) {
+  ctx.save();
+  ctx.strokeStyle = pal.ink;
+  ctx.lineCap = "round";
+
+  if (skyPaths) {
+    // ── Tier 1: Continuous Solid Lines ──
+    ctx.globalAlpha = 0.90;
+    ctx.lineWidth = 2.70;
+    ctx.stroke(skyPaths.continuous);
+
+    // ── Tier 2: Discontinuous Segments ──
+    ctx.globalAlpha = 0.80;
+    ctx.lineWidth = 2.55;
+    ctx.stroke(skyPaths.discontinuous);
+
+    // ── Tier 3: Delicate Stipple Dots ──
+    ctx.globalAlpha = 0.70;
+    ctx.lineWidth = 2.35;
+    ctx.stroke(skyPaths.dots);
+  } else if (skySegments) {
+    ctx.globalAlpha = 0.90;
+    ctx.lineWidth = 2.70;
+    ctx.beginPath();
+    for (const s of skySegments.continuous) {
+      ctx.moveTo(s.x1, s.y1);
+      ctx.lineTo(s.x2, s.y2);
+    }
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.80;
+    ctx.lineWidth = 2.55;
+    ctx.beginPath();
+    for (const s of skySegments.discontinuous) {
+      ctx.moveTo(s.x1, s.y1);
+      ctx.lineTo(s.x2, s.y2);
+    }
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.70;
+    ctx.lineWidth = 2.35;
+    ctx.beginPath();
+    for (const s of skySegments.dots) {
+      ctx.moveTo(s.x1, s.y1);
+      ctx.lineTo(s.x2, s.y2);
+    }
+    ctx.stroke();
+  }
+
   ctx.restore();
 }
 
@@ -628,6 +789,15 @@ function drawClouds(ctx, pal) {
   ctx.restore();
 }
 
+function getRidgeY(layer, x) {
+  const pts = layer.pts;
+  const idx = Math.max(0, Math.min(pts.length - 2, Math.floor((x - pts[0].x) / layer.stepX)));
+  const pA = pts[idx];
+  const pB = pts[idx + 1];
+  const t = (x - pA.x) / (pB.x - pA.x);
+  return pA.y + (pB.y - pA.y) * t;
+}
+
 // 4. Mountain Ridge Intaglio Hatching Engine
 function drawMountainLayer(ctx, layer, layerIdx, totalW, totalH, pal) {
   const { pts, baseY } = layer;
@@ -656,142 +826,116 @@ function drawMountainLayer(ctx, layer, layerIdx, totalW, totalH, pal) {
   // 2. Clip to Mountain Body for Intaglio Hatching
   ctx.clip();
 
-  // 3. Flowing Angled Intaglio Hatching Lines (~48 degrees)
-  // Distance gradient: FURTHEST is DARKEST (closely spaced, dense ink lines)
-  // FOREGROUND is LIGHTER (more open line spacing), exactly as requested
-  const hatchAngle = 0.84; // ~48 degrees
-  const cosA = Math.cos(hatchAngle);
-  const sinA = Math.sin(hatchAngle);
+  // 3. Downward Etched Lines from Ridge with Perlin-Guided Lengths
+  // Fixed etching angle (~55 degrees down-right)
+  const etchAngle = 0.96; // ~55 degrees
+  const cosA = Math.cos(etchAngle);
+  const sinA = Math.sin(etchAngle);
 
-  // Distant layer (layerIdx = 0) has tightest spacing (darkest)
-  // Foreground layers have wider spacing (lighter)
-  const baseSpacing = 3.2 + layerIdx * 1.35;
-  const minX = pts[0].x - 60;
-  const maxX = pts[pts.length - 1].x + 60;
-  const span = (maxX - minX) + totalH * 1.5;
+  // Spread-apart spacing: distinct, separated etched lines
+  const spacing = 9.0 + layerIdx * 1.2; // ~9.0px to 15.0px
+  const heightScale = layer.heightScale || (totalH * (0.16 - layer.depth * 0.05));
+  const maxLen = heightScale * (0.75 + layerIdx * 0.05);
 
-  ctx.lineWidth = Math.max(0.75, 1.15 - layerIdx * 0.06);
+  ctx.lineWidth = Math.max(1.25, 1.70 - layerIdx * 0.08);
   ctx.strokeStyle = pal.ink;
+  ctx.lineCap = "round";
 
-  // Primary Diagonal Hatching Pass
+  const minX = pts[0].x;
+  const maxX = pts[pts.length - 1].x;
+
   ctx.beginPath();
-  for (let offset = -totalH * 1.5; offset < span; offset += baseSpacing) {
-    const x1 = minX + offset;
-    const y1 = baseY - totalH * 0.6;
-    const x2 = x1 + cosA * (totalH * 1.8);
-    const y2 = y1 + sinA * (totalH * 1.8);
+  for (let x = minX; x <= maxX; x += spacing) {
+    const ry = getRidgeY(layer, x);
 
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
+    // Perlin noise curve along ridge for proximal uniformity
+    const n = fbm1D(x * 0.0038, layer.seedOffset + 250);
+    const rawN = 0.5 + 0.5 * n; // [0, 1]
+
+    let len = 0;
+    if (rawN > 0.15) {
+      const factor = (rawN - 0.15) / 0.85;
+      len = (0.10 + 0.90 * Math.pow(factor, 1.3)) * maxLen;
+    }
+
+    if (len > 3.0) {
+      const x2 = x + cosA * len;
+      const y2 = ry + sinA * len;
+      ctx.moveTo(x, ry);
+      ctx.lineTo(x2, y2);
+    }
   }
   ctx.stroke();
-
-  // 4. Horizontal Dashed Intaglio Cross-Texture on Foreground Layers (Image 3)
-  if (layerIdx >= mountainLayers.length - 2) {
-    ctx.save();
-    ctx.strokeStyle = pal.ink;
-    ctx.lineWidth = 0.85;
-
-    const dashLen = 6.0;
-    const dashGap = 3.0;
-    const dashPeriod = dashLen + dashGap; // 9px period
-    const rowStep = 4.5;
-
-    const startY = baseY - totalH * 0.05;
-    let rowIndex = 0;
-    for (let y = startY; y < totalH + 30; y += rowStep) {
-      const rowOffset = (rowIndex % 2 === 0) ? 0 : dashPeriod * 0.5;
-      ctx.beginPath();
-      for (let x = minX + rowOffset; x < maxX; x += dashPeriod) {
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + dashLen, y);
-      }
-      ctx.stroke();
-      rowIndex++;
-    }
-    ctx.restore();
-  }
-
-  // 5. Solid Parallel Baseline Stripes at Very Bottom of Foreground Ridge (Image 1)
-  if (layerIdx === mountainLayers.length - 1) {
-    ctx.save();
-    ctx.strokeStyle = pal.ink;
-    ctx.lineWidth = 1.1;
-    for (let i = 0; i < 5; i++) {
-      const y = totalH - 5 - i * 4.2;
-      ctx.beginPath();
-      ctx.moveTo(minX, y);
-      ctx.lineTo(maxX, y);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
 
   ctx.restore();
 }
 
-// ── Main Page Draw Call ───────────────────────────────────────────────────────
-function drawEtchingScene(time) {
+// ── Offscreen Scene Pre-rendering with Aquatint Granulation ───────────────────
+function renderOffscreenScene(totalW, totalH, seed) {
+  offscreenCanvas.width = totalW;
+  offscreenCanvas.height = totalH;
+
   const pal = PALETTES[paletteIdx];
+  const rng = createRNG(seed + 777);
 
-  // Base Antique Laid Paper Wash
-  ctx.fillStyle = pal.paper;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // 1. Base Antique Laid Paper Wash
+  offscreenCtx.fillStyle = pal.paper;
+  offscreenCtx.fillRect(0, 0, totalW, totalH);
 
-  // Total panoramic width across all displays
-  const totalVirtualW = canvas.width * totalScreens;
-  const totalVirtualH = canvas.height;
-  const offsetX = screenIndex * canvas.width;
+  // 2. Atmospheric Broken Vertical Lines in the Sky
+  drawVerticalBrokenSky(offscreenCtx, pal);
 
-  // Viewport translation for current screen
-  ctx.save();
-  ctx.translate(-offsetX, 0);
+  // 3. Celestial Sun & Radiating Rays (3 distinct styles)
+  drawSunAndRays(offscreenCtx, totalW, totalH, pal, sunStyle, rng);
 
-  // 1. Atmospheric Broken Vertical Lines in the Sky (Images 2 & 3)
-  drawVerticalBrokenSky(ctx, totalVirtualW, totalVirtualH, pal, time, landscapeSeed);
+  // 4. Multiscale Arch-Carved Engraved Clouds
+  drawClouds(offscreenCtx, pal);
 
-  // 2. Celestial Woodcut Sun & Radiating Engraved Beams
-  drawSunAndRays(ctx, totalVirtualW, totalVirtualH, time, pal);
-
-  // 3. Grid-of-Circles Engraved Clouds (generativelight technique)
-  drawClouds(ctx, pal);
-
-  // 4. Mountain Ridge Layers (Back to Front, darker when away, lower 42% of screen)
+  // 5. Mountain Ridge Layers with Downward Ridge Etching
   for (let l = 0; l < mountainLayers.length; l++) {
-    drawMountainLayer(ctx, mountainLayers[l], l, totalVirtualW, totalVirtualH, pal);
+    drawMountainLayer(offscreenCtx, mountainLayers[l], l, totalW, totalH, pal);
   }
 
-  // 5. Overlay Laid-Paper Watermark Ribs & Fiber Tooth across the entire print
+  // 6. Overlay Laid-Paper Watermark Ribs & Fiber Tooth across the print
   const pat = getLaidPattern();
   if (pat) {
-    ctx.save();
-    ctx.fillStyle = pat;
-    ctx.globalCompositeOperation = "multiply";
-    ctx.globalAlpha = 0.65;
-    ctx.fillRect(0, 0, totalVirtualW, totalVirtualH);
-    ctx.restore();
+    offscreenCtx.save();
+    offscreenCtx.fillStyle = pat;
+    offscreenCtx.globalCompositeOperation = "multiply";
+    offscreenCtx.globalAlpha = 0.65;
+    offscreenCtx.fillRect(0, 0, totalW, totalH);
+    offscreenCtx.restore();
   }
 
-  // 6. Dual-screen bezel line guide (if enabled)
+  // 7. Antique Print Framing Border
+  offscreenCtx.strokeStyle = pal.ink;
+  offscreenCtx.lineWidth = 2.5;
+  const borderMargin = Math.max(12, Math.round(totalH * 0.015));
+  offscreenCtx.strokeRect(borderMargin, borderMargin, totalW - borderMargin * 2, totalH - borderMargin * 2);
+
+  // 8. Aquatint Granulation Filter (authentic intaglio paper tooth & ink grain)
+  applyAquatintGrain(offscreenCtx, totalW, totalH, 20, seed);
+}
+
+// ── Main Page Draw Call ───────────────────────────────────────────────────────
+function drawEtchingScene(time) {
+  if (offscreenCanvas.width === 0 || offscreenCanvas.height === 0) return;
+
+  const offsetX = screenIndex * canvas.width;
+  ctx.drawImage(offscreenCanvas, -offsetX, 0);
+
+  // Dual-screen bezel line guide (if enabled)
   if (showBezel > 0.5) {
     ctx.strokeStyle = "#ff4411";
     ctx.lineWidth = 3.0;
     for (let s = 1; s < totalScreens; s++) {
       const bx = s * canvas.width;
       ctx.beginPath();
-      ctx.moveTo(bx, 0);
-      ctx.lineTo(bx, canvas.height);
+      ctx.moveTo(bx - offsetX, 0);
+      ctx.lineTo(bx - offsetX, canvas.height);
       ctx.stroke();
     }
   }
-
-  // 7. Antique Print Framing Border
-  ctx.strokeStyle = pal.ink;
-  ctx.lineWidth = 2.5;
-  const borderMargin = Math.max(12, Math.round(canvas.height * 0.015));
-  ctx.strokeRect(borderMargin, borderMargin, totalVirtualW - borderMargin * 2, totalVirtualH - borderMargin * 2);
-
-  ctx.restore();
 }
 
 // ── Resize ────────────────────────────────────────────────────────────────────
@@ -902,6 +1046,7 @@ bc.onmessage = (ev) => {
   }
   if (data.cmd === "palette") {
     paletteIdx = data.paletteIdx;
+    renderOffscreenScene(canvas.width * totalScreens, canvas.height, landscapeSeed);
     return;
   }
   if (data.cmd === "pause") {
@@ -946,6 +1091,7 @@ document.addEventListener("keydown", (e) => {
   }
   if (e.key === "c" || e.key === "C") {
     paletteIdx = (paletteIdx + 1) % PALETTES.length;
+    renderOffscreenScene(canvas.width * totalScreens, canvas.height, landscapeSeed);
     bc.postMessage({ cmd: "palette", paletteIdx });
     return;
   }

@@ -323,6 +323,15 @@ It's possible to convert this for Safari using Apple's tools with `xcrun safari-
 * **APIs:** [Open-Meteo API](https://open-meteo.com/en/docs) (for weather)
 * **Fonts:** Roboto Mono, Reforma 1969, Inter, Monoid, Permanent Marker
 * **Assistance:** Google Gemini
+* **Screensaver Inspirations & Sources:**
+  * **Metaballs (`extras/metaballs/`):** Inspired by [Metaball interactions on r/generative](https://www.reddit.com/r/generative/comments/tp7qgk/metaball_interactions/).
+  * **Astronomic Comics (`extras/astronomic/`):** Based on Frank Force's (*KilledByAPixel*) [Astronomic Comics on r/generative](https://www.reddit.com/r/generative/comments/skiqjn/astronomic_comics_code_generated_space_comics/) ([writeup](https://frankforce.com/astronomic-comics/)).
+  * **Watercolor Study (`extras/watercolor/`):** Inspired by [Watercolor Study 001 on r/generative](https://www.reddit.com/r/generative/comments/p472wp/watercolor_study_001/).
+  * **Wireframe Tunnel (`extras/tunnel/`):** Inspired by [neon wireframe tunnel on r/generative](https://www.reddit.com/r/generative/comments/t11ypq/just_found_out_this_reddit_existed/).
+  * **Shifting Sand Dunes (`extras/dunes/`):** Inspired by [Genuary Day 15: Sand / Shifting Dunes on r/generative](https://www.reddit.com/r/generative/comments/s4mloa/genuary_day_15_sand_shifting_dunes/).
+  * **Etched Landscapes (`extras/etching/`):** Inspired by u/generativelight's ['etching' landscapes in p5js on r/generative](https://www.reddit.com/r/generative/comments/yxquhm/etching_landscapes_in_p5js/); paper and ink aquatint grain based on GorillaSun and meezwhite.
+  * **Accretion Disk (`extras/accretion/`):** Relativistic Schwarzschild black hole raytracer inspired by [Shadertoy lstSRS](https://www.shadertoy.com/view/lstSRS) ("Gargantua Kerr Black Hole") and [Shadertoy lcdGWB](https://www.shadertoy.com/view/lcdGWB) ("ScienceClic Spacetime Geodesics").
+  * **Thin Film (`extras/thinfilm/`):** Soap bubble interference optics based on Alan Zucconi's [Improving the Rainbow & Thin-Film Optics](https://www.alanzucconi.com/2017/07/15/improving-the-rainbow/) and [Shadertoy Xdf3zB](https://www.shadertoy.com/view/Xdf3zB).
 * Audio example: [JS Bach and Kimiko Ishizaka, CC0, via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Kimiko_Ishizaka_-_J.S._Bach-_-Open-_Goldberg_Variations,_BWV_988_(Piano)_-_01_Aria.mp3)
 
 ## Image Credits

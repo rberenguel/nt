@@ -171,6 +171,23 @@
 - url: extras/etching/index.html
 - screens: 2
 
+## Random
+- Matrix
+- Lightning
+- Storm
+- Life
+- Aquarium
+- Flip
+- Arabesque
+- Fishdraw
+- Black hole
+- Metaballs
+- Tunnel
+- Comics
+- Watercolor
+- Dunes
+- Etching
+
 # 8 ball
 ## 8
 - #111111

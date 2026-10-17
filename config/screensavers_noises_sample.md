@@ -8,13 +8,14 @@
 ## [Aquarium](#screensaver:Aquarium)
 ## [Arabesque](#screensaver:Arabesque)
 ## [Fishdraw](#screensaver:Fishdraw)
-## `bh` [Black hole](#screensaver:Black hole)
-## `mb` [Metaballs](#screensaver:Metaballs)
-## `tu` [Tunnel](#screensaver:Tunnel)
-## `co` [Comics](#screensaver:Comics)
-## `wc` [Watercolor](#screensaver:Watercolor)
-## `du` [Dunes](#screensaver:Dunes)
-## `et` [Etching](#screensaver:Etching)
+## [Black hole](#screensaver:Black hole)
+## [Metaballs](#screensaver:Metaballs)
+## [Tunnel](#screensaver:Tunnel)
+## [Comics](#screensaver:Comics)
+## [Watercolor](#screensaver:Watercolor)
+## [Dunes](#screensaver:Dunes)
+## [Etching](#screensaver:Etching)
+## [Random](#screensaver:Random)
 
 ---
 
