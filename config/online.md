@@ -143,12 +143,16 @@
 - url: extras/fishdraw/index.html
 - screens: 2
 
-## Accretion
+## Black hole
 - url: extras/accretion/index.html
 - screens: 2
 
 ## Metaballs
 - url: extras/metaballs/index.html
+- screens: 2
+
+## Tunnel
+- url: extras/tunnel/index.html
 - screens: 2
 
 

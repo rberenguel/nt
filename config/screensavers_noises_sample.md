@@ -8,8 +8,9 @@
 ## [Aquarium](#screensaver:Aquarium)
 ## [Arabesque](#screensaver:Arabesque)
 ## [Fishdraw](#screensaver:Fishdraw)
-## `bh` [Accretion (Black Hole)](#screensaver:Accretion)
-## `mb` [Metaballs (Topographic Slices)](#screensaver:Metaballs)
+## `bh` [Black hole](#screensaver:Black hole)
+## `mb` [Metaballs](#screensaver:Metaballs)
+## `tu` [Tunnel](#screensaver:Tunnel)
 
 
 
