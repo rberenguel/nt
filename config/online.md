@@ -171,6 +171,10 @@
 - url: extras/etching/index.html
 - screens: 2
 
+## Map
+- url: extras/map/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -187,6 +191,7 @@
 - Watercolor
 - Dunes
 - Etching
+- Map
 
 # 8 ball
 ## 8
