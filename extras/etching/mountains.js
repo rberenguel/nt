@@ -65,6 +65,42 @@ function generateMountains(totalW, totalH, seed) {
       }
     }
 
+    // Valley shadow hatching: dense diagonal shading in deep chasms where background peak towers above foreground
+    const valleyLines = [];
+    if (l > 0) {
+      const prevLayer = layers[l - 1];
+      const vSpacing = 3.5; // Dense intaglio spacing for velvety shadow tone
+      // Match the intaglio angle of the mountains (~55 degrees, rising up along the slope slant)
+      const vCos = -cosA;
+      const vSin = -sinA;
+      const vThreshold = Math.max(65.0, totalH * 0.075); // Only trigger in deep valley canyons
+
+      for (let x = minX; x <= maxX; x += vSpacing) {
+        const ryFront = getRidgeY({ pts, stepX }, x);
+        const ryBack = getRidgeY(prevLayer, x);
+        const deltaY = ryFront - ryBack; // Positive when background is taller (smaller y)
+
+        if (deltaY > vThreshold) {
+          const depthFactor = Math.min(1.0, (deltaY - vThreshold) / (heightScale * 0.75));
+          const n = fbm1D(x * 0.007, seedOffset + 700);
+          const noiseFactor = 0.85 + 0.3 * (0.5 + 0.5 * n);
+          const vLen = Math.pow(depthFactor, 1.25) * Math.min(36.0, deltaY * 0.40) * noiseFactor;
+
+          if (vLen > 2.5) {
+            valleyLines.push({
+              x,
+              ry: ryFront,
+              x2: x + vCos * vLen,
+              y2: ryFront + vSin * vLen,
+              len: vLen,
+              cosA: vCos,
+              sinA: vSin,
+            });
+          }
+        }
+      }
+    }
+
     layers.push({
       depth: depthFrac,
       baseY,
@@ -73,6 +109,7 @@ function generateMountains(totalW, totalH, seed) {
       stepX,
       seedOffset,
       hatchLines,
+      valleyLines,
       lineWidth: Math.max(1.5, 2.3 - l * 0.12),
     });
   }
@@ -140,7 +177,7 @@ function drawMountainLayer(ctx, layer, layerIdx, totalW, totalH, pal, progress =
     ctx.stroke();
 
   } else {
-    // Stage 2: Ridge profile is complete, carve slope hatchings ONE BY ONE from the left
+    // Stage 2: Ridge profile is complete
     ctx.beginPath();
     ctx.moveTo(pts[0].x, pts[0].y);
     for (let i = 1; i < pts.length; i++) {
@@ -157,6 +194,39 @@ function drawMountainLayer(ctx, layer, layerIdx, totalW, totalH, pal, progress =
     ctx.lineWidth = 1.8;
     ctx.stroke();
 
+    // Valley shadow hatching rising UP from the ridge into obscured canyon recesses
+    if (layer.valleyLines && layer.valleyLines.length > 0) {
+      ctx.save();
+      ctx.lineWidth = Math.max(0.85, layer.lineWidth * 0.52);
+      ctx.strokeStyle = pal.ink;
+      ctx.lineCap = "round";
+
+      if (progress >= 1.0) {
+        ctx.beginPath();
+        for (const v of layer.valleyLines) {
+          ctx.moveTo(v.x, v.ry);
+          ctx.lineTo(v.x2, v.y2);
+        }
+        ctx.stroke();
+      } else {
+        const hatchP = (progress - RIDGE_SPLIT) / (1.0 - RIDGE_SPLIT);
+        const nValley = layer.valleyLines.length;
+        const vSpan = 5.0 / nValley;
+        ctx.beginPath();
+        for (let k = 0; k < nValley; k++) {
+          const startP = (k / nValley) * (1.0 - vSpan);
+          if (hatchP <= startP) break;
+          const v = layer.valleyLines[k];
+          const frac = Math.min(1.0, (hatchP - startP) / vSpan);
+          ctx.moveTo(v.x, v.ry);
+          ctx.lineTo(v.x + v.cosA * v.len * frac, v.ry + v.sinA * v.len * frac);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Clip to mountain body for downward slope hatchings
     ctx.clip();
 
     ctx.lineWidth = layer.lineWidth;
@@ -172,7 +242,7 @@ function drawMountainLayer(ctx, layer, layerIdx, totalW, totalH, pal, progress =
       }
       ctx.stroke();
     } else {
-      // Carve hatch lines sequentially from left to right with visible stroke extension
+      // Carve slope hatch lines sequentially from left to right with visible stroke extension
       const hatchP = (progress - RIDGE_SPLIT) / (1.0 - RIDGE_SPLIT);
       const mLines = layer.hatchLines.length;
       if (mLines > 0) {
