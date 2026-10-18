@@ -46,24 +46,8 @@ function fillBg() {
 }
 
 function redrawAfterResize() {
-  if (!theme || phase === "waiting") return;
-  fillBg();
-  const { scale, ox, oy } = fishTransform();
-  ctx.strokeStyle = theme.stroke;
-  ctx.lineWidth   = theme.lineWidth;
-  ctx.lineCap     = "round";
-  ctx.lineJoin    = "round";
-  const upTo = phase === "drawing" ? lineIdx : polylines.length;
-  for (let i = 0; i < upTo; i++) {
-    const line = polylines[i];
-    if (line.length < 2) continue;
-    ctx.beginPath();
-    ctx.moveTo(ox + line[0][0] * scale, oy + line[0][1] * scale);
-    for (let j = 1; j < line.length; j++) ctx.lineTo(ox + line[j][0] * scale, oy + line[j][1] * scale);
-    ctx.stroke();
-  }
-  if (phase !== "drawing") drawLabel();
-  ptIdx = 0;
+  if (!theme) return;
+  renderFrame(phase, currentProgress, currentAlpha);
 }
 
 function resize() {
@@ -91,17 +75,23 @@ function getBBox(polylines) {
 
 let fishBBox = { x: 0, y: 0, w: 500, h: 300 };
 
+const INITIAL_DELAY = 500;
+const DRAW_DURATION = 4200;
 const PAUSE_AFTER   = 2000;
 const FADE_DURATION = 600;
-const STROKE_DELAY  = 6;
+const STAGGER_MAX   = 0.08;
 
-let polylines   = [];
-let fishName    = "";
-let lineIdx     = 0;
-let ptIdx       = 0;
-let phase       = "waiting";
-let phaseStart  = 0;
-let lastSegTime = 0;
+let polylines        = [];
+let lineData         = [];
+let maxLineLen       = 0;
+let fishName         = "";
+let phase            = "waiting";
+let phaseStart       = 0;
+let currentProgress  = 0;
+let currentAlpha     = 1;
+let currentSeed      = 0;
+let initialDelayDone = false;
+let initialStartTime = 0;
 
 function fishTransform() {
   const pad    = Math.min(canvas.width, canvas.height) * 0.1;
@@ -142,94 +132,180 @@ function drawAll(alpha) {
   if (alpha > 0.5) drawLabel();
 }
 
+function renderFrame(pPhase, progress, alpha = 1) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  fillBg();
+
+  if (pPhase === "drawing") {
+    if (progress > 0) {
+      const { scale, ox, oy } = fishTransform();
+      ctx.strokeStyle = theme.stroke;
+      ctx.lineWidth   = theme.lineWidth;
+      ctx.lineCap     = "round";
+      ctx.lineJoin    = "round";
+
+      ctx.beginPath();
+      for (const { line, totalLen, cumLens, startT } of lineData) {
+        if (line.length < 2 || totalLen <= 0) continue;
+        if (progress <= startT) continue; // Not started yet
+
+        const lineProgress = progress >= 1 ? 1 : (progress - startT) / (1 - startT);
+        const currentDist = lineProgress * totalLen;
+
+        // Skip until the stroke has moved slightly to avoid drawing static round dots at the start point
+        if (currentDist < 0.6) continue;
+
+        ctx.moveTo(ox + line[0][0] * scale, oy + line[0][1] * scale);
+
+        if (lineProgress >= 1) {
+          for (let j = 1; j < line.length; j++) {
+            ctx.lineTo(ox + line[j][0] * scale, oy + line[j][1] * scale);
+          }
+        } else {
+          let k = 0;
+          while (k < cumLens.length - 2 && cumLens[k + 1] <= currentDist) {
+            k++;
+          }
+          for (let j = 1; j <= k; j++) {
+            ctx.lineTo(ox + line[j][0] * scale, oy + line[j][1] * scale);
+          }
+          const segLen = cumLens[k + 1] - cumLens[k];
+          const frac = segLen > 0 ? (currentDist - cumLens[k]) / segLen : 0;
+          const hx = line[k][0] + (line[k + 1][0] - line[k][0]) * frac;
+          const hy = line[k][1] + (line[k + 1][1] - line[k][1]) * frac;
+          ctx.lineTo(ox + hx * scale, oy + hy * scale);
+        }
+      }
+      ctx.stroke();
+    }
+    if (progress >= 1) drawLabel();
+  } else if (pPhase === "pausing") {
+    drawAll(1);
+    drawLabel();
+  } else if (pPhase === "fading") {
+    drawAll(alpha);
+  }
+}
+
 function spawnFish(seed) {
   jsr = seed;
   const p  = generate_params();
   fishName  = binomen(p.seed);
   polylines = cleanup(fish(p));
   fishBBox  = getBBox(polylines);
-  lineIdx   = 0;
-  ptIdx     = 0;
-  phase     = "drawing";
-  lastSegTime = 0;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  fillBg();
+  maxLineLen = 0;
+  const nLines = Math.max(1, polylines.length - 1);
+  lineData  = polylines.map((line, i) => {
+    const cumLens = [0];
+    let total = 0;
+    for (let j = 0; j < line.length - 1; j++) {
+      total += Math.hypot(line[j + 1][0] - line[j][0], line[j + 1][1] - line[j][1]);
+      cumLens.push(total);
+    }
+    if (total > maxLineLen) maxLineLen = total;
+    // Slight deterministic stagger: structural lines start earliest, texture joins within STAGGER_MAX
+    const baseT = i / nLines;
+    const jitter = ((Math.sin(i * 12.9898 + seed) * 43758.5453) % 1 + 1) % 1;
+    const startT = Math.min(STAGGER_MAX, (baseT * 0.75 + jitter * 0.25) * STAGGER_MAX);
+    return { line, totalLen: total, cumLens, startT };
+  });
 }
-
-let currentSeed = 0;
 
 function nextFish() {
-  currentSeed    = ~~(Math.random() * 0xffffffff);
-  const themeIdx = THEMES.indexOf(theme);
-  bc.postMessage({ newFish: true, seed: currentSeed, themeIdx });
+  currentSeed = ~~(Math.random() * 0xffffffff);
   spawnFish(currentSeed);
+  phase = "drawing";
+  phaseStart = 0;
+  currentProgress = 0;
+  currentAlpha = 1;
 }
 
-function drawStep(now) {
-  if (phase === "waiting") return;
+function toggleTheme() {
+  const themeIdx = (THEMES.indexOf(theme) + 1) % THEMES.length;
+  applyTheme(themeIdx);
+  nextFish();
+}
+
+function easeInToLinear(u) {
+  const c = 0.4; // ramp up speed over the first 40% of duration
+  if (u <= 0) return 0;
+  if (u >= 1) return 1;
+  const total = 1 - (2 * c) / 3;
+  if (u < c) {
+    return (Math.pow(u, 3) / (3 * c * c)) / total;
+  }
+  return (c / 3 + (u - c)) / total;
+}
+
+function primaryLoop(now) {
+  if (!initialDelayDone) {
+    if (initialStartTime === 0) initialStartTime = now;
+    renderFrame("drawing", 0, 1);
+    bc.postMessage({
+      cmd: "sync",
+      seed: currentSeed,
+      themeIdx: THEMES.indexOf(theme),
+      phase: "drawing",
+      progress: 0,
+      alpha: 1,
+    });
+    if (now - initialStartTime >= INITIAL_DELAY) {
+      initialDelayDone = true;
+      phaseStart = now;
+    }
+    requestAnimationFrame(primaryLoop);
+    return;
+  }
 
   if (phase === "drawing") {
-    if (now - lastSegTime < STROKE_DELAY) return;
-    lastSegTime = now;
+    if (phaseStart === 0) phaseStart = now;
+    const elapsed = Math.max(0, now - phaseStart);
+    const u = Math.min(1, elapsed / DRAW_DURATION);
+    currentProgress = easeInToLinear(u);
+    currentAlpha = 1;
 
-    if (lineIdx >= polylines.length) {
-      drawLabel();
+    renderFrame("drawing", currentProgress, 1);
+
+    if (u >= 1) {
       phase = "pausing";
       phaseStart = now;
-      return;
     }
-
-    const line = polylines[lineIdx];
-    const { scale, ox, oy } = fishTransform();
-    ctx.strokeStyle = theme.stroke;
-    ctx.lineWidth   = theme.lineWidth;
-    ctx.lineCap     = "round";
-    ctx.lineJoin    = "round";
-
-    if (ptIdx === 0) {
-      ctx.beginPath();
-      ctx.moveTo(ox + line[0][0] * scale, oy + line[0][1] * scale);
-      ptIdx = 1;
-    }
-
-    if (ptIdx < line.length) {
-      ctx.lineTo(ox + line[ptIdx][0] * scale, oy + line[ptIdx][1] * scale);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(ox + line[ptIdx][0] * scale, oy + line[ptIdx][1] * scale);
-      ptIdx++;
-    }
-
-    if (ptIdx >= line.length) {
-      lineIdx++;
-      ptIdx = 0;
-    }
-
   } else if (phase === "pausing") {
+    currentProgress = 1;
+    currentAlpha = 1;
+    renderFrame("pausing", 1, 1);
+
     if (now - phaseStart >= PAUSE_AFTER) {
       phase = "fading";
       phaseStart = now;
     }
-
   } else if (phase === "fading") {
+    currentProgress = 1;
     const t = (now - phaseStart) / FADE_DURATION;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    fillBg();
-    if (t < 1) {
-      drawAll(1 - t);
-    } else {
+    currentAlpha = Math.max(0, 1 - t);
+    renderFrame("fading", 1, currentAlpha);
+
+    if (t >= 1) {
       nextFish();
+      requestAnimationFrame(primaryLoop);
+      return;
     }
   }
+
+  bc.postMessage({
+    cmd: "sync",
+    seed: currentSeed,
+    themeIdx: THEMES.indexOf(theme),
+    phase,
+    progress: currentProgress,
+    alpha: currentAlpha,
+  });
+
+  requestAnimationFrame(primaryLoop);
 }
 
 // ── Multi-screen sync via BroadcastChannel ────────────────────────────────────
 const bc = new BroadcastChannel("fishdraw");
-
-function loop(now) {
-  drawStep(now);
-  requestAnimationFrame(loop);
-}
 
 function saveCanvas() {
   canvas.toBlob(blob => {
@@ -242,29 +318,51 @@ function saveCanvas() {
   });
 }
 
-bc.addEventListener("message", ({ data }) => {
+bc.onmessage = ({ data }) => {
+  if (!data) return;
   if (data.quit) { window.close(); return; }
-  if (isPrimary && data.hello) {
-    bc.postMessage({ newFish: true, seed: currentSeed, themeIdx: THEMES.indexOf(theme) });
+
+  if (isPrimary) {
+    if (data.cmd === "requestSync") {
+      bc.postMessage({
+        cmd: "sync",
+        seed: currentSeed,
+        themeIdx: THEMES.indexOf(theme),
+        phase,
+        progress: currentProgress,
+        alpha: currentAlpha,
+      });
+    } else if (data.cmd === "toggleTheme") {
+      toggleTheme();
+    } else if (data.cmd === "save") {
+      saveCanvas();
+    }
     return;
   }
-  if (data.themeChange) { applyTheme(data.themeIdx); spawnFish(data.seed); return; }
-  if (data.save && isPrimary) { saveCanvas(); return; }
-  if (!isPrimary && data.newFish) {
-    if (!theme) applyTheme(data.themeIdx);
-    spawnFish(data.seed);
+
+  // Secondary display client:
+  if (data.cmd === "sync") {
+    if (data.themeIdx !== undefined && THEMES[data.themeIdx] !== theme) {
+      applyTheme(data.themeIdx);
+    }
+    if (data.seed !== currentSeed) {
+      currentSeed = data.seed;
+      spawnFish(currentSeed);
+    }
+    phase = data.phase;
+    currentProgress = data.progress;
+    currentAlpha = data.alpha;
+    renderFrame(phase, currentProgress, currentAlpha);
   }
-});
+};
 
 if (isPrimary) {
   applyTheme(Math.floor(Math.random() * THEMES.length));
-  fillBg();
   nextFish();
+  requestAnimationFrame(primaryLoop);
 } else {
-  bc.postMessage({ hello: true });
+  bc.postMessage({ cmd: "requestSync" });
 }
-
-requestAnimationFrame(loop);
 
 // ── Fullscreen & Keys ─────────────────────────────────────────────────────────
 function enterFullscreen() {
@@ -279,11 +377,12 @@ document.addEventListener("click", () => {
 
 document.addEventListener("keydown", e => {
   if (e.key === "q" || e.key === "Q") { bc.postMessage({ quit: true }); window.close(); }
-  if (e.key === "s" || e.key === "S") { if (isPrimary) saveCanvas(); else bc.postMessage({ save: true }); }
+  if (e.key === "s" || e.key === "S") { if (isPrimary) saveCanvas(); else bc.postMessage({ cmd: "save" }); }
   if (e.key === " ") {
-    const themeIdx = (THEMES.indexOf(theme) + 1) % THEMES.length;
-    applyTheme(themeIdx);
-    bc.postMessage({ themeChange: true, themeIdx, seed: currentSeed });
-    spawnFish(currentSeed);
+    if (isPrimary) {
+      toggleTheme();
+    } else {
+      bc.postMessage({ cmd: "toggleTheme" });
+    }
   }
 });
