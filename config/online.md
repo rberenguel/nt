@@ -175,6 +175,10 @@
 - url: extras/map/index.html
 - screens: 2
 
+## Constellation
+- url: extras/constellation/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -192,6 +196,7 @@
 - Dunes
 - Etching
 - Map
+- Constellation
 
 # 8 ball
 ## 8
