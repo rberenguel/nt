@@ -64,6 +64,19 @@ class CoastlineEngine {
   }
 
   /**
+   * Returns normalized 2D direction pointing inland away from the ocean based on the coast topology style.
+   */
+  getInlandVector() {
+    switch (this.coastStyle) {
+      case "west-ocean": return { x: 1, y: 0 };
+      case "east-ocean": return { x: -1, y: 0 };
+      case "north-ocean": return { x: 0, y: 1 };
+      case "south-ocean": return { x: 0, y: -1 };
+      default: return { x: 0, y: -1 };
+    }
+  }
+
+  /**
    * Generate an organic coastal boundary.
    * Styles:
    * - "west-ocean": Ocean on the left/west, land on the right/east.
@@ -352,14 +365,70 @@ class CoastlineEngine {
    * Render ocean wash, waterlines, and coastal pen strokes
    */
   draw(ctx, palette, progress = 1.0) {
+    if (progress <= 0) return;
+
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // 1. Subtle Ocean Watercolor Wash
-    if (palette.shadowWash && this.oceanPolys.length > 0) {
+    // 1. Primary Coastline Pen Ink Stroke (Bold, crisp shore boundary drawn first)
+    const penProg = Math.min(1.0, progress / 0.60);
+    ctx.strokeStyle = palette.ink;
+    ctx.lineWidth = 1.8;
+    for (let coast of this.coasts) {
+      const maxPts = Math.floor(coast.length * penProg);
+      if (maxPts < 2) continue;
+
+      ctx.beginPath();
+      ctx.moveTo(coast[0].x, coast[0].y);
+      for (let i = 1; i < maxPts; i++) {
+        ctx.lineTo(coast[i].x, coast[i].y);
+      }
+      ctx.stroke();
+    }
+
+    // 2. Concentric Waterlining Echo Contours (radiating outward as coast forms)
+    if (progress > 0.20) {
+      const wlProg = Math.min(1.0, (progress - 0.20) / 0.65);
+      ctx.strokeStyle = palette.ink;
+      for (let wl of this.waterlines) {
+        const maxPts = Math.floor(wl.points.length * wlProg);
+        if (maxPts < 2) continue;
+
+        ctx.lineWidth = wl.lineWidth;
+        ctx.globalAlpha = wl.opacity;
+        ctx.beginPath();
+        ctx.moveTo(wl.points[0].x, wl.points[0].y);
+        for (let i = 1; i < maxPts; i++) {
+          ctx.lineTo(wl.points[i].x, wl.points[i].y);
+        }
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    // 3. Intaglio Coastal Edge Fringes
+    if (progress > 0.45) {
+      const fProg = Math.min(1.0, (progress - 0.45) / 0.55);
+      ctx.strokeStyle = palette.ink;
+      ctx.lineWidth = 0.75;
+      ctx.globalAlpha = 0.65;
+      const maxFringes = Math.floor(this.coastFringes.length * fProg);
+      for (let i = 0; i < maxFringes; i++) {
+        const f = this.coastFringes[i];
+        ctx.beginPath();
+        ctx.moveTo(f.x1, f.y1);
+        ctx.lineTo(f.x2, f.y2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1.0;
+    }
+
+    // 4. Subtle Ocean Watercolor Wash (settling in gently)
+    if (progress > 0.50 && palette.shadowWash && this.oceanPolys.length > 0) {
+      const washProg = Math.min(1.0, (progress - 0.50) / 0.50);
       ctx.fillStyle = palette.shadowWash;
-      ctx.globalAlpha = 0.18; // soft oceanic tint
+      ctx.globalAlpha = 0.18 * washProg;
       for (let poly of this.oceanPolys) {
         if (poly.length < 3) continue;
         ctx.beginPath();
@@ -371,52 +440,6 @@ class CoastlineEngine {
         ctx.fill();
       }
       ctx.globalAlpha = 1.0;
-    }
-
-    // 2. Concentric Waterlining Echo Contours
-    ctx.strokeStyle = palette.ink;
-    for (let wl of this.waterlines) {
-      const maxPts = Math.floor(wl.points.length * progress);
-      if (maxPts < 2) continue;
-
-      ctx.lineWidth = wl.lineWidth;
-      ctx.globalAlpha = wl.opacity;
-      ctx.beginPath();
-      ctx.moveTo(wl.points[0].x, wl.points[0].y);
-      for (let i = 1; i < maxPts; i++) {
-        ctx.lineTo(wl.points[i].x, wl.points[i].y);
-      }
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1.0;
-
-    // 3. Intaglio Coastal Edge Fringes
-    ctx.strokeStyle = palette.ink;
-    ctx.lineWidth = 0.75;
-    ctx.globalAlpha = 0.65;
-    const maxFringes = Math.floor(this.coastFringes.length * progress);
-    for (let i = 0; i < maxFringes; i++) {
-      const f = this.coastFringes[i];
-      ctx.beginPath();
-      ctx.moveTo(f.x1, f.y1);
-      ctx.lineTo(f.x2, f.y2);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1.0;
-
-    // 4. Primary Coastline Pen Ink Stroke (Bold, crisp shore boundary)
-    ctx.strokeStyle = palette.ink;
-    ctx.lineWidth = 1.8;
-    for (let coast of this.coasts) {
-      const maxPts = Math.floor(coast.length * progress);
-      if (maxPts < 2) continue;
-
-      ctx.beginPath();
-      ctx.moveTo(coast[0].x, coast[0].y);
-      for (let i = 1; i < maxPts; i++) {
-        ctx.lineTo(coast[i].x, coast[i].y);
-      }
-      ctx.stroke();
     }
 
     ctx.restore();

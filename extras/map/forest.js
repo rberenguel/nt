@@ -47,16 +47,16 @@ class ForestEngine {
    * 1. Foothill forests: nestled along mountain flank bases.
    * 2. Riverine woods: scattered in bends along riverbanks.
    */
-  populateForests(ridges, rivers, lakes, coastEngine = null) {
+  populateForests(ridges, rivers, lakes, coastEngine = null, hillsEngine = null) {
     const { rng, totalW, totalH } = this;
     this.trees = [];
 
-    // 1. Dense Foothill Belts along mountain ranges (4 to 6 groves per range)
+    // 1. Dense Foothill Belts along mountain ranges (6 to 8 groves per range)
     for (let r of ridges) {
       if (!r.facets || r.facets.length === 0) continue;
-      const tSamples = [0.15, 0.35, 0.55, 0.75, 0.90];
+      const tSamples = [0.10, 0.25, 0.40, 0.55, 0.70, 0.85, 0.95];
       for (let t of tSamples) {
-        if (rng() < 0.20) continue; // slight organic variation
+        if (rng() < 0.15) continue; // slight organic variation
         const side = rng() < 0.5 ? "left" : "right";
         const fIdx = Math.min(r.facets.length - 1, Math.floor(r.facets.length * (t + (rng() - 0.5) * 0.10)));
         const facet = r.facets[fIdx];
@@ -71,37 +71,37 @@ class ForestEngine {
         // High elevation or north = conifers; lower valleys = deciduous
         const style = (anchorY < totalH * 0.45 || rng() < 0.40) ? "conifer" : "deciduous";
         const groveRadius = 42 + rng() * 28;
-        const groveDensity = 24 + Math.floor(rng() * 18);
+        const groveDensity = 26 + Math.floor(rng() * 20);
 
         this.generateGrove(anchorX, anchorY, groveRadius, style, groveDensity);
       }
     }
 
-    // 2. Riverine Gallery Woodlands along rivers (3 to 6 groves flanking the river)
+    // 2. Riverine Gallery Woodlands along rivers (flanking both riverbanks)
     for (let river of rivers) {
       if (river.points.length < 10) continue;
-      const numRiverGroves = 4 + Math.floor(rng() * 3);
+      const numRiverGroves = 5 + Math.floor(rng() * 4);
       for (let rg = 0; rg < numRiverGroves; rg++) {
-        const t = 0.15 + (rg / numRiverGroves) * 0.70 + (rng() - 0.5) * 0.08;
+        const t = 0.12 + (rg / numRiverGroves) * 0.76 + (rng() - 0.5) * 0.08;
         const ptIdx = Math.min(river.points.length - 1, Math.max(0, Math.floor(river.points.length * t)));
         const pt = river.points[ptIdx];
 
         const riverSide = rg % 2 === 0 ? 1 : -1;
-        const offsetDist = (pt.width || 3.0) * 0.5 + 16 + rng() * 22;
+        const offsetDist = (pt.width || 3.0) * 0.5 + 16 + rng() * 24;
         const anchorX = pt.x + riverSide * offsetDist;
         const anchorY = pt.y + (rng() - 0.5) * 24;
 
         if (coastEngine && coastEngine.isOcean({ x: anchorX, y: anchorY }, 18)) continue;
 
-        const groveRadius = 36 + rng() * 24;
-        const groveDensity = 18 + Math.floor(rng() * 14);
+        const groveRadius = 38 + rng() * 26;
+        const groveDensity = 22 + Math.floor(rng() * 16);
         this.generateGrove(anchorX, anchorY, groveRadius, "deciduous", groveDensity);
       }
     }
 
     // 3. Lakeside Woods around lake perimeters
     for (let lake of lakes) {
-      const numLakeGroves = 3 + Math.floor(rng() * 2);
+      const numLakeGroves = 4 + Math.floor(rng() * 3);
       for (let lg = 0; lg < numLakeGroves; lg++) {
         const angle = (lg / numLakeGroves) * Math.PI * 2 + (rng() - 0.5) * 0.4;
         const lx = lake.x + Math.cos(angle) * (lake.radius * 1.15 + 12 + rng() * 18);
@@ -109,31 +109,31 @@ class ForestEngine {
 
         if (coastEngine && coastEngine.isOcean({ x: lx, y: ly }, 18)) continue;
 
-        const groveRadius = 38 + rng() * 22;
-        const groveDensity = 20 + Math.floor(rng() * 16);
+        const groveRadius = 40 + rng() * 24;
+        const groveDensity = 24 + Math.floor(rng() * 18);
         this.generateGrove(lx, ly, groveRadius, "deciduous", groveDensity);
       }
     }
 
-    // 4. Grand Ancient Forest Tracts (Mirkwood / Fangorn scale, 2 large contiguous forests)
+    // 4. Grand Ancient Forest Tracts (Mirkwood / Fangorn scale, 3 to 5 large contiguous forests)
     const pad = 65;
-    const numAncientForests = 2;
+    const numAncientForests = 4;
     for (let af = 0; af < numAncientForests; af++) {
       let attempts = 0;
       let placed = false;
-      while (attempts < 20 && !placed) {
+      while (attempts < 30 && !placed) {
         attempts++;
         const cx = pad + rng() * (totalW - pad * 2);
         const cy = pad + rng() * (totalH - pad * 2);
 
-        if (coastEngine && coastEngine.isOcean({ x: cx, y: cy }, 65)) continue;
+        if (coastEngine && coastEngine.isOcean({ x: cx, y: cy }, 55)) continue;
 
         // Ensure not inside mountain spines
         let collidesRidge = false;
         for (let r of ridges) {
           if (RiverNetwork.pointInPoly({ x: cx, y: cy }, r.boundingPoly)) { collidesRidge = true; break; }
           for (let f of r.facets) {
-            if (Math.hypot(cx - f.pA.x, cy - f.pA.y) < 75) { collidesRidge = true; break; }
+            if (Math.hypot(cx - f.pA.x, cy - f.pA.y) < 70) { collidesRidge = true; break; }
           }
           if (collidesRidge) break;
         }
@@ -141,25 +141,25 @@ class ForestEngine {
 
         // Generate a grand multi-cluster forest tract
         const forestStyle = rng() < 0.40 ? "conifer" : "deciduous";
-        const numClusters = 3;
+        const numClusters = 4;
         for (let c = 0; c < numClusters; c++) {
-          const subX = cx + (rng() - 0.5) * 60;
-          const subY = cy + (rng() - 0.5) * 45;
-          const subRadius = 45 + rng() * 30;
-          const subDensity = 24 + Math.floor(rng() * 18);
+          const subX = cx + (rng() - 0.5) * 80;
+          const subY = cy + (rng() - 0.5) * 60;
+          const subRadius = 48 + rng() * 32;
+          const subDensity = 26 + Math.floor(rng() * 18);
           this.generateGrove(subX, subY, subRadius, forestStyle, subDensity);
         }
         placed = true;
       }
     }
 
-    // 5. Scattered Countryside Copses & Groves
-    const numCopses = 5 + Math.floor(rng() * 4);
+    // 5. Scattered Countryside Copses & Valley Woodlands (16 to 24 copses)
+    const numCopses = 16 + Math.floor(rng() * 9);
     for (let cp = 0; cp < numCopses; cp++) {
       const cx = pad + rng() * (totalW - pad * 2);
       const cy = pad + rng() * (totalH - pad * 2);
 
-      if (coastEngine && coastEngine.isOcean({ x: cx, y: cy }, 35)) continue;
+      if (coastEngine && coastEngine.isOcean({ x: cx, y: cy }, 28)) continue;
 
       let collidesRidge = false;
       for (let r of ridges) {
@@ -168,9 +168,21 @@ class ForestEngine {
       if (collidesRidge) continue;
 
       const style = rng() < 0.35 ? "conifer" : "deciduous";
-      const copseRadius = 32 + rng() * 20;
-      const copseDensity = 14 + Math.floor(rng() * 10);
+      const copseRadius = 34 + rng() * 22;
+      const copseDensity = 16 + Math.floor(rng() * 12);
       this.generateGrove(cx, cy, copseRadius, style, copseDensity);
+    }
+
+    // 6. Hillside Woodlands nestled among rolling hill chains
+    if (hillsEngine && hillsEngine.hills && hillsEngine.hills.length > 0) {
+      const numHillGroves = 6 + Math.floor(rng() * 6);
+      for (let hg = 0; hg < numHillGroves; hg++) {
+        const hill = hillsEngine.hills[Math.floor(rng() * hillsEngine.hills.length)];
+        const hx = hill.x + (rng() - 0.5) * (hill.width * 1.2);
+        const hy = hill.y + 12 + rng() * 18;
+        if (coastEngine && coastEngine.isOcean({ x: hx, y: hy }, 15)) continue;
+        this.generateGrove(hx, hy, 28 + rng() * 16, rng() < 0.4 ? "conifer" : "deciduous", 12 + Math.floor(rng() * 8));
+      }
     }
 
     // Filter out trees that ended up inside water, mountain backbones, or ocean
@@ -196,6 +208,26 @@ class ForestEngine {
       }
       return true;
     });
+
+    // Sort trees North-to-South for painter's depth occlusion
+    this.trees.sort((a, b) => a.avgY - b.avgY);
+  }
+
+  /**
+   * Draws trees sequentially North-to-South with blooming windows (like stars in Constellations)
+   */
+  draw(ctx, palette, progress = 1.0) {
+    if (!this.trees || this.trees.length === 0 || progress <= 0) return;
+
+    const total = this.trees.length;
+    const windowDuration = Math.min(0.12, 3.5 / total);
+
+    for (let i = 0; i < total; i++) {
+      const startTime = (i / total) * (1.0 - windowDuration);
+      if (progress < startTime) continue;
+      const tProg = Math.min(1.0, (progress - startTime) / windowDuration);
+      this.trees[i].draw(ctx, palette, tProg);
+    }
   }
 }
 
@@ -214,10 +246,15 @@ class TreeSymbol {
   }
 
   draw(ctx, palette, progress = 1.0) {
+    if (progress <= 0) return;
     const { x, y, size, style, rng } = this;
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+
+    if (progress < 1.0) {
+      ctx.globalAlpha = Math.min(1.0, progress * 1.3);
+    }
 
     const crownH = size * 1.15;
     const crownTop = y - crownH;

@@ -814,8 +814,13 @@ function generateConstellationScene(totalW, totalH, totalScreens, seed) {
     rawConstellations.push(constObj);
   }
 
-  // Sort constellations strictly West-to-East (left-to-right) across the celestial vault
-  rawConstellations.sort((a, b) => a.label.x - b.label.x);
+  // Shuffle constellations in random drawing order across the celestial vault using deterministic PRNG
+  for (let i = rawConstellations.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const temp = rawConstellations[i];
+    rawConstellations[i] = rawConstellations[j];
+    rawConstellations[j] = temp;
+  }
   rawConstellations.forEach((c, idx) => {
     c.index = idx;
     c.stars.forEach((s) => { s.constellationIndex = idx; });
@@ -892,8 +897,8 @@ function drawConstellationsWithNames(ctx, constellations, pal, progress) {
     const edges = constellation.edges;
     const totalEdges = edges.length;
 
-    // Line engraving takes the first 70% of this constellation's window
-    const lineProg = Math.min(1.0, constProgress / 0.70);
+    // Line engraving takes the first 75% of this constellation's window
+    const lineProg = Math.min(1.0, constProgress / 0.75);
     if (lineProg > 0 && totalEdges > 0) {
       const edgeTime = 1.0 / totalEdges;
       for (let e = 0; e < totalEdges; e++) {
@@ -915,9 +920,9 @@ function drawConstellationsWithNames(ctx, constellations, pal, progress) {
       }
     }
 
-    // Name label animates in immediately as lines reach completion (last 30% of window)
-    if (constProgress > 0.70) {
-      const nameProg = (constProgress - 0.70) / 0.30;
+    // Name label animates in immediately as lines reach completion (last 25% of window)
+    if (constProgress > 0.75) {
+      const nameProg = (constProgress - 0.75) / 0.25;
       drawConstellationLabel(ctx, constellation.label, pal, nameProg);
     }
   }

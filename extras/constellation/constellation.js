@@ -36,21 +36,14 @@ const fsSource = `
   precision highp float;
 
   uniform sampler2D u_texture;
+  uniform sampler2D u_noiseTex;
   uniform float u_screenIndex;
   uniform float u_totalScreens;
-  uniform float u_seed;
   uniform float u_grainAmount;
   uniform float u_alpha;
   uniform vec3 u_paperColor;
 
   varying vec2 v_uv;
-
-  // High-frequency pseudo-random hash for copperplate aquatint rosin bite
-  float hash21(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21) + u_seed * 0.001);
-    p += dot(p, p + 45.32);
-    return fract(p.x * p.y);
-  }
 
   void main() {
     // Panoramic slice across displays (flip Y so 2D top-down aligns with WebGL)
@@ -58,9 +51,15 @@ const fsSource = `
     float v = 1.0 - v_uv.y;
     vec4 texColor = texture2D(u_texture, vec2(u, v));
 
-    // Dual-scale microscopic aquatint rosin noise
-    float n1 = (hash21(gl_FragCoord.xy) - 0.5) * u_grainAmount;
-    float n2 = (hash21(gl_FragCoord.yx * 0.5 + vec2(37.7, 91.3)) - 0.5) * (u_grainAmount * 0.45);
+    // Sample pure noise texture with 256.0 repeat tiling to eliminate all hash-banding
+    vec2 coord1 = gl_FragCoord.xy / 256.0;
+    vec2 coord2 = (gl_FragCoord.yx * 0.5 + vec2(0.37, 0.71)) / 256.0;
+
+    vec4 nSample1 = texture2D(u_noiseTex, coord1);
+    vec4 nSample2 = texture2D(u_noiseTex, coord2);
+
+    float n1 = (nSample1.r - 0.5) * u_grainAmount;
+    float n2 = (nSample2.g - 0.5) * (u_grainAmount * 0.45);
 
     vec3 color = clamp(texColor.rgb + n1 + n2, 0.0, 1.0);
 
@@ -73,6 +72,25 @@ const fsSource = `
 
 let glState = null;
 let fallbackCtx2D = null;
+
+function createNoiseTexture(gl) {
+  const size = 256;
+  const data = new Uint8Array(size * size * 4);
+  for (let i = 0; i < size * size; i++) {
+    data[i * 4 + 0] = Math.floor(Math.random() * 256);
+    data[i * 4 + 1] = Math.floor(Math.random() * 256);
+    data[i * 4 + 2] = Math.floor(Math.random() * 256);
+    data[i * 4 + 3] = 255;
+  }
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  return tex;
+}
 
 function initWebGLState() {
   let gl = null;
@@ -138,17 +156,20 @@ function initWebGLState() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
+  const noiseTex = createNoiseTexture(gl);
+
   return {
     gl,
     prog,
     posAttr: gl.getAttribLocation(prog, "a_position"),
     posBuf,
     tex,
+    noiseTex,
     uniforms: {
       u_texture: gl.getUniformLocation(prog, "u_texture"),
+      u_noiseTex: gl.getUniformLocation(prog, "u_noiseTex"),
       u_screenIndex: gl.getUniformLocation(prog, "u_screenIndex"),
       u_totalScreens: gl.getUniformLocation(prog, "u_totalScreens"),
-      u_seed: gl.getUniformLocation(prog, "u_seed"),
       u_grainAmount: gl.getUniformLocation(prog, "u_grainAmount"),
       u_alpha: gl.getUniformLocation(prog, "u_alpha"),
       u_paperColor: gl.getUniformLocation(prog, "u_paperColor"),
@@ -184,7 +205,7 @@ let lastRenderedRose = null;
 
 // Animation timing configuration (ms)
 const INITIAL_DELAY  = 500;    // Wait 500ms on first launch for Chrome multi-window sync
-const DRAW_DURATION  = 22000;  // Deliberate line-by-line celestial engraving (~22s)
+const DRAW_DURATION  = 32000;  // Deliberate line-by-line celestial engraving (~32s, lines 2x slower)
 const PAUSE_DURATION = 14000;  // Linger for 14s to admire completed chart
 const FADE_DURATION  = 900;    // Dissolve into next chart (~0.9s)
 
@@ -230,30 +251,30 @@ function renderOffscreenScene(totalW, totalH, seed, progress, alpha) {
 
   if (progress <= 0) return;
 
-  // 1. Celestial Coordinate Grid (Animated declination arches & cascading meridians): 0.00 -> 0.15
-  const gridProgress = Math.min(1.0, progress / 0.15);
+  // 1. Celestial Coordinate Grid (Animated declination arches & cascading meridians): 0.00 -> 0.12
+  const gridProgress = Math.min(1.0, progress / 0.12);
   if (gridProgress > 0) {
     drawCelestialGrid(offscreenCtx, totalW, totalH, margin, pal, gridProgress, celestialScene.voronoiCells, showVoronoi);
   }
 
-  // 2. Stars (Constellation stars + background field stars): 0.08 -> 0.42
+  // 2. Stars (Constellation stars + background field stars): 0.06 -> 0.32
   // Each star blooms from 1 pixel to full size sequentially in allStars order
-  const starProgress = Math.max(0.0, Math.min(1.0, (progress - 0.08) / 0.34));
+  const starProgress = Math.max(0.0, Math.min(1.0, (progress - 0.06) / 0.26));
   if (starProgress > 0) {
     drawAllStars(offscreenCtx, allStars, pal, starProgress);
   }
 
-  // 3. Constellations (Lines left-to-right + interleaved name reveals): 0.42 -> 0.88
-  // Sequentially West-to-East: lines drawn left-to-right, then Latin name in place immediately
-  const constProgress = Math.max(0.0, Math.min(1.0, (progress - 0.42) / 0.46));
+  // 3. Constellations (Random order line engraving + interleaved name reveals): 0.28 -> 0.90
+  // Each constellation line draws at half the speed (2x slower, ~20s total window)
+  const constProgress = Math.max(0.0, Math.min(1.0, (progress - 0.28) / 0.62));
   if (constProgress > 0) {
     drawConstellationsWithNames(offscreenCtx, constellations, pal, constProgress);
     // Redraw blooming stars on top so star glyphs sit cleanly over line intersections
     drawAllStars(offscreenCtx, allStars, pal, starProgress);
   }
 
-  // 4. Neatline Framing Border & Cartouches: 0.88 -> 1.00
-  const decorProgress = Math.max(0.0, Math.min(1.0, (progress - 0.88) / 0.12));
+  // 4. Neatline Framing Border & Cartouches: 0.90 -> 1.00
+  const decorProgress = Math.max(0.0, Math.min(1.0, (progress - 0.90) / 0.10));
   const runFont = celestialScene.runFont;
   if (decorProgress > 0) {
     drawNeatlineBorder(offscreenCtx, totalW, totalH, margin, pal, decorProgress);
@@ -308,7 +329,7 @@ function drawConstellationSceneOnScreen(progress, alpha = 1.0) {
 
   // Render on screen with real-time aquatint fragment shader
   if (glState) {
-    const { gl, prog, posAttr, posBuf, tex, uniforms } = glState;
+    const { gl, prog, posAttr, posBuf, tex, noiseTex, uniforms } = glState;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.useProgram(prog);
 
@@ -316,11 +337,15 @@ function drawConstellationSceneOnScreen(progress, alpha = 1.0) {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, offscreenCanvas);
-
     gl.uniform1i(uniforms.u_texture, 0);
+
+    // Bind tiled random noise texture (unit 1)
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+    gl.uniform1i(uniforms.u_noiseTex, 1);
+
     gl.uniform1f(uniforms.u_screenIndex, screenIndex);
     gl.uniform1f(uniforms.u_totalScreens, totalScreens);
-    gl.uniform1f(uniforms.u_seed, (celestialSeed % 100000) + 1.0);
     gl.uniform1f(uniforms.u_grainAmount, pal.isDark ? 0.055 : 0.075);
     gl.uniform1f(uniforms.u_alpha, alpha);
 

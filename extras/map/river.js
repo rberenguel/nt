@@ -339,6 +339,7 @@ class RiverNetwork {
 
     const pad = 36;
     let isSeaEstuary = false;
+    let isTributary = false;
     let endLake = null;
 
     // Max steps: 280 steps (~1960px) allows reaching the ocean anywhere on the map;
@@ -362,6 +363,26 @@ class RiverNetwork {
         isSeaEstuary = true;
         break;
       }
+
+      // 1b. Tributary Confluence: did we meet an existing river channel?
+      let joinedTributary = false;
+      if (totalDist > 45 && this.rivers && this.rivers.length > 0) {
+        for (let otherRiv of this.rivers) {
+          for (let oi = 3; oi < otherRiv.points.length; oi++) {
+            const op = otherRiv.points[oi];
+            if (Math.hypot(nextX - op.x, nextY - op.y) < 14) {
+              curX = op.x;
+              curY = op.y;
+              points.push({ x: curX, y: curY });
+              isTributary = true;
+              joinedTributary = true;
+              break;
+            }
+          }
+          if (joinedTributary) break;
+        }
+      }
+      if (joinedTributary) break;
 
       // 2. Neatline boundary check: stop right at the border
       if (nextX < pad || nextX > totalW - pad || nextY < pad || nextY > totalH - pad) {
@@ -411,8 +432,8 @@ class RiverNetwork {
       }
     }
 
-    // MANDATORY RULE: If the river did not reach the ocean, IT MUST FORM A SAFE LAKE!
-    if (!isSeaEstuary) {
+    // MANDATORY RULE: If the river did not reach the ocean or join a tributary, IT MUST FORM A SAFE LAKE!
+    if (!isSeaEstuary && !isTributary) {
       let lakePlaced = false;
       const sizeMultipliers = [1.0, 0.78, 0.58, 0.42];
 
@@ -459,6 +480,9 @@ class RiverNetwork {
         if (t > 0.80) {
           w += Math.pow((t - 0.80) / 0.20, 1.2) * 8.5 * flowPower;
         }
+      } else if (isTributary) {
+        // Mountain hairline (1.0px) -> Confluence mouth (4.5px)
+        w = 1.0 + Math.pow(t, 0.75) * 4.5 * flowPower;
       } else {
         // Mountain hairline (1.0px) -> Valley channel (5.5px) -> Lake entry (11.5px)
         w = 1.0 + Math.pow(t, 0.65) * 8.0 * flowPower;
@@ -478,6 +502,7 @@ class RiverNetwork {
       flowPower,
       lake: endLake,
       isSeaEstuary,
+      isTributary,
       avgY: points.reduce((acc, p) => acc + p.y, 0) / points.length,
     };
 
@@ -747,13 +772,24 @@ class RiverNetwork {
    * Render rivers and lakes
    */
   draw(ctx, palette, progress = 1.0) {
+    if (progress <= 0) return;
+
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // 1. Draw Rivers first (so river lines terminate naturally under the lake's opaque paper mask)
-    for (let river of this.rivers) {
-      const maxPts = Math.floor(river.points.length * progress);
+    // 1. Draw Rivers sequentially from source to mouth
+    const totalRivers = this.rivers.length;
+    const rivProg = Math.min(1.0, progress / 0.75);
+
+    for (let rIdx = 0; rIdx < totalRivers; rIdx++) {
+      const rStart = (rIdx / Math.max(1, totalRivers)) * 0.60;
+      const rSpan = 0.40;
+      const subProg = Math.max(0.0, Math.min(1.0, (rivProg - rStart) / rSpan));
+      if (subProg <= 0) continue;
+
+      const river = this.rivers[rIdx];
+      const maxPts = Math.floor(river.points.length * subProg);
       if (maxPts < 2) continue;
 
       const subLeft = river.leftBank ? river.leftBank.slice(0, maxPts) : null;
@@ -772,7 +808,7 @@ class RiverNetwork {
         // B. Atmospheric Watercolor Wash (Water Interior matching lakes & sea)
         if (palette.shadowWash) {
           ctx.fillStyle = palette.shadowWash;
-          ctx.globalAlpha = 0.22;
+          ctx.globalAlpha = 0.22 * subProg;
           ctx.beginPath();
           ctx.moveTo(subLeft[0].x, subLeft[0].y);
           for (let i = 1; i < subLeft.length; i++) ctx.lineTo(subLeft[i].x, subLeft[i].y);
@@ -786,7 +822,7 @@ class RiverNetwork {
         if (river.streamlines) {
           ctx.strokeStyle = palette.ink;
           for (let st of river.streamlines) {
-            const stPts = Math.floor(st.points.length * progress);
+            const stPts = Math.floor(st.points.length * subProg);
             if (stPts < 2) continue;
 
             ctx.lineWidth = st.lineWidth;
@@ -806,7 +842,7 @@ class RiverNetwork {
           ctx.strokeStyle = palette.ink;
           ctx.lineWidth = 0.70;
           ctx.globalAlpha = 0.55;
-          const maxFringes = Math.floor(river.bankFringes.length * progress);
+          const maxFringes = Math.floor(river.bankFringes.length * subProg);
           for (let i = 0; i < maxFringes; i++) {
             const f = river.bankFringes[i];
             ctx.beginPath();
@@ -839,87 +875,91 @@ class RiverNetwork {
       }
     }
 
-    // 2. Draw Lakes on top:
-    // Opaque paper base mask cleanly covers any incoming river lines!
-    for (let lake of this.lakes) {
-      if (lake.poly.length < 3) continue;
+    // 2. Draw Lakes on top as water collects in basins
+    if (progress > 0.40) {
+      const lakeProg = Math.min(1.0, (progress - 0.40) / 0.60);
+      for (let lake of this.lakes) {
+        if (lake.poly.length < 3) continue;
 
-      // 1. Opaque paper base mask
-      ctx.fillStyle = palette.paper;
-      ctx.beginPath();
-      ctx.moveTo(lake.poly[0].x, lake.poly[0].y);
-      for (let i = 1; i < lake.poly.length; i++) {
-        ctx.lineTo(lake.poly[i].x, lake.poly[i].y);
-      }
-      ctx.closePath();
-      ctx.fill();
+        const maxLakePts = Math.max(3, Math.floor(lake.poly.length * lakeProg));
+        const subLakePoly = lake.poly.slice(0, maxLakePts);
 
-      // 2. Atmospheric watercolor wash on lake surface
-      if (palette.shadowWash) {
-        ctx.fillStyle = palette.shadowWash;
-        ctx.globalAlpha = 0.18;
+        // 1. Opaque paper base mask
+        ctx.fillStyle = palette.paper;
         ctx.beginPath();
-        ctx.moveTo(lake.poly[0].x, lake.poly[0].y);
-        for (let i = 1; i < lake.poly.length; i++) {
-          ctx.lineTo(lake.poly[i].x, lake.poly[i].y);
+        ctx.moveTo(subLakePoly[0].x, subLakePoly[0].y);
+        for (let i = 1; i < subLakePoly.length; i++) {
+          ctx.lineTo(subLakePoly[i].x, subLakePoly[i].y);
         }
         ctx.closePath();
         ctx.fill();
-        ctx.globalAlpha = 1.0;
-      }
 
-      // 3. Concentric Waterlining Echo Contours (radiating inward into the water)
-      if (lake.waterlines) {
-        ctx.strokeStyle = palette.ink;
-        for (let wl of lake.waterlines) {
-          const maxPts = Math.floor(wl.points.length * progress);
-          if (maxPts < 2) continue;
-
-          ctx.lineWidth = wl.lineWidth;
-          ctx.globalAlpha = wl.opacity;
+        // 2. Atmospheric watercolor wash on lake surface
+        if (palette.shadowWash) {
+          ctx.fillStyle = palette.shadowWash;
+          ctx.globalAlpha = 0.18 * lakeProg;
           ctx.beginPath();
-          ctx.moveTo(wl.points[0].x, wl.points[0].y);
-          for (let i = 1; i < maxPts; i++) {
-            ctx.lineTo(wl.points[i].x, wl.points[i].y);
+          ctx.moveTo(subLakePoly[0].x, subLakePoly[0].y);
+          for (let i = 1; i < subLakePoly.length; i++) {
+            ctx.lineTo(subLakePoly[i].x, subLakePoly[i].y);
           }
-          if (progress >= 1.0) {
+          ctx.closePath();
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+
+        // 3. Concentric Waterlining Echo Contours (radiating inward into the water)
+        if (lake.waterlines) {
+          ctx.strokeStyle = palette.ink;
+          for (let wl of lake.waterlines) {
+            const maxPts = Math.floor(wl.points.length * lakeProg);
+            if (maxPts < 2) continue;
+
+            ctx.lineWidth = wl.lineWidth;
+            ctx.globalAlpha = wl.opacity;
+            ctx.beginPath();
+            ctx.moveTo(wl.points[0].x, wl.points[0].y);
+            for (let i = 1; i < maxPts; i++) {
+              ctx.lineTo(wl.points[i].x, wl.points[i].y);
+            }
+            if (lakeProg >= 1.0) {
+              ctx.closePath();
+            }
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1.0;
+        }
+
+        // 4. Intaglio Shoreline Fringe Ticks (short pen marks pointing into water)
+        if (lake.coastFringes) {
+          ctx.strokeStyle = palette.ink;
+          ctx.lineWidth = 0.75;
+          ctx.globalAlpha = 0.65;
+          const maxFringes = Math.floor(lake.coastFringes.length * lakeProg);
+          for (let i = 0; i < maxFringes; i++) {
+            const f = lake.coastFringes[i];
+            ctx.beginPath();
+            ctx.moveTo(f.x1, f.y1);
+            ctx.lineTo(f.x2, f.y2);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1.0;
+        }
+
+        // 5. Primary Shoreline Pen Stroke (Bold, crisp cartographic shore boundary)
+        ctx.strokeStyle = palette.ink;
+        ctx.lineWidth = 1.8;
+        if (subLakePoly.length >= 2) {
+          ctx.beginPath();
+          ctx.moveTo(subLakePoly[0].x, subLakePoly[0].y);
+          for (let i = 1; i < subLakePoly.length; i++) {
+            ctx.lineTo(subLakePoly[i].x, subLakePoly[i].y);
+          }
+          if (lakeProg >= 1.0) {
             ctx.closePath();
           }
           ctx.stroke();
         }
-        ctx.globalAlpha = 1.0;
-      }
-
-      // 4. Intaglio Shoreline Fringe Ticks (short pen marks pointing into water)
-      if (lake.coastFringes) {
-        ctx.strokeStyle = palette.ink;
-        ctx.lineWidth = 0.75;
-        ctx.globalAlpha = 0.65;
-        const maxFringes = Math.floor(lake.coastFringes.length * progress);
-        for (let i = 0; i < maxFringes; i++) {
-          const f = lake.coastFringes[i];
-          ctx.beginPath();
-          ctx.moveTo(f.x1, f.y1);
-          ctx.lineTo(f.x2, f.y2);
-          ctx.stroke();
-        }
-        ctx.globalAlpha = 1.0;
-      }
-
-      // 5. Primary Shoreline Pen Stroke (Bold, crisp cartographic shore boundary)
-      ctx.strokeStyle = palette.ink;
-      ctx.lineWidth = 1.8;
-      const maxPts = Math.floor(lake.poly.length * progress);
-      if (maxPts >= 2) {
-        ctx.beginPath();
-        ctx.moveTo(lake.poly[0].x, lake.poly[0].y);
-        for (let i = 1; i < maxPts; i++) {
-          ctx.lineTo(lake.poly[i].x, lake.poly[i].y);
-        }
-        if (progress >= 1.0) {
-          ctx.closePath();
-        }
-        ctx.stroke();
       }
     }
 

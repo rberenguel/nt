@@ -532,6 +532,10 @@ class MountainPeak {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
+    if (progress < 1.0) {
+      ctx.globalAlpha = Math.min(1.0, progress * 1.35);
+    }
+
     // 1. OPAQUE PAPER OCCLUSION MASK
     ctx.fillStyle = palette.paper;
     ctx.beginPath();
