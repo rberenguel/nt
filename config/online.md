@@ -179,6 +179,18 @@
 - url: extras/constellation/index.html
 - screens: 2
 
+## Parquetry
+- url: extras/parquetry/index.html
+- screens: 2
+
+## Kintsugi
+- url: extras/kintsugi/index.html
+- screens: 2
+
+## Topography
+- url: extras/topography/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -197,6 +209,9 @@
 - Etching
 - Map
 - Constellation
+- Parquetry
+- Kintsugi
+- Topography
 
 # 8 ball
 ## 8
