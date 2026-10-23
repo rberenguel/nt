@@ -584,16 +584,23 @@ function stitchSegmentsToPolylines(segments) {
         smoothed.push({ x: smoothed[0].x, y: smoothed[0].y });
       }
 
-      // 2. Precompute fine cumulative arc-lengths (points now spaced ~2px apart)
+      // 2. Precompute fine cumulative arc-lengths and horizontal bounding box
       const n = smoothed.length;
       const dists = new Float32Array(n);
       dists[0] = 0;
+      let minX = smoothed[0].x;
+      let maxX = smoothed[0].x;
       for (let d = 1; d < n; d++) {
-        dists[d] = dists[d - 1] + Math.hypot(smoothed[d].x - smoothed[d - 1].x, smoothed[d].y - smoothed[d - 1].y);
+        const px = smoothed[d].x;
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        dists[d] = dists[d - 1] + Math.hypot(px - smoothed[d - 1].x, smoothed[d].y - smoothed[d - 1].y);
       }
       smoothed._dists = dists;
       smoothed._totalLen = dists[n - 1];
       smoothed._isClosed = isClosed;
+      smoothed._minX = minX;
+      smoothed._maxX = maxX;
 
       // Discard tiny micro-speckles under 28px
       if (smoothed._totalLen >= 28) {
@@ -678,7 +685,7 @@ function appendPolylineToPath(ctx, poly, t) {
 // ── Drawing Functions ────────────────────────────────────────────────────────
 
 // 1. Base Graticule Grid & Coordinate Ticks with Incremental Numbers
-function drawGraticuleGrid(ctx, totalW, totalH, margin, pal, progress, runFont) {
+function drawGraticuleGrid(ctx, totalW, totalH, margin, pal, progress, runFont, minVisX = -Infinity, maxVisX = Infinity) {
   const gridSpacing = 160;
   ctx.save();
   ctx.strokeStyle = pal.inkFaint;
@@ -697,8 +704,11 @@ function drawGraticuleGrid(ctx, totalW, totalH, margin, pal, progress, runFont) 
 
   for (let c = 1; c <= numCols; c++) {
     const x = margin + c * gridSpacing;
+    const inViewport = (x >= minVisX - 50 && x <= maxVisX + 50);
+
     for (let r = 1; r <= numRows; r++) {
       if (count++ >= currentTicks) break;
+      if (!inViewport) continue;
       const y = margin + r * gridSpacing;
 
       // Small crosshair tick '+'
@@ -720,7 +730,7 @@ function drawGraticuleGrid(ctx, totalW, totalH, margin, pal, progress, runFont) 
 }
 
 // 2. Waterlines (Echo contours traced continuously around lakes/fjords)
-function drawWaterlines(ctx, waterlines, pal, progress) {
+function drawWaterlines(ctx, waterlines, pal, progress, minVisX = -Infinity, maxVisX = Infinity) {
   if (!waterlines || waterlines.length === 0 || progress <= 0) return;
   ctx.save();
   ctx.strokeStyle = pal.waterLine || pal.contour;
@@ -736,6 +746,9 @@ function drawWaterlines(ctx, waterlines, pal, progress) {
     ctx.globalAlpha = wl.opacity * Math.min(1.0, ringT * 1.5);
     ctx.beginPath();
     for (const poly of wl.polylines) {
+      if (poly._maxX !== undefined && (poly._maxX < minVisX - 10 || poly._minX > maxVisX + 10)) {
+        continue;
+      }
       appendPolylineToPath(ctx, poly, ringT);
     }
     ctx.stroke();
@@ -744,7 +757,7 @@ function drawWaterlines(ctx, waterlines, pal, progress) {
 }
 
 // 3. Contour Lines: Smooth Sub-Pixel Continuous Tracing (Batched for 60 FPS)
-function drawContourLines(ctx, scene, pal, progress) {
+function drawContourLines(ctx, scene, pal, progress, minVisX = -Infinity, maxVisX = Infinity) {
   const { contourLevels, runFont } = scene;
   if (!contourLevels || progress <= 0) return;
 
@@ -769,6 +782,11 @@ function drawContourLines(ctx, scene, pal, progress) {
       const poly = cl.polylines[pIdx];
       if (poly.length < 2) continue;
 
+      // Viewport culling: skip polylines completely outside visible screen
+      if (poly._maxX !== undefined && (poly._maxX < minVisX - 10 || poly._minX > maxVisX + 10)) {
+        continue;
+      }
+
       if (isIndex) {
         indexPolys.push({ poly, t: levelProgress });
       } else {
@@ -777,11 +795,14 @@ function drawContourLines(ctx, scene, pal, progress) {
 
       // Check if index label should appear once the curve has reached the halfway mark
       if (isIndex && poly.length > 25 && l % 2 === 0 && levelProgress >= 0.55) {
-        labelsToDraw.push({
-          poly,
-          cl,
-          alpha: Math.min(1.0, (levelProgress - 0.55) / 0.25),
-        });
+        const midPt = poly[Math.floor(poly.length * 0.5)];
+        if (midPt.x >= minVisX - 30 && midPt.x <= maxVisX + 30) {
+          labelsToDraw.push({
+            poly,
+            cl,
+            alpha: Math.min(1.0, (levelProgress - 0.55) / 0.25),
+          });
+        }
       }
     }
   }
@@ -859,7 +880,7 @@ function drawContourLines(ctx, scene, pal, progress) {
 }
 
 // 4. Imhof Slope Hachures: Progressively Carving Downhill
-function drawImhofHachures(ctx, hachures, pal, progress) {
+function drawImhofHachures(ctx, hachures, pal, progress, minVisX = -Infinity, maxVisX = Infinity) {
   if (!hachures || hachures.length === 0 || progress <= 0) return;
   ctx.save();
   ctx.strokeStyle = pal.hachure || pal.ink;
@@ -870,6 +891,9 @@ function drawImhofHachures(ctx, hachures, pal, progress) {
   ctx.beginPath();
   for (let i = 0; i < total; i++) {
     const h = hachures[i];
+    if (Math.max(h.x1, h.x2) < minVisX - 10 || Math.min(h.x1, h.x2) > maxVisX + 10) {
+      continue;
+    }
     const hStart = (i / total) * 0.65;
     const hDur = 0.35;
     const hT = Math.max(0.0, Math.min(1.0, (progress - hStart) / hDur));
@@ -889,7 +913,7 @@ function drawImhofHachures(ctx, hachures, pal, progress) {
 }
 
 // 5. Summits & Spot Heights (Meshing naturally without square white background)
-function drawSummitsAndPasses(ctx, scene, pal, progress) {
+function drawSummitsAndPasses(ctx, scene, pal, progress, minVisX = -Infinity, maxVisX = Infinity) {
   const { summits, passes, runFont } = scene;
   if (progress <= 0) return;
 
@@ -899,6 +923,7 @@ function drawSummitsAndPasses(ctx, scene, pal, progress) {
   const summitCount = Math.floor(summits.length * progress);
   for (let i = 0; i < summitCount; i++) {
     const s = summits[i];
+    if (s.x < minVisX - 80 || s.x > maxVisX + 80) continue;
 
     // Prominent Peak Symbol: Sharp solid ▲ directly on mountain terrain
     ctx.fillStyle = pal.indexContour || pal.ink;
@@ -944,6 +969,7 @@ function drawSummitsAndPasses(ctx, scene, pal, progress) {
   const passCount = Math.floor(passes.length * progress);
   for (let i = 0; i < passCount; i++) {
     const p = passes[i];
+    if (p.x < minVisX - 70 || p.x > maxVisX + 70) continue;
 
     // Col symbol: )(
     ctx.save();
@@ -1194,7 +1220,7 @@ function drawReliefWash(ctx, scene, pal, progress) {
   ctx.save();
   ctx.globalAlpha = Math.min(1.0, progress * 1.5) * (pal.isDark ? 0.25 : 0.45);
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
+  ctx.imageSmoothingQuality = "low";
   ctx.drawImage(scene.washCanvas, 0, 0, totalW, totalH);
   ctx.restore();
 }

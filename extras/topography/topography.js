@@ -1,5 +1,5 @@
 // Procedural Topographic Elevation Maps & Orographic Relief Cartography
-// Multi-screen BroadcastChannel coordination with WebGL aquatint quad.
+// Dual-screen BroadcastChannel coordination with WebGL aquatint rosin noise quad.
 
 const params = new URLSearchParams(window.location.search);
 const screenIndex = parseInt(params.get("screen") || "0", 10);
@@ -350,7 +350,7 @@ function drawTopographyOnScreen(progress, alpha = 1.0) {
 
     gl.uniform1f(uniforms.u_screenIndex, screenIndex);
     gl.uniform1f(uniforms.u_totalScreens, totalScreens);
-    gl.uniform1f(uniforms.u_grainAmount, pal.isDark ? 0.055 : 0.075);
+    gl.uniform1f(uniforms.u_grainAmount, pal.isDark ? 0.055 : 0.080);
     gl.uniform1f(uniforms.u_alpha, alpha);
 
     const paperRgb = hexToRgb01(pal.paper);
@@ -388,7 +388,7 @@ function nextTopography() {
   renderedFinalSeed = null;
   generateMap(canvas.width * totalScreens, canvas.height, topoSeed);
   phase = "drawing";
-  phaseStart = performance.now();
+  phaseStart = 0;
   currentProgress = 0.0;
   currentAlpha = 1.0;
 }
@@ -396,7 +396,22 @@ function nextTopography() {
 // ── Primary Animation Loop ────────────────────────────────────────────────────
 function primaryLoop(timestamp) {
   if (!initialDelayDone) {
-    if (!initialStartTime) initialStartTime = timestamp;
+    if (initialStartTime === 0) initialStartTime = timestamp;
+    currentProgress = 0.0;
+    currentAlpha = 1.0;
+    drawTopographyOnScreen(0.0, 1.0);
+
+    bc.postMessage({
+      cmd: "sync",
+      seed: topoSeed,
+      paletteIdx,
+      phase: "drawing",
+      progress: 0.0,
+      alpha: 1.0,
+      paused,
+      showBezel,
+    });
+
     if (timestamp - initialStartTime >= INITIAL_DELAY) {
       initialDelayDone = true;
       phaseStart = timestamp;
@@ -406,15 +421,15 @@ function primaryLoop(timestamp) {
   }
 
   if (!paused) {
-    const elapsed = timestamp - phaseStart;
-
     if (phase === "drawing") {
-      const t = Math.min(1.0, elapsed / DRAW_DURATION);
-      currentProgress = t;
+      if (phaseStart === 0) phaseStart = timestamp;
+      const elapsed = Math.max(0, timestamp - phaseStart);
+      currentProgress = Math.min(1.0, elapsed / DRAW_DURATION);
       currentAlpha = 1.0;
-      drawTopographyOnScreen(currentProgress, currentAlpha);
 
-      if (t >= 1.0) {
+      drawTopographyOnScreen(currentProgress, 1.0);
+
+      if (currentProgress >= 1.0) {
         phase = "pausing";
         phaseStart = timestamp;
       }
@@ -423,14 +438,14 @@ function primaryLoop(timestamp) {
       currentAlpha = 1.0;
       drawTopographyOnScreen(1.0, 1.0);
 
-      if (elapsed >= PAUSE_DURATION) {
+      if (timestamp - phaseStart >= PAUSE_DURATION) {
         phase = "fading";
         phaseStart = timestamp;
       }
     } else if (phase === "fading") {
-      const t = Math.min(1.0, elapsed / FADE_DURATION);
       currentProgress = 1.0;
-      currentAlpha = 1.0 - t;
+      const t = (timestamp - phaseStart) / FADE_DURATION;
+      currentAlpha = Math.max(0.0, 1.0 - t);
       drawTopographyOnScreen(1.0, currentAlpha);
 
       if (t >= 1.0) {
@@ -492,7 +507,7 @@ bc.onmessage = (ev) => {
     return;
   }
 
-  // Secondary display client
+  // Secondary display client (100% matched to map.js architecture)
   if (data.cmd === "sync") {
     if (data.seed !== topoSeed) {
       topoSeed = data.seed;

@@ -125,23 +125,33 @@ function getLaidPattern(ctx) {
   return laidPattern;
 }
 
-// Deterministic Aquatint Rosin Granulation (2D fallback when WebGL is unavailable)
-function applyAquatintGrain(targetCtx, w, h, amount, seed) {
-  const imgData = targetCtx.getImageData(0, 0, w, h);
-  const data = imgData.data;
-  const rng = createRNG(seed ^ 0x9e3779b9);
-  const len = data.length;
-  for (let i = 0; i < len; i += 4) {
-    const n = (rng() - 0.5) * (amount * 2);
-    data[i] = Math.max(0, Math.min(255, data[i] + n));
-    data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + n));
-    data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + n));
+// Deterministic Aquatint Rosin Granulation Pattern (Hardware-Accelerated 2D)
+let grainPattern = null;
+function getGrainPattern(ctx) {
+  if (typeof document === "undefined") return null;
+  if (!grainPattern && ctx) {
+    const gCanvas = document.createElement("canvas");
+    gCanvas.width = 256;
+    gCanvas.height = 256;
+    const gCtx = gCanvas.getContext("2d");
+    const imgData = gCtx.createImageData(256, 256);
+    const data = imgData.data;
+    for (let i = 0; i < 256 * 256; i++) {
+      const n = (Math.random() - 0.5) * 55;
+      const idx = i * 4;
+      data[idx] = 128 + n;
+      data[idx + 1] = 128 + n;
+      data[idx + 2] = 128 + n;
+      data[idx + 3] = 26; // Subtle aquatint grain tooth
+    }
+    gCtx.putImageData(imgData, 0, 0);
+    grainPattern = ctx.createPattern(gCanvas, "repeat");
   }
-  targetCtx.putImageData(imgData, 0, 0);
+  return grainPattern;
 }
 
 if (typeof globalThis !== "undefined") {
   globalThis.TOPOGRAPHY_PALETTES = TOPOGRAPHY_PALETTES;
   globalThis.getLaidPattern = getLaidPattern;
-  globalThis.applyAquatintGrain = applyAquatintGrain;
+  globalThis.getGrainPattern = getGrainPattern;
 }
