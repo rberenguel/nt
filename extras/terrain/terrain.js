@@ -659,6 +659,9 @@ function nextTerrain() {
   startLandscapeGeneration(totalW, totalH, terrainSeed);
 }
 
+// ── Shared sync state for secondary (updated by BroadcastChannel, consumed by rAF loop) ──
+let syncState = null;
+
 // ── Secondary Screen Receiver ─────────────────────────────────────────────────
 bc.onmessage = (event) => {
   const data = event.data;
@@ -695,8 +698,20 @@ bc.onmessage = (event) => {
     return;
   }
 
-  // Secondary Display Client
+  // Secondary Display Client — just stash state, do NOT generate or draw here
   if (data.cmd === "sync") {
+    syncState = data;
+  }
+};
+
+// ── Secondary Animation Loop (runs independently at its own frame pace) ──────
+function secondaryLoop(now) {
+  const dt = Math.min(0.1, (now - lastFrameTime) / 1000.0);
+  lastFrameTime = now;
+
+  if (syncState) {
+    const data = syncState;
+
     if (data.seed !== terrainSeed) {
       terrainSeed = data.seed;
       paletteIdx = data.paletteIdx;
@@ -707,10 +722,6 @@ bc.onmessage = (event) => {
       paletteIdx = data.paletteIdx;
     }
 
-    if (data.phase === "drawing") {
-      stepLandscapeGeneration();
-    }
-
     currentAlpha = data.alpha;
     animTime = data.time;
     phase = data.phase;
@@ -718,9 +729,33 @@ bc.onmessage = (event) => {
     motionEnabled = data.motionEnabled;
     showBezel = data.showBezel;
 
-    drawFrame();
+    syncState = null; // consumed
   }
-};
+
+  if (!paused) {
+    animTime += dt;
+
+    if (phase === "drawing") {
+      stepLandscapeGeneration();
+    } else if (phase === "linger") {
+      phaseTimer += dt;
+      if (phaseTimer >= 18.0) {
+        phase = "fade";
+        phaseTimer = 0.0;
+      }
+    } else if (phase === "fade") {
+      phaseTimer += dt;
+      currentAlpha = Math.max(0.0, 1.0 - phaseTimer / 1.5);
+      if (phaseTimer >= 1.5) {
+        // secondary follows primary into next terrain via sync seed change
+        phaseTimer = 0.0;
+      }
+    }
+  }
+
+  drawFrame();
+  requestAnimationFrame(secondaryLoop);
+}
 
 // ── Window Resize & Screenshots ───────────────────────────────────────────────
 function resize() {
@@ -805,5 +840,7 @@ resize();
 if (isPrimary) {
   requestAnimationFrame(primaryLoop);
 } else {
+  lastFrameTime = performance.now();
   bc.postMessage({ cmd: "requestSync" });
+  requestAnimationFrame(secondaryLoop);
 }
