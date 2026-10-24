@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Terrain</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #eae5d9;
+    }
+    #terrainCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="terrainCanvas"></canvas>
+  <script src="palettes.js"></script>
+  <script src="noise.js"></script>
+  <script src="simulation.js"></script>
+  <script src="terrain.js"></script>
+</body>
+</html>

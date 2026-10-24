@@ -191,6 +191,10 @@
 - url: extras/topography/index.html
 - screens: 2
 
+## Terrain
+- url: extras/terrain/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -212,6 +216,7 @@
 - Parquetry
 - Kintsugi
 - Topography
+- Terrain
 
 # 8 ball
 ## 8
