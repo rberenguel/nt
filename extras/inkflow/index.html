@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inkflow</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #e8e2d5;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    #hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      color: rgba(60, 50, 40, 0.85);
+      background: rgba(232, 226, 213, 0.72);
+      border: 1px solid rgba(120, 100, 80, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      pointer-events: none;
+      user-select: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.3s ease;
+    }
+    #hud.hidden { opacity: 0; }
+    .hud-key { color: #8b4513; font-weight: 600; }
+    .hud-val { color: #2f4f4f; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div><strong>Inkflow</strong> — flowing pigment network</div>
+    <div>Screen: <span id="hudScreen" class="hud-val">0 / 1</span> | Master: <span id="hudMaster" class="hud-val">YES</span></div>
+    <div>Agents: <span id="hudAgents" class="hud-val">30000</span> | Grid: <span id="hudGrid" class="hud-val">1024</span></div>
+    <div><span class="hud-key">[Space/Click]</span> New seed | <span class="hud-key">[C]</span> Palette: <span id="hudPalette" class="hud-val">Warm Earth</span></div>
+    <div><span class="hud-key">[R]</span> Clear | <span class="hud-key">[P]</span> Pause | <span class="hud-key">[B]</span> Bezel: <span id="hudBezel" class="hud-val">OFF</span></div>
+    <div><span class="hud-key">[S]</span> Save PNG | <span class="hud-key">[H]</span> Toggle HUD | <span class="hud-key">[Q]</span> Quit</div>
+  </div>
+  <canvas id="glcanvas"></canvas>
+  <script src="inkflow.js"></script>
+</body>
+</html>

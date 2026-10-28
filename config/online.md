@@ -195,6 +195,10 @@
 - url: extras/terrain/index.html
 - screens: 2
 
+## Inkflow
+- url: extras/inkflow/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -217,6 +221,7 @@
 - Kintsugi
 - Topography
 - Terrain
+- Inkflow
 
 # 8 ball
 ## 8
