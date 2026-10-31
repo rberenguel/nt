@@ -199,6 +199,10 @@
 - url: extras/inkflow/index.html
 - screens: 2
 
+## Flora
+- url: extras/flora/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning

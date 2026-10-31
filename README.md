@@ -268,21 +268,27 @@ Make sure you match the size of the embed (in the URL) with the size of the ifra
 ## Storm
 - url: extras/storm/screensaver.html?mode=storm
 - screens: 2
+
+## Flora
+- url: extras/flora/index.html
+- screens: 1
 ```
 
 * Example links in your links file:
     * `` `mx` [Matrix screensaver](#screensaver:Matrix) ``
     * `` `li` [Lightning](#screensaver:Lightning) ``
     * `` `st` [Storm](#screensaver:Storm) ``
-* The included screensavers (`extras/matrix/`, `extras/storm/`) support:
+    * `` `fl` [Flora screensaver](#screensaver:Flora) ``
+* The included screensavers (`extras/matrix/`, `extras/storm/`, `extras/flora/`) support:
     * Click or any key to enter fullscreen
     * `q` to close the window
     * `f` to toggle fullscreen
     * `,` / `.` to adjust brightness (darker/brighter)
+* The Flora screensaver (`extras/flora/`) is a procedural botanical margin ported from [tikz-flora](https://github.com/wn-mitch/tikz-flora). Controls: `N`/`Space` new flora, `S` save PNG, `F`/click fullscreen, `Q` quit.
 * The Storm screensaver has two modes:
     * `lightning` - Dark background with lightning bolts only
     * `storm` - Full storm with rain, wind, and lightning
-* Multi-monitor support: flashes are synchronized across all screens, with lightning bolts randomly appearing on one screen at a time
+* Multi-monitor support: flashes are synchronized across all screens, with lightning bolts randomly appearing on one screen at a time. Flora broadcasts the same seed to all screens via `BroadcastChannel`.
 
 #### Audio stuff
 

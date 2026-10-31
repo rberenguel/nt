@@ -15,6 +15,7 @@
 ## [Dunes](#screensaver:Dunes)
 ## [Etching](#screensaver:Etching)
 ## [Map](#screensaver:Map)
+## [Flora](#screensaver:Flora)
 ## [Random](#screensaver:Random)
 
 ---
