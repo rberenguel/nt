@@ -94,11 +94,11 @@ function makeSpec() {
 }
 
 function scheduleAdvance() {
-  if (advanceTimer) return;
+  if (advanceTimer || !isPrimary) return;
   advanceTimer = setTimeout(() => {
     advanceTimer = null;
     next();
-    if (isPrimary) broadcast();
+    channel.postMessage({ cmd: 'next' });
   }, ADVANCE_DELAY);
 }
 
@@ -204,21 +204,26 @@ function toggleFullscreen() {
 const channel = new BroadcastChannel('flora-screensaver');
 channel.onmessage = e => {
   const d = e.data;
-  let changed = false;
-  if (d.seed !== undefined && d.seed !== seed) { seed = d.seed; changed = true; }
-  if (d.paletteIdx !== undefined && d.paletteIdx !== paletteIdx) { paletteIdx = d.paletteIdx; changed = true; }
-  if (changed) draw();
+  if (d.cmd === 'next') { next(); }
+  else if (d.cmd === 'requestNext' && isPrimary) { next(); channel.postMessage({ cmd: 'next' }); }
+  else if (d.paletteIdx !== undefined && d.paletteIdx !== paletteIdx) {
+    paletteIdx = d.paletteIdx;
+    draw();
+  }
   if (d.quit) window.close();
 };
 
 function broadcast() {
-  channel.postMessage({ seed, paletteIdx, quit: false });
+  channel.postMessage({ paletteIdx, quit: false });
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'q' || e.key === 'Q') { channel.postMessage({ quit: true }); window.close(); }
-  else if (e.key === 'n' || e.key === 'N' || e.key === ' ') { next(); if (isPrimary) broadcast(); }
-  else if (e.key === 'c' || e.key === 'C') { cyclePalette(); if (isPrimary) broadcast(); }
+  else if (e.key === 'n' || e.key === 'N' || e.key === ' ') {
+    if (isPrimary) { next(); channel.postMessage({ cmd: 'next' }); }
+    else channel.postMessage({ cmd: 'requestNext' });
+  }
+  else if (e.key === 'c' || e.key === 'C') { cyclePalette(); broadcast(); }
   else if (e.key === 'p' || e.key === 'P') { paused = !paused; if (!paused) requestAnimationFrame(nextFrame); }
   else if (e.key === 's' || e.key === 'S') save();
   else if (e.key === 'f' || e.key === 'F') toggleFullscreen();
