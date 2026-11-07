@@ -203,6 +203,10 @@
 - url: extras/flora/index.html
 - screens: 2
 
+## Caustics
+- url: extras/caustics/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -226,6 +230,7 @@
 - Topography
 - Terrain
 - Inkflow
+- Caustics
 
 # 8 ball
 ## 8
