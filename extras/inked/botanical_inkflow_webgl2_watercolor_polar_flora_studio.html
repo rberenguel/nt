@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botanical Inkflow — WebGL2 Polar Flora & Pigment Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-serif: 'Instrument Serif', Georgia, serif;
+            --font-sans: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #dfd8c8;
+            font-family: var(--font-sans);
+            user-select: none;
+        }
+        .serif-title { font-family: var(--font-serif); }
+        .mono-text { font-family: var(--font-mono); }
+
+        #glcanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        /* Custom Range Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(120, 100, 80, 0.22);
+            border-radius: 999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #9e2a2b;
+            cursor: pointer;
+            border: 2px solid #faf6f0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            transition: transform 0.12s ease, background-color 0.12s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.18);
+            background: #7c1d1e;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(100, 85, 70, 0.25);
+            border-radius: 999px;
+        }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- WebGL2 Fullscreen Canvas -->
+    <canvas id="glcanvas"></canvas>
+
+    <!-- Top-Right Quick Status HUD (Matches Inkflow Aesthetic) -->
+    <div id="hud" class="fixed top-4 right-4 z-20 bg-[#ebe5d8]/85 backdrop-blur-md border border-[#786450]/25 rounded-xl px-4 py-3 text-[11px] mono-text text-[#3c3228] shadow-lg pointer-events-none transition-opacity duration-300 leading-relaxed">
+        <div class="flex items-center justify-between gap-4 border-b border-[#786450]/15 pb-1.5 mb-1.5">
+            <span class="font-semibold text-[#2a211b] tracking-tight">INKFLOW // BOTANICAL FLORA</span>
+            <span id="hudStatusBadge" class="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#b52b20]/15 text-[#8b261d] font-medium">
+                <span id="hudStatusDot" class="w-2 h-2 rounded-full bg-[#b52b20] animate-ping"></span>
+                <span id="hudStatusText">DRAWING WET INK...</span>
+            </span>
+        </div>
+        <div>Agents: <span id="hudAgents" class="text-[#2f4f4f] font-medium">0</span> | Wetness: <span id="hudWetness" class="text-[#8b4513] font-medium">100%</span></div>
+        <div>Palette: <span id="hudPalette" class="text-[#8b4513] font-medium">Classic Crimson &amp; Emerald</span> | Seed: <span id="hudSeed" class="text-[#2f4f4f]">849204</span></div>
+        <div class="text-[10px] text-[#6b5b4b] mt-1">
+            <span class="font-semibold text-[#8b4513]">[Click]</span> Stamp Bloom &middot;
+            <span class="font-semibold text-[#8b4513]">[Drag]</span> Dip-Pen &middot;
+            <span class="font-semibold text-[#8b4513]">[Space]</span> Redraw &middot;
+            <span class="font-semibold text-[#8b4513]">[S]</span> Save &middot;
+            <span class="font-semibold text-[#8b4513]">[H]</span> UI
+        </div>
+    </div>
+
+    <!-- Toggle Sidebar Button (Always accessible) -->
+    <button id="toggleSidebarBtn" title="Toggle Studio Panel (H)" class="fixed top-4 left-4 z-40 bg-[#ebe5d8]/90 hover:bg-[#e2dac9] text-[#3c3228] border border-[#786450]/30 p-2.5 rounded-xl shadow-md backdrop-blur-md transition flex items-center gap-2 text-xs font-medium cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#8b261d]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        </svg>
+        <span id="toggleBtnLabel" class="hidden sm:inline">Studio Controls</span>
+    </button>
+
+    <!-- Collapsible Left Studio Panel -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-80 sm:w-96 z-30 p-3 pt-16 flex flex-col pointer-events-none transition-transform duration-300 translate-x-0">
+        <div class="bg-[#f2ede2]/92 backdrop-blur-xl border border-[#786450]/30 rounded-2xl shadow-2xl flex flex-col h-full pointer-events-auto overflow-hidden text-[#382e24]">
+
+            <!-- Header -->
+            <div class="px-5 pt-4 pb-3 border-b border-[#786450]/15 bg-[#e6dfd1]/50 flex items-baseline justify-between">
+                <div>
+                    <h1 class="serif-title text-2xl sm:text-3xl tracking-tight text-[#241c15] leading-none">Botanical Inkflow</h1>
+                    <p class="text-[10px] uppercase tracking-widest text-[#6e5d4f] mt-1 font-semibold">Polar Sine &amp; Beer-Lambert Pigment</p>
+                </div>
+                <span id="bloomCounter" class="mono-text text-[11px] bg-[#d8cfc0] text-[#3c3228] px-2 py-0.5 rounded-md font-medium">5 blooms</span>
+            </div>
+
+            <!-- Scrollable Controls -->
+            <div class="p-4 space-y-4 overflow-y-auto custom-scroll flex-1 text-xs">
+
+                <!-- Primary Actions -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="newCompositionBtn" class="col-span-2 py-2.5 px-4 bg-[#9e2a2b] hover:bg-[#822021] active:scale-[0.99] text-[#faf6f0] font-medium rounded-xl shadow-md shadow-[#9e2a2b]/20 flex items-center justify-center gap-2 transition text-xs cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Draw New Floral Composition (Space)</span>
+                    </button>
+
+                    <button id="reInkBtn" class="py-2 px-3 bg-[#dfd7c8] hover:bg-[#d2c8b5] text-[#382e24] font-medium rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#786450]/20">
+                        <span>Re-Ink Layer</span>
+                    </button>
+
+                    <button id="pauseBtn" class="py-2 px-3 bg-[#dfd7c8] hover:bg-[#d2c8b5] text-[#382e24] font-medium rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#786450]/20">
+                        <span id="pauseBtnText">Freeze Ink (P)</span>
+                    </button>
+                </div>
+
+                <!-- Click Action Mode -->
+                <div class="flex items-center justify-between bg-[#e6dfd1]/70 p-2 rounded-xl border border-[#786450]/15">
+                    <span class="font-medium text-[#4a3e32] pl-1">Canvas Click/Drag:</span>
+                    <div class="flex gap-1">
+                        <button id="modeBloomBtn" class="px-2.5 py-1 rounded-lg bg-[#9e2a2b] text-white font-medium text-[11px] transition cursor-pointer">Stamp Bloom</button>
+                        <button id="modeBrushBtn" class="px-2.5 py-1 rounded-lg bg-transparent text-[#4a3e32] hover:bg-[#d8cfc0] font-medium text-[11px] transition cursor-pointer">Dip-Pen Sketch</button>
+                    </div>
+                </div>
+
+                <!-- Palette & Archetype -->
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label class="font-semibold text-[#5c4d3c] uppercase tracking-wider text-[10px] block mb-1">Botanical Palette Selector (Beer-Lambert K)</label>
+                        <select id="paletteSelect" class="w-full bg-[#faf6f0] border border-[#786450]/30 rounded-xl px-3 py-2 text-[#2d241c] font-medium focus:outline-none focus:border-[#9e2a2b] cursor-pointer">
+                            <option value="0">Classic Crimson &amp; Emerald Leaf</option>
+                            <option value="1">Burnt Sienna &amp; Indigo Leaf</option>
+                            <option value="2">Hibiscus Scarlet &amp; Forest</option>
+                            <option value="3">Vintage Ochre &amp; Olive</option>
+                            <option value="4">Sumi-e Botanical</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="font-semibold text-[#5c4d3c] uppercase tracking-wider text-[10px] block mb-1">Floral Geometry Archetype</label>
+                        <select id="archetypeSelect" class="w-full bg-[#faf6f0] border border-[#786450]/30 rounded-xl px-3 py-2 text-[#2d241c] font-medium focus:outline-none focus:border-[#9e2a2b] cursor-pointer">
+                            <option value="mixed">Mixed Botanical Sketchbook (All Forms)</option>
+                            <option value="peony">Ruffled Peonies &amp; Old Roses</option>
+                            <option value="chrysanthemum">Pointed Chrysanthemums &amp; Dahlias</option>
+                            <option value="hibiscus">Open Hibiscus &amp; Stamen Burst</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="border-[#786450]/20">
+
+                <!-- Section 1: Polar Harmonic Floral Geometry -->
+                <div class="space-y-3">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-[#8b4513]">1. Polar Harmonic Floral Geometry</div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Flower Count</span>
+                            <span id="valFlowerCount" class="mono-text text-[#6e5d4f]">5</span>
+                        </div>
+                        <input id="sliderFlowerCount" type="range" min="1" max="9" step="1" value="5">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Petal Harmonic Lobes (k)</span>
+                            <span id="valLobeFreq" class="mono-text text-[#6e5d4f]">8</span>
+                        </div>
+                        <input id="sliderLobeFreq" type="range" min="5" max="14" step="1" value="8">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Concentric Petal Rings</span>
+                            <span id="valRings" class="mono-text text-[#6e5d4f]">5</span>
+                        </div>
+                        <input id="sliderRings" type="range" min="2" max="7" step="1" value="5">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">3D Cupping &amp; Eccentric Tilt</span>
+                            <span id="valTilt" class="mono-text text-[#6e5d4f]">0.55</span>
+                        </div>
+                        <input id="sliderTilt" type="range" min="0.0" max="1.0" step="0.05" value="0.55">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Radial Vein &amp; Hatching Density</span>
+                            <span id="valVeinDensity" class="mono-text text-[#6e5d4f]">1.00x</span>
+                        </div>
+                        <input id="sliderVeinDensity" type="range" min="0.5" max="1.8" step="0.05" value="1.0">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Edge Ruffle &amp; Polar Noise</span>
+                            <span id="valNoise" class="mono-text text-[#6e5d4f]">1.00x</span>
+                        </div>
+                        <input id="sliderNoise" type="range" min="0.2" max="2.0" step="0.05" value="1.0">
+                    </div>
+                </div>
+
+                <hr class="border-[#786450]/20">
+
+                <!-- Section 2: WebGL2 Inkflow & Paper Physics -->
+                <div class="space-y-3">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-[#8b4513]">2. Dip-Pen Stroke &amp; Drying Physics</div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Stroke Length / Agent Life</span>
+                            <span id="valStrokeLife" class="mono-text text-[#6e5d4f]">0.30s</span>
+                        </div>
+                        <input id="sliderStrokeLife" type="range" min="0.15" max="0.80" step="0.05" value="0.30">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Wet Ink Bleed / Diffusion</span>
+                            <span id="valDiffusion" class="mono-text text-[#6e5d4f]">0.0025</span>
+                        </div>
+                        <input id="sliderDiffusion" type="range" min="0.000" max="0.015" step="0.0005" value="0.0025">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Wet Edge Advection</span>
+                            <span id="valFlow" class="mono-text text-[#6e5d4f]">0.08</span>
+                        </div>
+                        <input id="sliderFlow" type="range" min="0.00" max="0.35" step="0.01" value="0.08">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Hand-Drawn Line Jitter</span>
+                            <span id="valWander" class="mono-text text-[#6e5d4f]">0.008</span>
+                        </div>
+                        <input id="sliderWander" type="range" min="0.000" max="0.030" step="0.001" value="0.008">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Architectural Pencil Grid</span>
+                            <span id="valGrid" class="mono-text text-[#6e5d4f]">100%</span>
+                        </div>
+                        <input id="sliderGrid" type="range" min="0.0" max="2.0" step="0.05" value="1.0">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="font-medium">Watercolor Paper Grain</span>
+                            <span id="valGrain" class="mono-text text-[#6e5d4f]">0.045</span>
+                        </div>
+                        <input id="sliderGrain" type="range" min="0.0" max="0.09" step="0.005" value="0.045">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-3.5 border-t border-[#786450]/20 bg-[#e6dfd1]/70 flex gap-2">
+                <button id="clearBtn" class="w-1/3 py-2 px-3 bg-[#d8cfc0] hover:bg-[#cbbba4] text-[#382e24] font-medium rounded-xl text-xs transition cursor-pointer">
+                    Clear (R)
+                </button>
+                <button id="saveBtn" class="w-2/3 py-2 px-3 bg-[#2d241c] hover:bg-[#1a140f] text-[#faf6f0] font-medium rounded-xl text-xs flex items-center justify-center gap-1.5 shadow transition cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Save Artwork PNG (S)</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ======================================================================= -->
+    <!-- EMBEDDED GLSL #version 300 es SHADERS (FROM INKFLOW PIPELINE)           -->
+    <!-- ======================================================================= -->
+
+    <!-- 1. Fullscreen Quad Vertex Shader -->
+    <script id="vs-fullscreen" type="x-shader/x-vertex">#version 300 es
+    in vec2 a_position;
+    out vec2 v_uv;
+    void main() {
+        v_uv = a_position * 0.5 + 0.5;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+    </script>
+
+    <!-- 2. Agent Transform-Feedback Update & Soft Brush Vertex Shader -->
+    <script id="vs-agents" type="x-shader/x-vertex">#version 300 es
+    precision highp float;
+
+    layout(location = 0) in vec2  a_position;
+    layout(location = 1) in float a_angle;
+    layout(location = 2) in vec3  a_K;
+    layout(location = 3) in float a_speed;
+    layout(location = 4) in float a_life;
+
+    out vec2  v_position;
+    out float v_angle;
+    out vec3  v_K;
+    out float v_speed;
+    out float v_life;
+
+    out vec3  vf_K;
+    out float vf_life;
+    out float vf_speed;
+    out float vf_taper;
+    out float vf_nibSize;
+
+    uniform sampler2D u_trail;
+    uniform vec2      u_gridSize;
+    uniform float     u_sensorOffset;
+    uniform float     u_sensorAngle;
+    uniform float     u_turnSpeed;
+    uniform float     u_wander;
+    uniform float     u_simTime;
+    uniform float     u_dt;
+    uniform float     u_maxLife;
+
+    float hash(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+    }
+
+    float sense(vec2 pos, float angle, float offAngle, float offDist) {
+        vec2 dir = vec2(cos(angle + offAngle), sin(angle + offAngle));
+        vec2 samp = (pos + dir * offDist) / u_gridSize;
+        return texture(u_trail, fract(samp)).r;
+    }
+
+    void main() {
+        vec2  pos   = a_position;
+        float angle = a_angle;
+        float life  = a_life;
+
+        // Decode packed speed + nibSize: integer part = nibSize * 100.0, fractional part = speed / 20.0
+        float encoded = a_speed;
+        float nibCode = floor(encoded);
+        float rawSpeed = (encoded - nibCode) * 20.0;
+        float nibSize = clamp(nibCode * 0.01, 0.75, 3.2);
+
+        if (life > 0.0) {
+            float so = u_sensorOffset;
+            float sa = u_sensorAngle;
+
+            float left   = sense(pos, angle, -sa, so);
+            float center = sense(pos, angle,  0.0, so);
+            float right  = sense(pos, angle, +sa, so);
+
+            // Subtle trail-guided alignment keeps botanical hatching cohesive without overshooting
+            if (center > left && center > right) {
+                // Hold course along established vein/contour
+            } else if (left > right) {
+                angle -= u_turnSpeed;
+            } else if (right > left) {
+                angle += u_turnSpeed;
+            } else {
+                angle += (hash(pos + vec2(u_simTime * 0.07)) - 0.5) * u_turnSpeed * 0.25;
+            }
+
+            // Micro dip-pen hand-drawn jitter
+            angle += (hash(pos + vec2(u_simTime * 0.23 + 17.0)) - 0.5) * u_wander;
+
+            // Advance by exact pixel velocity per second (rawSpeed * 60.0 * u_dt)
+            pos += vec2(cos(angle), sin(angle)) * (rawSpeed * 60.0 * u_dt);
+            pos = clamp(pos, vec2(3.0), u_gridSize - vec2(3.0));
+
+            life = max(0.0, life - u_dt);
+        }
+
+        v_position = pos;
+        v_angle    = angle;
+        v_K        = a_K;
+        v_speed    = a_speed;
+        v_life     = life;
+
+        vf_K       = a_K;
+        vf_life    = life;
+        vf_speed   = rawSpeed;
+        vf_nibSize = nibSize;
+
+        // Taper brush size by remaining life: crisp nib at root, razor-sharp 0.85px point at tip
+        float lifeRatio = clamp(life / max(u_maxLife, 0.08), 0.38, 1.0);
+        vf_taper = lifeRatio;
+
+        gl_PointSize = life > 0.0 ? max(0.85, nibSize * (0.55 + 0.45 * lifeRatio)) : 0.0;
+
+        vec2 ndc = life > 0.0 ? ((pos / u_gridSize) * 2.0 - 1.0) : vec2(-2.0, -2.0);
+        gl_Position = vec4(ndc.x, ndc.y, 0.0, 1.0);
+    }
+    </script>
+
+    <!-- 3. Agent MRT Soft-Brush Deposit Fragment Shader -->
+    <script id="fs-deposit" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec3  vf_K;
+    in float vf_life;
+    in float vf_speed;
+    in float vf_taper;
+    in float vf_nibSize;
+
+    layout(location = 0) out vec4 trailDeposit;
+    layout(location = 1) out vec4 pigmentDeposit;
+
+    uniform float u_trailDeposit;
+    uniform float u_pigmentDeposit;
+
+    void main() {
+        if (vf_life <= 0.0) discard;
+
+        // Tighter radial dip-pen nib falloff so thin lines stay crisp without puffy halos
+        vec2 c = gl_PointCoord - 0.5;
+        float d = length(c) * 2.0;
+        float alpha = smoothstep(1.0, 0.38, d);
+        if (alpha <= 0.0) discard;
+
+        // Boost pigment density on ultra-fine nibs so 1px-2px veins still achieve deep crimson/emerald saturation
+        float thinBoost = clamp(2.1 / max(vf_nibSize, 0.85), 0.85, 1.85);
+        float density = (0.75 + clamp(vf_speed * 0.12, 0.0, 0.35)) * vf_taper * thinBoost;
+        alpha *= density;
+
+        trailDeposit   = vec4(u_trailDeposit * alpha, 0.0, 0.0, alpha);
+        pigmentDeposit = vec4(vf_K * u_pigmentDeposit * alpha, u_pigmentDeposit * alpha);
+    }
+    </script>
+
+    <!-- 4. Trail Gradient Flow Advection & Isotropic Pigment Diffusion Shader -->
+    <script id="fs-flow" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec2 v_uv;
+    layout(location = 0) out vec4 trailOut;
+    layout(location = 1) out vec4 pigmentOut;
+
+    uniform sampler2D u_trail;
+    uniform sampler2D u_pigment;
+    uniform vec2      u_gridSize;
+    uniform float     u_flowStrength;
+    uniform float     u_diffusion;
+    uniform float     u_trailDecay;
+    uniform float     u_pigmentDecay;
+
+    void main() {
+        vec2 texel = 1.0 / u_gridSize;
+        vec2 uv = v_uv;
+
+        // Trail gradient (flow direction)
+        float tL = texture(u_trail, uv + vec2(-texel.x, 0.0)).r;
+        float tR = texture(u_trail, uv + vec2( texel.x, 0.0)).r;
+        float tD = texture(u_trail, uv + vec2(0.0, -texel.y)).r;
+        float tU = texture(u_trail, uv + vec2(0.0,  texel.y)).r;
+
+        vec2 grad = vec2(tR - tL, tU - tD);
+        float gradLen = length(grad);
+
+        // Sample pigment at advected position along trail gradient
+        vec2 flowUV = uv;
+        if (gradLen > 0.0005) {
+            vec2 dir = grad / gradLen;
+            flowUV = uv + dir * texel * u_flowStrength;
+        }
+
+        vec4 pigment = texture(u_pigment, flowUV);
+
+        // Isotropic water diffusion of pigment
+        vec4 pSum = pigment * 0.4;
+        pSum += texture(u_pigment, uv + vec2(-texel.x, 0.0)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2( texel.x, 0.0)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2(0.0, -texel.y)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2(0.0,  texel.y)) * 0.15;
+
+        pigmentOut = mix(pigment, pSum, u_diffusion) * u_pigmentDecay;
+
+        // Trail softening (preserve fine vein structure)
+        float trail = texture(u_trail, uv).r;
+        float tSum = trail * 0.5;
+        tSum += tL * 0.125;
+        tSum += tR * 0.125;
+        tSum += tD * 0.125;
+        tSum += tU * 0.125;
+        trailOut = vec4(tSum * u_trailDecay, 0.0, 0.0, 1.0);
+    }
+    </script>
+
+    <!-- 5. Display Compositor: Watercolor Paper, Pencil Grid & Beer-Lambert Pigment -->
+    <script id="fs-display" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec2 v_uv;
+    out vec4 fragColor;
+
+    uniform sampler2D u_trail;
+    uniform sampler2D u_pigment;
+    uniform float     u_time;
+    uniform vec2      u_resolution;
+    uniform float     u_seed;
+    uniform vec3      u_paper_color;
+    uniform float     u_grain;
+    uniform float     u_grid_opacity;
+    uniform float     u_ink_visibility;
+
+    // Hash / Noise
+    float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21) + u_seed * 0.001);
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+    }
+
+    float vnoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash21(i);
+        float b = hash21(i + vec2(1.0, 0.0));
+        float c = hash21(i + vec2(0.0, 1.0));
+        float d = hash21(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    // Beer-Lambert translucent colour (Kubelka-Munk inspired subtractive mixing)
+    vec3 paintColour(vec3 K, float thickness) {
+        vec3 absorption = K * thickness * 4.0;
+        vec3 transmitted = exp(-absorption);
+        return transmitted;
+    }
+
+    void main() {
+        // Aspect-corrected UVs so flowers and grids never stretch regardless of window shape
+        vec2 aspect = vec2(u_resolution.x / max(u_resolution.y, 1.0), 1.0);
+        if (u_resolution.x < u_resolution.y) {
+            aspect = vec2(1.0, u_resolution.y / max(u_resolution.x, 1.0));
+        }
+        vec2 uv = v_uv;
+
+        // 1. Warm Archival Watercolor Paper Base
+        vec3 color = u_paper_color;
+
+        // Multi-scale cold-press watercolor paper grain
+        float fine  = (hash21(gl_FragCoord.xy) - 0.5) * u_grain;
+        float med   = (hash21(gl_FragCoord.xy * 0.3 + vec2(17.3, 53.1)) - 0.5) * (u_grain * 0.6);
+        float large = (vnoise(gl_FragCoord.xy * 0.015 + u_seed) - 0.5) * (u_grain * 1.3);
+        color += fine + med + large;
+
+        // 2. Botanical Sketchbook Pencil Grid + Diagonal Construction Lines + Graphite Smudge
+        float gridSpacing = min(u_resolution.x, u_resolution.y) * 0.012;
+        vec2 gridCoord = uv * aspect * gridSpacing;
+
+        float gridLine = 0.0;
+        gridLine += smoothstep(0.97, 0.995, fract(gridCoord.x));
+        gridLine += smoothstep(0.97, 0.995, fract(gridCoord.y));
+        gridLine = clamp(gridLine, 0.0, 1.0) * 0.07 * u_grid_opacity;
+
+        float diag = 0.0;
+        diag += smoothstep(0.985, 0.997, fract((gridCoord.x + gridCoord.y) * 0.55));
+        diag += smoothstep(0.985, 0.997, fract((gridCoord.x - gridCoord.y + 100.0) * 0.55));
+        diag = clamp(diag, 0.0, 1.0) * 0.035 * u_grid_opacity;
+
+        float smudge = vnoise(uv * 7.0 + u_seed * 3.7) * vnoise(uv * 11.0 - u_seed * 1.3);
+        smudge = smoothstep(0.55, 0.9, smudge) * 0.04 * u_grid_opacity;
+
+        color = color * (1.0 - gridLine - diag - smudge)
+              + vec3(0.55, 0.52, 0.48) * (gridLine + diag)
+              + vec3(0.62, 0.59, 0.55) * smudge;
+
+        // 3. Trail Network (Subtle graphite/ink scaffolding along botanical veins)
+        float trail = texture(u_trail, uv).r;
+        float veinDetail = vnoise(uv * 160.0 + trail * 8.0) * 0.5 + 0.5;
+        float veinMask = smoothstep(0.005, 0.020 + veinDetail * 0.016, trail);
+        vec3 networkColor = vec3(0.48, 0.43, 0.37);
+        color = mix(color, networkColor, veinMask * 0.07 * u_ink_visibility);
+
+        // 4. Pigment (Beer-Lambert Subtractive Mixing)
+        vec4 pigment = texture(u_pigment, uv);
+        vec3 K = max(pigment.rgb, vec3(0.0));
+        float X = pigment.a;
+        vec3 avgK = X > 0.0001 ? (K / X) : vec3(0.0);
+
+        vec3 transmitted = paintColour(avgK, X);
+
+        // Strong opacity falloff so dip-pen lines and throat pools are vivid and crisp
+        float opacity = 1.0 - exp(-X * 5.8);
+        color = mix(color, color * transmitted, opacity * u_ink_visibility);
+
+        // Saturation boost in dense pigment so crimson & emerald stay luminous
+        float pigmentDepth = length(avgK) * X;
+        vec3 reflectanceHue = exp(-avgK * 2.4);
+        float satBoost = smoothstep(0.05, 0.38, X);
+        color = mix(color, color * (0.72 + 0.28 * reflectanceHue), satBoost * 0.38 * u_ink_visibility);
+
+        // Edge granulation / watercolor pigment ring at wet edges (on 2048x2048 grid)
+        vec2 texel = 1.0 / vec2(2048.0);
+        float xL = texture(u_pigment, uv - vec2(texel.x, 0.0)).a;
+        float xR = texture(u_pigment, uv + vec2(texel.x, 0.0)).a;
+        float xD = texture(u_pigment, uv - vec2(0.0, texel.y)).a;
+        float xU = texture(u_pigment, uv + vec2(0.0, texel.y)).a;
+        float edgeGrad = length(vec2(xR - xL, xU - xD));
+        float edgeDarkening = smoothstep(0.015, 0.16, edgeGrad) * smoothstep(0.02, 0.35, X);
+        color *= 1.0 - edgeDarkening * 0.16;
+
+        // Deepen dense intersections (keeps flower throats & petal bases rich and velvety)
+        float deep = smoothstep(0.28, 0.85, pigmentDepth);
+        color *= 1.0 - deep * 0.14;
+
+        // Subtle water bloom at vein edges
+        float bloom = smoothstep(0.002, 0.014, trail) * (1.0 - veinMask);
+        color = mix(color, color * reflectanceHue, bloom * 0.05 * u_ink_visibility);
+
+        // 5. Subtle Sketchbook Vignette
+        vec2 vc = uv - 0.5;
+        float vignette = 1.0 - dot(vc, vc) * 0.20;
+        color *= vignette;
+
+        fragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+    }
+    </script>
+
+    <!-- ======================================================================= -->
+    <!-- MAIN JAVASCRIPT: POLAR FLORA CHOREOGRAPHER + WEBGL2 INKFLOW ENGINE      -->
+    <!-- ======================================================================= -->
+    <script>
+        /**
+         * BEER-LAMBERT ABSORPTION PALETTES (K = [R_abs, G_abs, B_abs])
+         * Low K in a channel means that channel is REFLECTED by the pigment.
+         */
+        const BOTANICAL_PALETTES = [
+            {
+                name: "Classic Crimson & Emerald Leaf",
+                petalRim: [
+                    [0.03, 0.90, 0.86], // Deep Carmine Crimson
+                    [0.02, 0.82, 0.78], // Vermilion Red
+                    [0.06, 0.94, 0.82]  // Ruby Madder
+                ],
+                petalVein: [
+                    [0.04, 0.86, 0.80], // Crisp Scarlet Vein
+                    [0.08, 0.80, 0.84]  // Warm Carmine Hatch
+                ],
+                throatPool: [
+                    [0.14, 0.96, 0.92], // Deep Velvety Maroon
+                    [0.22, 0.95, 0.88]  // Dark Burgundy Core
+                ],
+                leafColors: [
+                    [0.88, 0.08, 0.86], // Pure Botanical Emerald Green
+                    [0.82, 0.10, 0.90], // Rich Sap & Leaf Green
+                    [0.90, 0.14, 0.82]  // Deep Forest Viridian (strictly green, no slate-blue)
+                ],
+                stamenColors: [
+                    [0.86, 0.09, 0.86], // Green Carpel Cluster (matches reference 1)
+                    [0.04, 0.18, 0.90]  // Golden Pollen Dot
+                ]
+            },
+            {
+                name: "Burnt Sienna & Indigo Leaf",
+                petalRim: [
+                    [0.10, 0.68, 0.84], // Burnt Sienna
+                    [0.06, 0.78, 0.80], // Sanguine Terracotta
+                    [0.16, 0.58, 0.82]  // Raw Sienna
+                ],
+                petalVein: [
+                    [0.12, 0.62, 0.80], // Sienna Ink Vein
+                    [0.20, 0.52, 0.76]  // Ochre Sienna Hatch
+                ],
+                throatPool: [
+                    [0.28, 0.85, 0.88], // Deep Burnt Umber Pool
+                    [0.84, 0.68, 0.18]  // Indigo Core Accent
+                ],
+                leafColors: [
+                    [0.82, 0.56, 0.14], // Prussian Indigo Leaf
+                    [0.72, 0.36, 0.45], // Indigo-Teal Foliage
+                    [0.52, 0.46, 0.38]  // Payne's Grey Leaf
+                ],
+                stamenColors: [
+                    [0.06, 0.28, 0.86], // Warm Amber Stamen
+                    [0.84, 0.62, 0.16]  // Deep Indigo Center
+                ]
+            },
+            {
+                name: "Hibiscus Scarlet & Forest",
+                petalRim: [
+                    [0.03, 0.85, 0.80], // Hibiscus Scarlet
+                    [0.05, 0.90, 0.76], // Alizarin Crimson
+                    [0.04, 0.74, 0.84]  // Cadmium Red
+                ],
+                petalVein: [
+                    [0.05, 0.86, 0.80], // Intense Scarlet Filaments
+                    [0.12, 0.92, 0.84]  // Deep Ruby Ray
+                ],
+                throatPool: [
+                    [0.16, 0.96, 0.90], // Dark Hibiscus Eye
+                    [0.25, 0.94, 0.86]  // Velvety Crimson Throat
+                ],
+                leafColors: [
+                    [0.86, 0.18, 0.76], // Forest Botanical Green
+                    [0.78, 0.14, 0.82], // Leaf Green
+                    [0.90, 0.26, 0.68]  // Deep Pine Green
+                ],
+                stamenColors: [
+                    [0.04, 0.16, 0.88], // Bright Pollen Tips
+                    [0.78, 0.16, 0.78]  // Green Stigma
+                ]
+            },
+            {
+                name: "Vintage Ochre & Olive",
+                petalRim: [
+                    [0.06, 0.48, 0.86], // Marigold Ochre (matches reference 4)
+                    [0.05, 0.76, 0.80], // Persimmon Red-Orange
+                    [0.10, 0.36, 0.84]  // Golden Ochre
+                ],
+                petalVein: [
+                    [0.08, 0.44, 0.84], // Cadmium Orange Vein
+                    [0.14, 0.62, 0.80]  // Warm Rust Vein
+                ],
+                throatPool: [
+                    [0.18, 0.84, 0.86], // Deep Rust Throat
+                    [0.28, 0.68, 0.84]  // Raw Umber Core
+                ],
+                leafColors: [
+                    [0.76, 0.16, 0.78], // Vintage Olive Emerald
+                    [0.66, 0.22, 0.84], // Warm Moss Green
+                    [0.82, 0.24, 0.68]  // Hooker's Green
+                ],
+                stamenColors: [
+                    [0.78, 0.14, 0.78], // Emerald Carpel Knot
+                    [0.04, 0.14, 0.88]  // Gold Pollen
+                ]
+            },
+            {
+                name: "Sumi-e Botanical",
+                petalRim: [
+                    [0.68, 0.64, 0.60], // Dark Sumi Carbon Ink
+                    [0.48, 0.45, 0.42], // Medium Sumi Wash
+                    [0.06, 0.86, 0.80]  // Cinnabar Red Accent
+                ],
+                petalVein: [
+                    [0.42, 0.39, 0.36], // Diluted Sumi Line
+                    [0.56, 0.50, 0.44]  // Warm Sepia Ink
+                ],
+                throatPool: [
+                    [0.88, 0.84, 0.80], // Concentrated Pine Soot
+                    [0.14, 0.88, 0.82]  // Deep Cinnabar Core
+                ],
+                leafColors: [
+                    [0.64, 0.60, 0.54], // Sumi Charcoal Leaf
+                    [0.52, 0.44, 0.48], // Indigo-Tinted Sumi
+                    [0.72, 0.52, 0.62]  // Muted Sage Sumi
+                ],
+                stamenColors: [
+                    [0.05, 0.85, 0.80], // Cinnabar Stamens
+                    [0.88, 0.84, 0.80]  // Black Ink Dots
+                ]
+            }
+        ];
+
+        /**
+         * SIMULATION & STUDIO CONFIGURATION (2048x2048 High-Resolution Etching Grid)
+         */
+        const GRID_W = 2048;
+        const GRID_H = 2048;
+        const MAX_AGENTS = 140000;
+        const AGENT_STRIDE = 32; // 8 floats * 4 bytes
+
+        /**
+         * DETERMINISTIC PRNG, POLAR NOISE & POLYGON OCCLUSION HELPERS
+         */
+        function mulberry32(seed) {
+            let a = seed | 0;
+            return function() {
+                a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        class PolarNoiseGenerator {
+            constructor(prng) {
+                this.perm = new Uint8Array(512);
+                const p = new Uint8Array(256);
+                for (let i = 0; i < 256; i++) p[i] = i;
+                for (let i = 255; i > 0; i--) {
+                    const j = Math.floor(prng() * (i + 1));
+                    const tmp = p[i]; p[i] = p[j]; p[j] = tmp;
+                }
+                for (let i = 0; i < 512; i++) this.perm[i] = p[i & 255];
+            }
+            fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+            lerp(a, b, t) { return a + t * (b - a); }
+            grad2(hash, x, y) {
+                const h = hash & 7;
+                const u = h < 4 ? x : y;
+                const v = h < 4 ? y : x;
+                return ((h & 1) ? -u : u) + ((h & 2) ? -2.0 * v : 2.0 * v);
+            }
+            noise2D(x, y) {
+                const X = Math.floor(x) & 255;
+                const Y = Math.floor(y) & 255;
+                const xf = x - Math.floor(x);
+                const yf = y - Math.floor(y);
+                const u = this.fade(xf);
+                const v = this.fade(yf);
+                const aa = this.perm[this.perm[X] + Y];
+                const ab = this.perm[this.perm[X] + Y + 1];
+                const ba = this.perm[this.perm[X + 1] + Y];
+                const bb = this.perm[this.perm[X + 1] + Y + 1];
+                const x1 = this.lerp(this.grad2(aa, xf, yf), this.grad2(ba, xf - 1, yf), u);
+                const x2 = this.lerp(this.grad2(ab, xf, yf - 1), this.grad2(bb, xf - 1, yf - 1), u);
+                return this.lerp(x1, x2, v) * 0.45;
+            }
+            polarNoise(theta, radiusScale, seedOffset) {
+                const nx = Math.cos(theta) * radiusScale + seedOffset;
+                const ny = Math.sin(theta) * radiusScale + seedOffset;
+                return this.noise2D(nx, ny);
+            }
+        }
+
+        function isPointInPolygon(wx, wy, polyPts) {
+            let inside = false;
+            for (let i = 0, j = polyPts.length - 1; i < polyPts.length; j = i++) {
+                const xi = polyPts[i].wx, yi = polyPts[i].wy;
+                const xj = polyPts[j].wx, yj = polyPts[j].wy;
+                const intersect = ((yi > wy) !== (yj > wy)) &&
+                    (wx < (xj - xi) * (wy - yi) / ((yj - yi) || 1e-7) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        const state = {
+            seed: 849204,
+            paletteIdx: 0,
+            archetype: 'mixed',
+            flowerCount: 5,
+            baseLobes: 8,
+            ringCount: 5,
+            tiltDepth: 0.55,
+            veinDensity: 1.0,
+            noiseMult: 1.0,
+
+            // Fine dip-pen stroke & drying controls
+            strokeLife: 0.30,     // Short, calm 0.30s stroke lifetime
+            diffusion: 0.0025,    // Ultra-subtle wet edge feathering on 2048 grid
+            flowStrength: 0.08,   // Gentle wet-edge pigment advection
+            wander: 0.008,        // Minimal jitter for crisp dip-pen lines
+            gridOpacity: 1.0,
+            paperGrain: 0.045,
+
+            // Ink drying state machine
+            inkWetness: 1.0,
+            wetStartTime: 0,
+            wetDuration: 1850,    // 1.85 seconds total drying window
+            needsWarmup: false,
+
+            interactionMode: 'bloom', // 'bloom' | 'brush'
+            paused: false,
+            flowers: [],
+            scheduledBatches: []
+        };
+
+        let rng = mulberry32(state.seed);
+        let agentData = new Float32Array(MAX_AGENTS * 8);
+        let writeCursor = 0;
+        let activeAgentCount = 0;
+        let gpuDirty = false;
+
+        function wakeUpInkDryer(durationMs = 1850, warmup = false) {
+            state.inkWetness = 1.0;
+            state.wetStartTime = performance.now();
+            state.wetDuration = durationMs;
+            if (warmup) state.needsWarmup = true;
+        }
+
+        /**
+         * PACK NIB SIZE & SPEED INTO SINGLE FLOAT ATTRIBUTE (`a_speed`)
+         * Integer part = round(nibSize * 100), Fractional part = clamp(speed / 20.0, 0.001, 0.995)
+         */
+        function packNibAndSpeed(nibSizePx, speedPxPerFrame) {
+            const nibInt = Math.round(Math.max(75, Math.min(320, nibSizePx * 100)));
+            const speedFrac = Math.max(0.001, Math.min(0.995, speedPxPerFrame / 20.0));
+            return nibInt + speedFrac;
+        }
+
+        /**
+         * SPAWN SINGLE INKFLOW AGENT INTO RING BUFFER
+         */
+        function spawnAgent(x, y, angle, K, speed, life, nibSize = 1.5) {
+            if (x < 6 || x >= GRID_W - 6 || y < 6 || y >= GRID_H - 6) return;
+
+            const idx = writeCursor;
+            const base = idx * 8;
+            agentData[base + 0] = x;
+            agentData[base + 1] = y;
+            agentData[base + 2] = angle;
+            agentData[base + 3] = K[0];
+            agentData[base + 4] = K[1];
+            agentData[base + 5] = K[2];
+            agentData[base + 6] = speed > 50.0 ? speed : packNibAndSpeed(nibSize, speed);
+            agentData[base + 7] = life;
+
+            writeCursor = (writeCursor + 1) % MAX_AGENTS;
+            if (activeAgentCount < MAX_AGENTS) activeAgentCount++;
+            gpuDirty = true;
+        }
+
+        /**
+         * PUSH FINE CONTINUOUS DIP-PEN STROKE CHAIN ALONG SEGMENT (x0, y0) -> (x1, y1)
+         * Places finely spaced agents (`stepPx = 1.15`) with minimal jitter (`0.18px`) so lines
+         * are continuous, crisp, and never look like fat beaded sausages!
+         */
+        function pushStrokeChain(targetArray, x0, y0, x1, y1, K, lifeSec, nibSizePx, fRng, stepPx = 1.25, jitterPx = 0.20) {
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const distPx = Math.hypot(dx, dy);
+            if (distPx < 0.5) return;
+
+            const angle = Math.atan2(dy, dx);
+            const count = Math.max(1, Math.ceil(distPx / stepPx));
+            const life = Math.max(0.14, Math.min(0.36, lifeSec));
+            // Each seeded agent glides forward ~3.5px along the stroke tangent to knit a seamless line
+            const glideSpeed = Math.min(2.8, Math.max(0.35, Math.min(distPx * 0.35, 3.8) / (60.0 * life)));
+
+            for (let i = 0; i < count; i++) {
+                const t = count === 1 ? 0.0 : i / count;
+                // Taper nib size from root to tip along the chain
+                const localNib = nibSizePx * (1.0 - t * 0.28);
+                const jx = fRng ? (fRng() - 0.5) * jitterPx : 0.0;
+                const jy = fRng ? (fRng() - 0.5) * jitterPx : 0.0;
+                const jAng = fRng ? (fRng() - 0.5) * 0.015 : 0.0;
+
+                targetArray.push({
+                    x: x0 + dx * t + jx,
+                    y: y0 + dy * t + jy,
+                    angle: angle + jAng,
+                    K,
+                    speed: packNibAndSpeed(localNib, glideSpeed),
+                    life: life * (0.85 + 0.15 * (1.0 - t))
+                });
+            }
+        }
+
+        /**
+         * SPAWN EXACT DISTANCE-BOUNDED STROKE (Used for interactive Dip-Pen sketching)
+         */
+        function spawnBoundedStroke(x0, y0, x1, y1, K, desiredLifeSec, jitterAngle = 0.015, nibSize = 1.45) {
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const distPx = Math.hypot(dx, dy);
+            if (distPx < 0.75) return null;
+
+            const life = Math.max(0.14, Math.min(0.38, desiredLifeSec));
+            const exactSpeed = Math.min(6.0, distPx / (60.0 * life));
+            const angle = Math.atan2(dy, dx) + jitterAngle;
+
+            return { x: x0, y: y0, angle, K, speed: packNibAndSpeed(nibSize, exactSpeed), life };
+        }
+
+        /**
+         * ============================================================================
+         * POLAR HARMONIC & 3D CUPPING FLORAL GEOMETRY CHOREOGRAPHER
+         * ============================================================================
+         */
+        function evaluatePolarLayerPoints(layerCfg, flowerCfg, pNoise, numSamples = 240) {
+            const pts = [];
+            const {
+                rBase, lobeCount, lobeAmp, lobeSharpness,
+                ruffleFreq, ruffleAmp, phase, rufflePhase, noiseSeed, layerNorm
+            } = layerCfg;
+
+            const { tiltStrength, tiltAngle, maxRadius, cx, cy } = flowerCfg;
+            const tiltX = Math.cos(tiltAngle);
+            const tiltY = Math.sin(tiltAngle);
+
+            // Eccentric 3D throat offset: inner layers shift toward the viewer's tilt angle
+            const eccentricShift = (1.0 - Math.pow(layerNorm, 0.85)) * maxRadius * 0.32 * tiltStrength;
+            const ringCenterX = tiltX * eccentricShift;
+            const ringCenterY = tiltY * eccentricShift;
+
+            for (let i = 0; i <= numSamples; i++) {
+                const theta = (i / numSamples) * Math.PI * 2;
+
+                // 1. Primary petal lobes: |sin(k * theta / 2 + phase)|^p
+                const rawSine = Math.abs(Math.sin(lobeCount * theta * 0.5 + phase));
+                const mainLobe = Math.pow(rawSine, lobeSharpness);
+
+                // 2. Secondary high-frequency notch/ruffle harmonic strongest at petal tips
+                const tipWeight = 0.20 + 0.80 * mainLobe;
+                const secondaryRuffle = Math.sin(ruffleFreq * theta + rufflePhase) * ruffleAmp * tipWeight;
+
+                // 3. Seamless periodic polar noise
+                const organicWobble = pNoise.polarNoise(theta, 2.4, noiseSeed) * 0.11 * state.noiseMult;
+
+                // 4. Unprojected polar radius
+                const r = rBase * (1.0 + lobeAmp * mainLobe + secondaryRuffle + organicWobble);
+
+                // 5. Directional 3D foreshortening & parabolic bowl cupping
+                const cosView = Math.cos(theta - tiltAngle);
+                const foreshorten = 1.0 - tiltStrength * 0.24 * cosView;
+                const rProj = r * foreshorten;
+
+                const normR = r / maxRadius;
+                const cupLift = Math.pow(normR, 1.65) * maxRadius * 0.20 * tiltStrength;
+
+                const lx = ringCenterX + rProj * Math.cos(theta) - tiltX * cupLift;
+                const ly = ringCenterY + rProj * Math.sin(theta) - tiltY * cupLift;
+
+                pts.push({
+                    theta,
+                    r: rProj,
+                    mainLobe,
+                    x: lx,
+                    y: ly,
+                    wx: cx + lx,
+                    wy: cy + ly,
+                    cx: ringCenterX,
+                    cy: ringCenterY,
+                    wcx: cx + ringCenterX,
+                    wcy: cy + ringCenterY
+                });
+            }
+            return pts;
+        }
+
+        /**
+         * Creates a mathematical blueprint for a complete flower + leaves at (cx, cy) in 2048x2048 Grid Space
+         */
+        function createFlowerBlueprint(cx, cy, radiusScale, archetype, localRng) {
+            const palette = BOTANICAL_PALETTES[state.paletteIdx];
+            const chosenArch = archetype === 'mixed'
+                ? ['peony', 'chrysanthemum', 'hibiscus'][Math.floor(localRng() * 3)]
+                : archetype;
+
+            // Scaled for 2048x2048 high-DPI grid
+            const maxRadius = (188 + localRng() * 88) * radiusScale;
+            const tiltStrength = state.tiltDepth * (0.7 + localRng() * 0.45);
+            const tiltAngle = localRng() * Math.PI * 2;
+            const rotOffset = localRng() * Math.PI * 2;
+
+            let numLayers = state.ringCount;
+            let baseLobes, lobeSharpness, lobeAmpRange, ruffleFreqRange, ruffleAmpRange;
+
+            if (chosenArch === 'peony') {
+                baseLobes = Math.max(5, Math.round(state.baseLobes * (0.75 + localRng() * 0.25)));
+                lobeSharpness = 0.42 + localRng() * 0.22;
+                lobeAmpRange = [0.32, 0.48];
+                ruffleFreqRange = [18, 28];
+                ruffleAmpRange = [0.045, 0.085];
+            } else if (chosenArch === 'chrysanthemum') {
+                baseLobes = Math.max(8, Math.round(state.baseLobes * (1.35 + localRng() * 0.35)));
+                lobeSharpness = 0.85 + localRng() * 0.40;
+                lobeAmpRange = [0.48, 0.72];
+                ruffleFreqRange = [12, 20];
+                ruffleAmpRange = [0.015, 0.032];
+            } else {
+                // Hibiscus open bloom (fewer rings, broad ruffled petals, prominent central stamen burst)
+                numLayers = Math.max(2, Math.min(3, state.ringCount - 2));
+                baseLobes = Math.max(5, Math.min(7, Math.round(state.baseLobes * 0.7)));
+                lobeSharpness = 0.52 + localRng() * 0.22;
+                lobeAmpRange = [0.42, 0.62];
+                ruffleFreqRange = [22, 36];
+                ruffleAmpRange = [0.05, 0.095];
+            }
+
+            const rimK = palette.petalRim[Math.floor(localRng() * palette.petalRim.length)];
+            const veinK = palette.petalVein[Math.floor(localRng() * palette.petalVein.length)];
+            const throatK = palette.throatPool[Math.floor(localRng() * palette.throatPool.length)];
+
+            // Build protruding botanical delta leaves tucked behind outer petal ring
+            const numLeaves = 2 + Math.floor(localRng() * 3);
+            const leaves = [];
+            const baseLeafAngle = localRng() * Math.PI * 2;
+            for (let i = 0; i < numLeaves; i++) {
+                const lAngle = baseLeafAngle + (i / numLeaves) * Math.PI * 1.65 + (localRng() - 0.5) * 0.45;
+                leaves.push({
+                    angle: lAngle,
+                    startDist: maxRadius * (0.46 + localRng() * 0.14),
+                    length: maxRadius * (0.78 + localRng() * 0.34),
+                    width: maxRadius * (0.44 + localRng() * 0.16),
+                    bend: (localRng() - 0.5) * 0.22,
+                    leafK: palette.leafColors[Math.floor(localRng() * palette.leafColors.length)]
+                });
+            }
+
+            // Build concentric polar rings from outer (l = numLayers - 1) to inner (l = 0)
+            const layers = [];
+            for (let l = numLayers - 1; l >= 0; l--) {
+                const layerNorm = numLayers === 1 ? 1.0 : l / (numLayers - 1);
+                const rFrac = 0.24 + 0.76 * Math.pow(layerNorm, 0.85);
+                const layerLobes = Math.max(4, baseLobes + (l % 2 === 0 ? 0 : (localRng() > 0.5 ? 1 : -1)));
+
+                layers.push({
+                    layerIndex: l,
+                    layerNorm,
+                    rBase: maxRadius * rFrac * 0.68,
+                    lobeCount: layerLobes,
+                    lobeAmp: lobeAmpRange[0] + localRng() * (lobeAmpRange[1] - lobeAmpRange[0]),
+                    lobeSharpness: lobeSharpness * (0.9 + localRng() * 0.2),
+                    ruffleFreq: Math.round(ruffleFreqRange[0] + localRng() * (ruffleFreqRange[1] - ruffleFreqRange[0])),
+                    ruffleAmp: (ruffleAmpRange[0] + localRng() * (ruffleAmpRange[1] - ruffleAmpRange[0])) * state.noiseMult,
+                    phase: rotOffset + l * (Math.PI / layerLobes) + (localRng() - 0.5) * 0.20,
+                    rufflePhase: localRng() * Math.PI * 2,
+                    noiseSeed: localRng() * 500
+                });
+            }
+
+            return {
+                cx, cy, maxRadius, tiltStrength, tiltAngle,
+                archetype: chosenArch,
+                rimK, veinK, throatK,
+                carpelK: palette.stamenColors[0],
+                stamenK: palette.stamenColors[1] || palette.petalRim[0],
+                leaves,
+                layers,
+                seed: Math.floor(localRng() * 999999)
+            };
+        }
+
+        /**
+         * CHOREOGRAPHS FINE DIP-PEN, OCCLUSION-MASKED INKFLOW AGENTS ON 2048x2048 GRID
+         * - Computes all concentric ring polygons first (`layerPolys`).
+         * - Leaves are strictly clipped OUTSIDE `outerFlowerPoly` (`layerPolys[0]`) with crisp parallel green veins.
+         * - Each petal ring `idx` has a sharp 1.75px crimson contour and ultra-fine 1.15px radial veins
+         *   clipped OUTSIDE `layerPolys[idx + 1]`, leaving raw cream paper on the upper half of each petal lobe!
+         */
+        function choreographFlowerAgents(flower, otherFlowers = [], immediate = false) {
+            const fRng = mulberry32(flower.seed);
+            const pNoise = new PolarNoiseGenerator(fRng);
+            const baseLife = state.strokeLife;
+
+            const batchWave1 = []; // Crisp outer contours & occluded leaf outlines
+            const batchWave2 = []; // Fine radial veins, leaf sawtooth hatching & throat ink pools
+            const batchWave3 = []; // Inner petal rings & carpel/stamen core
+
+            // Pre-evaluate all concentric ring polygons from outer (idx = 0) to inner (idx = N-1) with high angular resolution
+            const layerPolys = flower.layers.map(layerCfg =>
+                evaluatePolarLayerPoints(layerCfg, flower, pNoise, 320)
+            );
+            const outerFlowerPoly = layerPolys[0];
+
+            // Helper: check if a point is occluded by another flower's outer polygon
+            const isOccludedByPriorFlower = (wx, wy) => {
+                for (let f = 0; f < otherFlowers.length; f++) {
+                    if (otherFlowers[f] !== flower && otherFlowers[f]._outerPoly) {
+                        if (isPointInPolygon(wx, wy, otherFlowers[f]._outerPoly)) return true;
+                    }
+                }
+                return false;
+            };
+            flower._outerPoly = outerFlowerPoly;
+
+            // ------------------------------------------------------------------------
+            // A. DELICATE BOTANICAL DELTA LEAVES (Crisp 1.8px Outline & Separated 1.1px Veins)
+            // ------------------------------------------------------------------------
+            flower.leaves.forEach(lf => {
+                const startX = flower.cx + Math.cos(lf.angle) * lf.startDist;
+                const startY = flower.cy + Math.sin(lf.angle) * lf.startDist;
+                const dirX = Math.cos(lf.angle);
+                const dirY = Math.sin(lf.angle);
+                const perpX = -dirY;
+                const perpY = dirX;
+
+                const steps = 64;
+                const upperPts = [];
+                const lowerPts = [];
+                const midPts = [];
+
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const dist = t * lf.length;
+                    const curveOffset = Math.sin(t * Math.PI) * lf.bend * lf.length;
+
+                    // Pointed delta-ovate leaf envelope
+                    const env = Math.sin(Math.pow(t, 0.62) * Math.PI) * Math.pow(1.0 - t * 0.22, 0.78);
+                    const serration = Math.sin(t * 36.0) * 0.025 * lf.width * Math.sin(t * Math.PI);
+                    const halfW = (lf.width * 0.5 * env) + serration;
+
+                    const mx = startX + dirX * dist + perpX * curveOffset;
+                    const my = startY + dirY * dist + perpY * curveOffset;
+
+                    midPts.push({ x: mx, y: my, t });
+                    upperPts.push({ x: mx + perpX * halfW, y: my + perpY * halfW });
+                    lowerPts.push({ x: mx - perpX * halfW, y: my - perpY * halfW });
+                }
+
+                // 1. Crisp Leaf Perimeter Outline (1.85px nib, single clean pass, strictly outside flower)
+                for (let i = 0; i < steps; i++) {
+                    const u0 = upperPts[i], u1 = upperPts[i + 1];
+                    if (!isPointInPolygon(u0.x, u0.y, outerFlowerPoly) && !isOccludedByPriorFlower(u0.x, u0.y)) {
+                        pushStrokeChain(batchWave1, u0.x, u0.y, u1.x, u1.y, lf.leafK, baseLife * 0.75, 1.85, fRng, 1.2, 0.18);
+                    }
+
+                    const l0 = lowerPts[i], l1 = lowerPts[i + 1];
+                    if (!isPointInPolygon(l0.x, l0.y, outerFlowerPoly) && !isOccludedByPriorFlower(l0.x, l0.y)) {
+                        pushStrokeChain(batchWave1, l0.x, l0.y, l1.x, l1.y, lf.leafK, baseLife * 0.75, 1.85, fRng, 1.2, 0.18);
+                    }
+
+                    // 2. Sharp Central Midrib Vein (1.5px nib)
+                    const m0 = midPts[i], m1 = midPts[i + 1];
+                    if (!isPointInPolygon(m0.x, m0.y, outerFlowerPoly) && !isOccludedByPriorFlower(m0.x, m0.y)) {
+                        pushStrokeChain(batchWave1, m0.x, m0.y, m1.x, m1.y, lf.leafK, baseLife * 0.7, 1.50, fRng, 1.3, 0.12);
+                    }
+                }
+
+                // 3. Distinct Parallel Angled Sawtooth Hatching on ONE side of the leaf blade (1.1px nib)
+                // Spaced cleanly so individual green lines are clearly visible with cream paper between them!
+                const numLatVeins = Math.floor(11 * state.veinDensity);
+                for (let v = 1; v < numLatVeins; v++) {
+                    const idxBase = Math.floor((v / numLatVeins) * (steps - 7));
+                    const idxTip = Math.min(steps - 1, idxBase + 5);
+                    const mPt = midPts[idxBase];
+                    const uPt = upperPts[idxTip];
+
+                    if (isPointInPolygon(mPt.x, mPt.y, outerFlowerPoly) &&
+                        isPointInPolygon(uPt.x, uPt.y, outerFlowerPoly)) continue;
+
+                    // Walk along the lateral vein to find the exact un-occluded segment outside `outerFlowerPoly`
+                    let tStart = 0.05;
+                    while (tStart < 0.90) {
+                        const tx = mPt.x + (uPt.x - mPt.x) * tStart;
+                        const ty = mPt.y + (uPt.y - mPt.y) * tStart;
+                        if (!isPointInPolygon(tx, ty, outerFlowerPoly) && !isOccludedByPriorFlower(tx, ty)) break;
+                        tStart += 0.06;
+                    }
+                    if (tStart >= 0.88) continue;
+
+                    const sx = mPt.x + (uPt.x - mPt.x) * tStart;
+                    const sy = mPt.y + (uPt.y - mPt.y) * tStart;
+                    const ex = mPt.x + (uPt.x - mPt.x) * 0.94;
+                    const ey = mPt.y + (uPt.y - mPt.y) * 0.94;
+
+                    pushStrokeChain(batchWave2, sx, sy, ex, ey, lf.leafK, baseLife * 0.75, 1.15, fRng, 1.35, 0.14);
+                }
+            });
+
+            // ------------------------------------------------------------------------
+            // B. CONCENTRIC POLAR PETAL RINGS (Fine 1.7px Rims & 1.1px Radial Etching Veins)
+            // ------------------------------------------------------------------------
+            flower.layers.forEach((layerCfg, polyIdx) => {
+                const pts = layerPolys[polyIdx];
+                const innerPoly = polyIdx + 1 < layerPolys.length ? layerPolys[polyIdx + 1] : null;
+                const numPts = pts.length - 1;
+                const { layerNorm } = layerCfg;
+                const targetContourWave = layerNorm > 0.45 ? batchWave1 : batchWave3;
+
+                // 1. Crisp Tangential Petal Rim Contour (1.75px nib at lobe tips, 1.45px in valleys)
+                for (let i = 0; i < numPts; i++) {
+                    const p0 = pts[i];
+                    const p1 = pts[i + 1];
+
+                    if (innerPoly && isPointInPolygon(p0.wx, p0.wy, innerPoly)) continue;
+                    if (isOccludedByPriorFlower(p0.wx, p0.wy)) continue;
+
+                    const rimNib = 1.40 + 0.45 * p0.mainLobe;
+                    pushStrokeChain(
+                        targetContourWave,
+                        p0.wx, p0.wy,
+                        p1.wx, p1.wy,
+                        flower.rimK,
+                        baseLife * 0.75,
+                        rimNib,
+                        fRng,
+                        1.20,
+                        0.16
+                    );
+                }
+
+                // 2. Ultra-Fine Radial Botanical Veins (1.1px nib) & Deep Crimson Throat Collar (2.1px nib)
+                // Spaced so individual radial etching lines remain distinct and leave raw cream paper in upper petals!
+                const veinStep = Math.max(2, Math.round(3.2 / state.veinDensity));
+                for (let i = 0; i < numPts; i += veinStep) {
+                    const pt = pts[i];
+                    const throatX = pt.wcx;
+                    const throatY = pt.wcy;
+                    const tipX = pt.wx;
+                    const tipY = pt.wy;
+
+                    if (isOccludedByPriorFlower(tipX, tipY)) continue;
+
+                    // Find exact intersection where ray from throat to tip exits `innerPoly` (the next inner petal ring)
+                    let startFrac = 0.07;
+                    if (innerPoly) {
+                        for (let f = 0.10; f <= 0.96; f += 0.03) {
+                            const tx = throatX + (tipX - throatX) * f;
+                            const ty = throatY + (tipY - throatY) * f;
+                            if (!isPointInPolygon(tx, ty, innerPoly)) {
+                                startFrac = f;
+                                break;
+                            }
+                            startFrac = 0.98;
+                        }
+                    }
+                    if (startFrac >= 0.90) continue;
+
+                    // Control how far radial veins extend into the exposed petal band so plenty of cream paper shows:
+                    let bandSpanFrac = 0.58;
+                    if (flower.archetype === 'chrysanthemum') {
+                        // Chrysanthemums: dense crimson base collar, crisp white pointed petal tips
+                        bandSpanFrac = (0.32 + 0.28 * (1.0 - pt.mainLobe)) * (0.65 + fRng() * 0.30);
+                    } else if (flower.archetype === 'hibiscus') {
+                        // Hibiscus: dramatic central radiating filaments tapering into clean white outer petals
+                        bandSpanFrac = innerPoly
+                            ? (0.42 + 0.32 * Math.sin(pt.theta * layerCfg.lobeCount))
+                            : (0.36 + 0.26 * Math.sin(pt.theta * 7.0 + layerCfg.phase) + fRng() * 0.20);
+                    } else {
+                        // Peony: woodcut/dip-pen radial vein bundles alternating with open white highlight zones
+                        const lobePhase = Math.sin(pt.theta * layerCfg.lobeCount * 0.5 + layerCfg.phase);
+                        const fineStriation = 0.5 + 0.5 * Math.cos(pt.theta * layerCfg.lobeCount * 3.0);
+                        bandSpanFrac = (0.28 + 0.44 * lobePhase * fineStriation) * (0.70 + fRng() * 0.28);
+                    }
+
+                    const endFrac = Math.min(0.88, startFrac + (0.88 - startFrac) * bandSpanFrac);
+                    if (endFrac > startFrac + 0.04) {
+                        const sx = throatX + (tipX - throatX) * startFrac;
+                        const sy = throatY + (tipY - throatY) * startFrac;
+                        const ex = throatX + (tipX - throatX) * endFrac;
+                        const ey = throatY + (tipY - throatY) * endFrac;
+
+                        pushStrokeChain(
+                            batchWave2,
+                            sx, sy,
+                            ex, ey,
+                            flower.veinK,
+                            baseLife * 0.85,
+                            1.10, // Ultra-fine 1.1px dip-pen vein nib
+                            fRng,
+                            1.40,
+                            0.14
+                        );
+                    }
+
+                    // 3. Concentrated Crimson Throat Collar at the base of the exposed petal ring (1.9px nib)
+                    const poolSpan = (0.14 + 0.14 * (1.0 - pt.mainLobe)) * (0.75 + fRng() * 0.25);
+                    const poolEndFrac = Math.min(0.75, startFrac + (0.85 - startFrac) * poolSpan);
+                    if (poolEndFrac > startFrac + 0.025) {
+                        const psx = throatX + (tipX - throatX) * startFrac;
+                        const psy = throatY + (tipY - throatY) * startFrac;
+                        const pex = throatX + (tipX - throatX) * poolEndFrac;
+                        const pey = throatY + (tipY - throatY) * poolEndFrac;
+
+                        pushStrokeChain(
+                            batchWave2,
+                            psx, psy,
+                            pex, pey,
+                            flower.throatK,
+                            baseLife * 0.65,
+                            1.95,
+                            fRng,
+                            1.50,
+                            0.22
+                        );
+                    }
+                }
+            });
+
+            // ------------------------------------------------------------------------
+            // C. CENTRAL CARPEL KNOT / STAMEN FILAMENTS (Crisp Botanical Center)
+            // ------------------------------------------------------------------------
+            const innerLayerPts = layerPolys[layerPolys.length - 1];
+            const coreX = innerLayerPts[0].wcx;
+            const coreY = innerLayerPts[0].wcy;
+            const coreRadius = flower.maxRadius * 0.082;
+
+            for (let s = 0; s < 52; s++) {
+                const a = (s / 52) * Math.PI * 2 + (fRng() - 0.5) * 0.12;
+                const r0 = fRng() * coreRadius * 0.25;
+                const r1 = coreRadius * (0.45 + fRng() * 0.60);
+                const isCarpel = flower.archetype !== 'hibiscus' || s < 28;
+
+                pushStrokeChain(
+                    batchWave3,
+                    coreX + Math.cos(a) * r0,
+                    coreY + Math.sin(a) * r0,
+                    coreX + Math.cos(a + 0.18) * r1,
+                    coreY + Math.sin(a + 0.18) * r1,
+                    isCarpel ? flower.carpelK : flower.stamenK,
+                    baseLife * 0.65,
+                    1.65,
+                    fRng,
+                    1.30,
+                    0.18
+                );
+            }
+
+            // Spawn all waves immediately and run a fast 8-substep warmup so the fine lines lock in cleanly
+            wakeUpInkDryer(1650, true);
+            const allAgents = [batchWave1, batchWave2, batchWave3];
+            for (let w = 0; w < allAgents.length; w++) {
+                const wave = allAgents[w];
+                for (let k = 0; k < wave.length; k++) {
+                    const a = wave[k];
+                    spawnAgent(a.x, a.y, a.angle, a.K, a.speed, a.life);
+                }
+            }
+        }
+
+        /**
+         * GENERATE FULL MULTI-FLOWER BOTANICAL COMPOSITION ON 2048x2048 GRID
+         */
+        function generateBotanicalComposition(clearCanvasFn) {
+            if (clearCanvasFn) clearCanvasFn();
+            state.scheduledBatches = [];
+            state.flowers = [];
+
+            rng = mulberry32(state.seed);
+            const count = state.flowerCount;
+            const minDist = count > 6 ? 410 : 510;
+
+            for (let i = 0; i < count; i++) {
+                let bestX = 1024, bestY = 1024;
+                let maxMinDist = -1;
+
+                for (let attempt = 0; attempt < 45; attempt++) {
+                    const margin = 340;
+                    const cx = margin + rng() * (GRID_W - margin * 2);
+                    const cy = margin + rng() * (GRID_H - margin * 2);
+
+                    let closest = Infinity;
+                    for (const f of state.flowers) {
+                        const d = Math.hypot(cx - f.cx, cy - f.cy);
+                        if (d < closest) closest = d;
+                    }
+
+                    if (closest >= minDist) {
+                        bestX = cx; bestY = cy;
+                        break;
+                    }
+                    if (closest > maxMinDist) {
+                        maxMinDist = closest;
+                        bestX = cx; bestY = cy;
+                    }
+                }
+
+                const scale = (count <= 2 ? 1.22 : 0.90) + rng() * 0.25;
+                const flower = createFlowerBlueprint(bestX, bestY, scale, state.archetype, rng);
+                state.flowers.push(flower);
+                choreographFlowerAgents(flower, state.flowers, true);
+            }
+
+            updateUIStatus();
+        }
+
+        function updateUIStatus() {
+            document.getElementById('bloomCounter').textContent =
+                `${state.flowers.length} ${state.flowers.length === 1 ? 'bloom' : 'blooms'}`;
+            document.getElementById('hudSeed').textContent = state.seed;
+            document.getElementById('hudPalette').textContent = BOTANICAL_PALETTES[state.paletteIdx].name;
+        }
+
+        /**
+         * ============================================================================
+         * WEBGL2 PIPELINE INITIALIZATION & MAIN LOOP
+         * ============================================================================
+         */
+        function initWebGL2App() {
+            const canvas = document.getElementById('glcanvas');
+            const gl = canvas.getContext('webgl2', {
+                preserveDrawingBuffer: true,
+                alpha: false,
+                antialias: false
+            });
+
+            if (!gl) {
+                document.body.innerHTML = `<div class="p-8 text-stone-800">WebGL2 is required for this studio.</div>`;
+                return;
+            }
+
+            const extFloat = gl.getExtension('EXT_color_buffer_float');
+            gl.getExtension('OES_texture_float_linear');
+
+            function resizeCanvas() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = Math.floor(window.innerWidth * dpr);
+                canvas.height = Math.floor(window.innerHeight * dpr);
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            function compileShader(type, src) {
+                const s = gl.createShader(type);
+                gl.shaderSource(s, src.trim());
+                gl.compileShader(s);
+                if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+                    console.error('Shader error:', gl.getShaderInfoLog(s));
+                }
+                return s;
+            }
+
+            function createProgram(vsId, fsId, tfVaryings = null) {
+                const vsSrc = document.getElementById(vsId).textContent;
+                const fsSrc = document.getElementById(fsId).textContent;
+                const p = gl.createProgram();
+                gl.attachShader(p, compileShader(gl.VERTEX_SHADER, vsSrc));
+                gl.attachShader(p, compileShader(gl.FRAGMENT_SHADER, fsSrc));
+                if (tfVaryings) {
+                    gl.transformFeedbackVaryings(p, tfVaryings, gl.INTERLEAVED_ATTRIBS);
+                }
+                gl.linkProgram(p);
+                if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+                    console.error('Program link error:', gl.getProgramInfoLog(p));
+                }
+                return p;
+            }
+
+            const agentProg = createProgram('vs-agents', 'fs-deposit', [
+                'v_position', 'v_angle', 'v_K', 'v_speed', 'v_life'
+            ]);
+            const flowProg = createProgram('vs-fullscreen', 'fs-flow');
+            const displayProg = createProgram('vs-fullscreen', 'fs-display');
+
+            // Fullscreen Quad VAO
+            const quadBuf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+            const quadVao = gl.createVertexArray();
+            gl.bindVertexArray(quadVao);
+            gl.enableVertexAttribArray(0);
+            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+            // Ping-Pong Agent Transform-Feedback Buffers
+            const agentBufA = gl.createBuffer();
+            const agentBufB = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, agentBufA);
+            gl.bufferData(gl.ARRAY_BUFFER, agentData.byteLength, gl.DYNAMIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, agentBufB);
+            gl.bufferData(gl.ARRAY_BUFFER, agentData.byteLength, gl.DYNAMIC_DRAW);
+
+            function makeAgentVao(buf) {
+                const vao = gl.createVertexArray();
+                gl.bindVertexArray(vao);
+                gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+                gl.enableVertexAttribArray(0);
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, AGENT_STRIDE, 0);
+                gl.enableVertexAttribArray(1);
+                gl.vertexAttribPointer(1, 1, gl.FLOAT, false, AGENT_STRIDE, 8);
+                gl.enableVertexAttribArray(2);
+                gl.vertexAttribPointer(2, 3, gl.FLOAT, false, AGENT_STRIDE, 12);
+                gl.enableVertexAttribArray(3);
+                gl.vertexAttribPointer(3, 1, gl.FLOAT, false, AGENT_STRIDE, 24);
+                gl.enableVertexAttribArray(4);
+                gl.vertexAttribPointer(4, 1, gl.FLOAT, false, AGENT_STRIDE, 28);
+                return vao;
+            }
+
+            let agentVaoRead = makeAgentVao(agentBufA);
+            let agentVaoWrite = makeAgentVao(agentBufB);
+            let agentBufRead = agentBufA;
+            let agentBufWrite = agentBufB;
+
+            function createSimTexture(w, h, isPigment) {
+                const tex = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, tex);
+                if (extFloat) {
+                    const internalFmt = isPigment ? gl.RGBA16F : gl.R16F;
+                    const fmt = isPigment ? gl.RGBA : gl.RED;
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFmt, w, h, 0, fmt, gl.HALF_FLOAT, null);
+                } else {
+                    const internalFmt = isPigment ? gl.RGBA8 : gl.R8;
+                    const fmt = isPigment ? gl.RGBA : gl.RED;
+                    gl.texImage2D(gl.TEXTURE_2D, 0, internalFmt, w, h, 0, fmt, gl.UNSIGNED_BYTE, null);
+                }
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                return tex;
+            }
+
+            const trailTexA = createSimTexture(GRID_W, GRID_H, false);
+            const trailTexB = createSimTexture(GRID_W, GRID_H, false);
+            const pigmentTexA = createSimTexture(GRID_W, GRID_H, true);
+            const pigmentTexB = createSimTexture(GRID_W, GRID_H, true);
+
+            let trailAccum = trailTexA;
+            let trailNext = trailTexB;
+            let pigmentAccum = pigmentTexA;
+            let pigmentNext = pigmentTexB;
+
+            const depositFbo = gl.createFramebuffer();
+            const flowFbo = gl.createFramebuffer();
+
+            function clearAllTextures() {
+                agentData.fill(0);
+                writeCursor = 0;
+                activeAgentCount = 0;
+                gpuDirty = true;
+
+                const clearTex = (tex) => {
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, depositFbo);
+                    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+                    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                };
+                clearTex(trailTexA);
+                clearTex(trailTexB);
+                clearTex(pigmentTexA);
+                clearTex(pigmentTexB);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            }
+
+            // Cache Uniform Locations
+            const uAgent = {
+                trail: gl.getUniformLocation(agentProg, 'u_trail'),
+                gridSize: gl.getUniformLocation(agentProg, 'u_gridSize'),
+                sensorOffset: gl.getUniformLocation(agentProg, 'u_sensorOffset'),
+                sensorAngle: gl.getUniformLocation(agentProg, 'u_sensorAngle'),
+                turnSpeed: gl.getUniformLocation(agentProg, 'u_turnSpeed'),
+                wander: gl.getUniformLocation(agentProg, 'u_wander'),
+                simTime: gl.getUniformLocation(agentProg, 'u_simTime'),
+                dt: gl.getUniformLocation(agentProg, 'u_dt'),
+                maxLife: gl.getUniformLocation(agentProg, 'u_maxLife'),
+                trailDep: gl.getUniformLocation(agentProg, 'u_trailDeposit'),
+                pigmentDep: gl.getUniformLocation(agentProg, 'u_pigmentDeposit')
+            };
+
+            const uFlow = {
+                trail: gl.getUniformLocation(flowProg, 'u_trail'),
+                pigment: gl.getUniformLocation(flowProg, 'u_pigment'),
+                gridSize: gl.getUniformLocation(flowProg, 'u_gridSize'),
+                flowStrength: gl.getUniformLocation(flowProg, 'u_flowStrength'),
+                diffusion: gl.getUniformLocation(flowProg, 'u_diffusion'),
+                trailDecay: gl.getUniformLocation(flowProg, 'u_trailDecay'),
+                pigmentDecay: gl.getUniformLocation(flowProg, 'u_pigmentDecay')
+            };
+
+            const uDisp = {
+                trail: gl.getUniformLocation(displayProg, 'u_trail'),
+                pigment: gl.getUniformLocation(displayProg, 'u_pigment'),
+                time: gl.getUniformLocation(displayProg, 'u_time'),
+                resolution: gl.getUniformLocation(displayProg, 'u_resolution'),
+                seed: gl.getUniformLocation(displayProg, 'u_seed'),
+                paperColor: gl.getUniformLocation(displayProg, 'u_paper_color'),
+                grain: gl.getUniformLocation(displayProg, 'u_grain'),
+                gridOpacity: gl.getUniformLocation(displayProg, 'u_grid_opacity'),
+                inkVisibility: gl.getUniformLocation(displayProg, 'u_ink_visibility')
+            };
+
+            // Pass 1: Agent Update + Fine Tapered Dip-Pen MRT Deposit (Zero Read/Write Texture Feedback Loop)
+            function runAgentPass(dt, simTime) {
+                if (activeAgentCount === 0) return;
+
+                if (gpuDirty) {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, agentBufRead);
+                    gl.bufferSubData(gl.ARRAY_BUFFER, 0, agentData);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+                    gpuDirty = false;
+                }
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, depositFbo);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, trailAccum, 0);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, pigmentAccum, 0);
+                gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+
+                gl.viewport(0, 0, GRID_W, GRID_H);
+                gl.useProgram(agentProg);
+
+                // Read from trailNext while additively depositing into trailAccum & pigmentAccum
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, trailNext);
+                gl.uniform1i(uAgent.trail, 0);
+
+                gl.uniform2f(uAgent.gridSize, GRID_W, GRID_H);
+                gl.uniform1f(uAgent.sensorOffset, 2.2);
+                gl.uniform1f(uAgent.sensorAngle, Math.PI / 6.0);
+                gl.uniform1f(uAgent.turnSpeed, 0.04);
+                gl.uniform1f(uAgent.wander, state.wander);
+                gl.uniform1f(uAgent.simTime, simTime);
+                gl.uniform1f(uAgent.dt, dt);
+                gl.uniform1f(uAgent.maxLife, state.strokeLife);
+                gl.uniform1f(uAgent.trailDep, 0.055);
+                gl.uniform1f(uAgent.pigmentDep, 0.088);
+
+                gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, agentBufWrite);
+                gl.bindVertexArray(agentVaoRead);
+
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ONE, gl.ONE);
+
+                gl.beginTransformFeedback(gl.POINTS);
+                gl.drawArrays(gl.POINTS, 0, activeAgentCount);
+                gl.endTransformFeedback();
+
+                gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+                gl.disable(gl.BLEND);
+
+                const tmpBuf = agentBufRead; agentBufRead = agentBufWrite; agentBufWrite = tmpBuf;
+                const tmpVao = agentVaoRead; agentVaoRead = agentVaoWrite; agentVaoWrite = tmpVao;
+            }
+
+            function syncCpuAgentBufferFromGpu() {
+                if (activeAgentCount > 0) {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, agentBufRead);
+                    gl.getBufferSubData(gl.ARRAY_BUFFER, 0, agentData);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+                }
+            }
+
+            // Pass 2: Subtle Wet-Edge Micro-Flow & Diffusion (Reads Accum -> Writes Next -> Swaps Accum & Next)
+            function runFlowPass(wetness) {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, flowFbo);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, trailNext, 0);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, pigmentNext, 0);
+                gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+
+                gl.viewport(0, 0, GRID_W, GRID_H);
+                gl.useProgram(flowProg);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, trailAccum);
+                gl.uniform1i(uFlow.trail, 0);
+
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, pigmentAccum);
+                gl.uniform1i(uFlow.pigment, 1);
+
+                gl.uniform2f(uFlow.gridSize, GRID_W, GRID_H);
+                gl.uniform1f(uFlow.flowStrength, state.flowStrength * wetness);
+                gl.uniform1f(uFlow.diffusion, state.diffusion * wetness);
+                gl.uniform1f(uFlow.trailDecay, 0.94);
+                gl.uniform1f(uFlow.pigmentDecay, 1.0); // Zero pigment fade once deposited
+
+                gl.bindVertexArray(quadVao);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                const tmpTrail = trailAccum; trailAccum = trailNext; trailNext = tmpTrail;
+                const tmpPigment = pigmentAccum; pigmentAccum = pigmentNext; pigmentNext = tmpPigment;
+            }
+
+            // Pass 3: Display Compositing onto Watercolor Paper + Pencil Grid
+            function runDisplayPass(nowMs) {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.useProgram(displayProg);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, trailAccum);
+                gl.uniform1i(uDisp.trail, 0);
+
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, pigmentAccum);
+                gl.uniform1i(uDisp.pigment, 1);
+
+                gl.uniform1f(uDisp.time, nowMs * 0.001);
+                gl.uniform2f(uDisp.resolution, canvas.width, canvas.height);
+                gl.uniform1f(uDisp.seed, state.seed);
+                gl.uniform3f(uDisp.paperColor, 0.93, 0.90, 0.85);
+                gl.uniform1f(uDisp.grain, state.paperGrain);
+                gl.uniform1f(uDisp.gridOpacity, state.gridOpacity);
+                gl.uniform1f(uDisp.inkVisibility, 1.0);
+
+                gl.bindVertexArray(quadVao);
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+            }
+
+            // Initial Composition
+            generateBotanicalComposition(clearAllTextures);
+
+            // HUD DOM references for live drying indicator
+            const hudStatusBadge = document.getElementById('hudStatusBadge');
+            const hudStatusDot = document.getElementById('hudStatusDot');
+            const hudStatusText = document.getElementById('hudStatusText');
+            const hudWetness = document.getElementById('hudWetness');
+            const hudAgents = document.getElementById('hudAgents');
+
+            let lastTime = 0;
+            let simTime = 0;
+
+            function animate(now) {
+                const dt = lastTime ? Math.min((now - lastTime) * 0.001, 0.04) : 0.016;
+                lastTime = now;
+
+                if (!state.paused) {
+                    // Instant 8-substep warmup when a new floral composition or bloom is stamped
+                    if (state.needsWarmup) {
+                        state.needsWarmup = false;
+                        for (let s = 0; s < 8; s++) {
+                            simTime += 0.016;
+                            runAgentPass(0.016, simTime);
+                            runFlowPass(0.65);
+                        }
+                    }
+
+                    // Update Ink Wetness decay curve (1.0 -> 0.0 over state.wetDuration)
+                    const elapsedWet = now - state.wetStartTime;
+                    state.inkWetness = Math.max(0.0, 1.0 - (elapsedWet / state.wetDuration));
+
+                    // Only run Agent & Flow passes while ink is still wet; freeze once dry so fine lines stay razor-sharp!
+                    if (state.inkWetness > 0.01) {
+                        simTime += dt;
+                        runAgentPass(dt, simTime);
+                        runFlowPass(state.inkWetness);
+
+                        hudStatusBadge.className = "inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#b52b20]/15 text-[#8b261d] font-medium";
+                        hudStatusDot.className = "w-2 h-2 rounded-full bg-[#b52b20] animate-ping";
+                        hudStatusText.textContent = "DRAWING WET INK...";
+                        hudWetness.textContent = `${Math.round(state.inkWetness * 100)}%`;
+                    } else {
+                        hudStatusBadge.className = "inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-[#2e6f40]/15 text-[#1f522d] font-medium";
+                        hudStatusDot.className = "w-2 h-2 rounded-full bg-[#2e6f40]";
+                        hudStatusText.textContent = "INK DRIED (CRISP)";
+                        hudWetness.textContent = "0% (Locked)";
+                    }
+                }
+
+                runDisplayPass(now);
+                hudAgents.textContent = activeAgentCount.toLocaleString();
+                requestAnimationFrame(animate);
+            }
+
+            requestAnimationFrame(animate);
+
+            /**
+             * ========================================================================
+             * UI CONTROLS, MOUSE PAINTING & KEYBOARD SHORTCUTS
+             * ========================================================================
+             */
+            function triggerNewComposition() {
+                state.seed = Math.floor(100000 + Math.random() * 900000);
+                generateBotanicalComposition(clearAllTextures);
+            }
+
+            function reInkCurrentFlowers() {
+                syncCpuAgentBufferFromGpu();
+                state.flowers.forEach(fl => choreographFlowerAgents(fl, state.flowers, false));
+            }
+
+            function saveArtworkPNG() {
+                canvas.toBlob((blob) => {
+                    if (!blob) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `botanical-inkflow-${state.seed}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+            }
+
+            document.getElementById('newCompositionBtn').addEventListener('click', triggerNewComposition);
+            document.getElementById('reInkBtn').addEventListener('click', reInkCurrentFlowers);
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                state.scheduledBatches = [];
+                state.flowers = [];
+                state.inkWetness = 0.0;
+                clearAllTextures();
+                updateUIStatus();
+            });
+            document.getElementById('saveBtn').addEventListener('click', saveArtworkPNG);
+
+            const pauseBtnText = document.getElementById('pauseBtnText');
+            function togglePause() {
+                state.paused = !state.paused;
+                pauseBtnText.textContent = state.paused ? 'Resume Ink (P)' : 'Freeze Ink (P)';
+                if (state.paused) {
+                    hudStatusText.textContent = 'INK FROZEN';
+                }
+            }
+            document.getElementById('pauseBtn').addEventListener('click', togglePause);
+
+            // Click Mode Switcher
+            const modeBloomBtn = document.getElementById('modeBloomBtn');
+            const modeBrushBtn = document.getElementById('modeBrushBtn');
+            modeBloomBtn.addEventListener('click', () => {
+                state.interactionMode = 'bloom';
+                modeBloomBtn.className = 'px-2.5 py-1 rounded-lg bg-[#9e2a2b] text-white font-medium text-[11px] transition cursor-pointer';
+                modeBrushBtn.className = 'px-2.5 py-1 rounded-lg bg-transparent text-[#4a3e32] hover:bg-[#d8cfc0] font-medium text-[11px] transition cursor-pointer';
+            });
+            modeBrushBtn.addEventListener('click', () => {
+                state.interactionMode = 'brush';
+                modeBrushBtn.className = 'px-2.5 py-1 rounded-lg bg-[#9e2a2b] text-white font-medium text-[11px] transition cursor-pointer';
+                modeBloomBtn.className = 'px-2.5 py-1 rounded-lg bg-transparent text-[#4a3e32] hover:bg-[#d8cfc0] font-medium text-[11px] transition cursor-pointer';
+            });
+
+            // Select Dropdowns
+            document.getElementById('paletteSelect').addEventListener('change', (e) => {
+                state.paletteIdx = parseInt(e.target.value, 10);
+                generateBotanicalComposition(clearAllTextures);
+            });
+            document.getElementById('archetypeSelect').addEventListener('change', (e) => {
+                state.archetype = e.target.value;
+                generateBotanicalComposition(clearAllTextures);
+            });
+
+            // Sliders: Geometry & Physics
+            const bindSlider = (id, valId, key, fmt, reDraw = true) => {
+                const el = document.getElementById(id);
+                const valEl = document.getElementById(valId);
+                el.addEventListener('input', (e) => {
+                    state[key] = parseFloat(e.target.value);
+                    valEl.textContent = fmt(state[key]);
+                });
+                if (reDraw) {
+                    el.addEventListener('change', () => generateBotanicalComposition(clearAllTextures));
+                }
+            };
+
+            bindSlider('sliderFlowerCount', 'valFlowerCount', 'flowerCount', v => Math.round(v), true);
+            bindSlider('sliderLobeFreq', 'valLobeFreq', 'baseLobes', v => Math.round(v), true);
+            bindSlider('sliderRings', 'valRings', 'ringCount', v => Math.round(v), true);
+            bindSlider('sliderTilt', 'valTilt', 'tiltDepth', v => v.toFixed(2), true);
+            bindSlider('sliderVeinDensity', 'valVeinDensity', 'veinDensity', v => v.toFixed(2) + 'x', true);
+            bindSlider('sliderNoise', 'valNoise', 'noiseMult', v => v.toFixed(2) + 'x', true);
+
+            bindSlider('sliderStrokeLife', 'valStrokeLife', 'strokeLife', v => v.toFixed(2) + 's', true);
+            bindSlider('sliderDiffusion', 'valDiffusion', 'diffusion', v => v.toFixed(4), false);
+            bindSlider('sliderFlow', 'valFlow', 'flowStrength', v => v.toFixed(2), false);
+            bindSlider('sliderWander', 'valWander', 'wander', v => v.toFixed(3), false);
+            bindSlider('sliderGrid', 'valGrid', 'gridOpacity', v => Math.round(v * 100) + '%', false);
+            bindSlider('sliderGrain', 'valGrain', 'paperGrain', v => v.toFixed(3), false);
+
+            // Sidebar Toggle
+            const sidebar = document.getElementById('sidebar');
+            const hud = document.getElementById('hud');
+            function toggleUI() {
+                sidebar.classList.toggle('-translate-x-full');
+            }
+            document.getElementById('toggleSidebarBtn').addEventListener('click', toggleUI);
+
+            // Canvas Interactive Pointer: Stamp New Bloom OR Sketch Bounded Dip-Pen Strokes
+            let isPointerDown = false;
+            let lastGridX = 0;
+            let lastGridY = 0;
+
+            function clientToGrid(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                const u = (clientX - rect.left) / rect.width;
+                const v = 1.0 - (clientY - rect.top) / rect.height;
+                return { x: u * GRID_W, y: v * GRID_H };
+            }
+
+            canvas.addEventListener('pointerdown', (e) => {
+                isPointerDown = true;
+                const pt = clientToGrid(e.clientX, e.clientY);
+                lastGridX = pt.x;
+                lastGridY = pt.y;
+
+                syncCpuAgentBufferFromGpu();
+                const clickRng = mulberry32(Date.now() ^ Math.floor(pt.x * 100));
+
+                if (state.interactionMode === 'bloom') {
+                    const newFlower = createFlowerBlueprint(pt.x, pt.y, 0.85 + clickRng() * 0.30, state.archetype, clickRng);
+                    state.flowers.push(newFlower);
+                    choreographFlowerAgents(newFlower, state.flowers, true);
+                    updateUIStatus();
+                } else {
+                    wakeUpInkDryer(1100, false);
+                    const palette = BOTANICAL_PALETTES[state.paletteIdx];
+                    const K = palette.petalRim[Math.floor(clickRng() * palette.petalRim.length)];
+                    for (let i = 0; i < 14; i++) {
+                        const a = clickRng() * Math.PI * 2;
+                        const len = 10 + clickRng() * 18;
+                        const st = spawnBoundedStroke(
+                            pt.x, pt.y,
+                            pt.x + Math.cos(a) * len,
+                            pt.y + Math.sin(a) * len,
+                            K, state.strokeLife * 0.65, 0.0, 1.35
+                        );
+                        if (st) spawnAgent(st.x, st.y, st.angle, st.K, st.speed, st.life);
+                    }
+                }
+            });
+
+            canvas.addEventListener('pointermove', (e) => {
+                if (!isPointerDown || state.interactionMode !== 'brush') return;
+                const pt = clientToGrid(e.clientX, e.clientY);
+                const dx = pt.x - lastGridX;
+                const dy = pt.y - lastGridY;
+                const dist = Math.hypot(dx, dy);
+                if (dist < 3) return;
+
+                syncCpuAgentBufferFromGpu();
+                wakeUpInkDryer(1100, false);
+                const dragRng = mulberry32(Date.now());
+                const palette = BOTANICAL_PALETTES[state.paletteIdx];
+                const K = palette.petalRim[Math.floor(dragRng() * palette.petalRim.length)];
+
+                const chain = [];
+                pushStrokeChain(chain, lastGridX, lastGridY, pt.x, pt.y, K, state.strokeLife * 0.6, 1.45, dragRng, 1.2, 0.25);
+                for (let i = 0; i < chain.length; i++) {
+                    const st = chain[i];
+                    spawnAgent(st.x, st.y, st.angle, st.K, st.speed, st.life);
+                }
+
+                lastGridX = pt.x;
+                lastGridY = pt.y;
+            });
+
+            window.addEventListener('pointerup', () => { isPointerDown = false; });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    triggerNewComposition();
+                } else if (e.key === 'p' || e.key === 'P') {
+                    togglePause();
+                } else if (e.key === 'r' || e.key === 'R') {
+                    state.scheduledBatches = [];
+                    state.flowers = [];
+                    state.inkWetness = 0.0;
+                    clearAllTextures();
+                    updateUIStatus();
+                } else if (e.key === 'c' || e.key === 'C') {
+                    state.paletteIdx = (state.paletteIdx + 1) % BOTANICAL_PALETTES.length;
+                    document.getElementById('paletteSelect').value = String(state.paletteIdx);
+                    generateBotanicalComposition(clearAllTextures);
+                } else if (e.key === 's' || e.key === 'S') {
+                    saveArtworkPNG();
+                } else if (e.key === 'h' || e.key === 'H') {
+                    toggleUI();
+                    hud.classList.toggle('opacity-0');
+                }
+            });
+        }
+
+        window.onload = initWebGL2App;
+    </script>
+</body>
+</html>

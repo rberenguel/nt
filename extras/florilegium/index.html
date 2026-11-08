@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Florilegium</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #dfd8c8;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+<script id="vs-fullscreen" type="x-shader/x-vertex">#version 300 es
+    in vec2 a_position;
+    out vec2 v_uv;
+    void main() {
+        v_uv = a_position * 0.5 + 0.5;
+        gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+    </script>
+<script id="vs-agents" type="x-shader/x-vertex">#version 300 es
+    precision highp float;
+
+    layout(location = 0) in vec2  a_position;
+    layout(location = 1) in float a_angle;
+    layout(location = 2) in vec3  a_K;
+    layout(location = 3) in float a_speed;
+    layout(location = 4) in float a_life;
+
+    out vec2  v_position;
+    out float v_angle;
+    out vec3  v_K;
+    out float v_speed;
+    out float v_life;
+
+    out vec3  vf_K;
+    out float vf_life;
+    out float vf_speed;
+    out float vf_taper;
+    out float vf_nibSize;
+
+    uniform sampler2D u_trail;
+    uniform vec2      u_gridSize;
+    uniform float     u_sensorOffset;
+    uniform float     u_sensorAngle;
+    uniform float     u_turnSpeed;
+    uniform float     u_wander;
+    uniform float     u_simTime;
+    uniform float     u_dt;
+    uniform float     u_maxLife;
+
+    float hash(vec2 p) {
+        vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+        p3 += dot(p3, p3.yzx + 33.33);
+        return fract((p3.x + p3.y) * p3.z);
+    }
+
+    float sense(vec2 pos, float angle, float offAngle, float offDist) {
+        vec2 dir = vec2(cos(angle + offAngle), sin(angle + offAngle));
+        vec2 samp = (pos + dir * offDist) / u_gridSize;
+        return texture(u_trail, fract(samp)).r;
+    }
+
+    void main() {
+        vec2  pos   = a_position;
+        float angle = a_angle;
+        float life  = a_life;
+
+        // Decode packed speed + nibSize: integer part = nibSize * 100.0, fractional part = speed / 20.0
+        float encoded = a_speed;
+        float nibCode = floor(encoded);
+        float rawSpeed = (encoded - nibCode) * 20.0;
+        float nibSize = clamp(nibCode * 0.01, 0.75, 3.2);
+
+        if (life > 0.0) {
+            float so = u_sensorOffset;
+            float sa = u_sensorAngle;
+
+            float left   = sense(pos, angle, -sa, so);
+            float center = sense(pos, angle,  0.0, so);
+            float right  = sense(pos, angle, +sa, so);
+
+            // Subtle trail-guided alignment keeps botanical hatching cohesive without overshooting
+            if (center > left && center > right) {
+                // Hold course along established vein/contour
+            } else if (left > right) {
+                angle -= u_turnSpeed;
+            } else if (right > left) {
+                angle += u_turnSpeed;
+            } else {
+                angle += (hash(pos + vec2(u_simTime * 0.07)) - 0.5) * u_turnSpeed * 0.25;
+            }
+
+            // Micro dip-pen hand-drawn jitter
+            angle += (hash(pos + vec2(u_simTime * 0.23 + 17.0)) - 0.5) * u_wander;
+
+            // Advance by exact pixel velocity per second (rawSpeed * 60.0 * u_dt)
+            pos += vec2(cos(angle), sin(angle)) * (rawSpeed * 60.0 * u_dt);
+            pos = clamp(pos, vec2(3.0), u_gridSize - vec2(3.0));
+
+            life = max(0.0, life - u_dt);
+        }
+
+        v_position = pos;
+        v_angle    = angle;
+        v_K        = a_K;
+        v_speed    = a_speed;
+        v_life     = life;
+
+        vf_K       = a_K;
+        vf_life    = life;
+        vf_speed   = rawSpeed;
+        vf_nibSize = nibSize;
+
+        // Taper brush size by remaining life: crisp nib at root, razor-sharp 0.85px point at tip
+        float lifeRatio = clamp(life / max(u_maxLife, 0.08), 0.38, 1.0);
+        vf_taper = lifeRatio;
+
+        gl_PointSize = life > 0.0 ? max(0.85, nibSize * (0.55 + 0.45 * lifeRatio)) : 0.0;
+
+        vec2 ndc = life > 0.0 ? ((pos / u_gridSize) * 2.0 - 1.0) : vec2(-2.0, -2.0);
+        gl_Position = vec4(ndc.x, ndc.y, 0.0, 1.0);
+    }
+    </script>
+<script id="fs-deposit" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec3  vf_K;
+    in float vf_life;
+    in float vf_speed;
+    in float vf_taper;
+    in float vf_nibSize;
+
+    layout(location = 0) out vec4 trailDeposit;
+    layout(location = 1) out vec4 pigmentDeposit;
+
+    uniform float u_trailDeposit;
+    uniform float u_pigmentDeposit;
+
+    void main() {
+        if (vf_life <= 0.0) discard;
+
+        // Tighter radial dip-pen nib falloff so thin lines stay crisp without puffy halos
+        vec2 c = gl_PointCoord - 0.5;
+        float d = length(c) * 2.0;
+        float alpha = smoothstep(1.0, 0.38, d);
+        if (alpha <= 0.0) discard;
+
+        // Boost pigment density on ultra-fine nibs so 1px-2px veins still achieve deep crimson/emerald saturation
+        float thinBoost = clamp(2.1 / max(vf_nibSize, 0.85), 0.85, 1.85);
+        float density = (0.75 + clamp(vf_speed * 0.12, 0.0, 0.35)) * vf_taper * thinBoost;
+        alpha *= density;
+
+        trailDeposit   = vec4(u_trailDeposit * alpha, 0.0, 0.0, alpha);
+        pigmentDeposit = vec4(vf_K * u_pigmentDeposit * alpha, u_pigmentDeposit * alpha);
+    }
+    </script>
+<script id="fs-flow" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec2 v_uv;
+    layout(location = 0) out vec4 trailOut;
+    layout(location = 1) out vec4 pigmentOut;
+
+    uniform sampler2D u_trail;
+    uniform sampler2D u_pigment;
+    uniform vec2      u_gridSize;
+    uniform float     u_flowStrength;
+    uniform float     u_diffusion;
+    uniform float     u_trailDecay;
+    uniform float     u_pigmentDecay;
+
+    void main() {
+        vec2 texel = 1.0 / u_gridSize;
+        vec2 uv = v_uv;
+
+        // Trail gradient (flow direction)
+        float tL = texture(u_trail, uv + vec2(-texel.x, 0.0)).r;
+        float tR = texture(u_trail, uv + vec2( texel.x, 0.0)).r;
+        float tD = texture(u_trail, uv + vec2(0.0, -texel.y)).r;
+        float tU = texture(u_trail, uv + vec2(0.0,  texel.y)).r;
+
+        vec2 grad = vec2(tR - tL, tU - tD);
+        float gradLen = length(grad);
+
+        // Sample pigment at advected position along trail gradient
+        vec2 flowUV = uv;
+        if (gradLen > 0.0005) {
+            vec2 dir = grad / gradLen;
+            flowUV = uv + dir * texel * u_flowStrength;
+        }
+
+        vec4 pigment = texture(u_pigment, flowUV);
+
+        // Isotropic water diffusion of pigment
+        vec4 pSum = pigment * 0.4;
+        pSum += texture(u_pigment, uv + vec2(-texel.x, 0.0)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2( texel.x, 0.0)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2(0.0, -texel.y)) * 0.15;
+        pSum += texture(u_pigment, uv + vec2(0.0,  texel.y)) * 0.15;
+
+        pigmentOut = mix(pigment, pSum, u_diffusion) * u_pigmentDecay;
+
+        // Trail softening (preserve fine vein structure)
+        float trail = texture(u_trail, uv).r;
+        float tSum = trail * 0.5;
+        tSum += tL * 0.125;
+        tSum += tR * 0.125;
+        tSum += tD * 0.125;
+        tSum += tU * 0.125;
+        trailOut = vec4(tSum * u_trailDecay, 0.0, 0.0, 1.0);
+    }
+    </script>
+<script id="fs-display" type="x-shader/x-fragment">#version 300 es
+    precision highp float;
+
+    in vec2 v_uv;
+    out vec4 fragColor;
+
+    uniform sampler2D u_trail;
+    uniform sampler2D u_pigment;
+    uniform float     u_time;
+    uniform vec2      u_resolution;
+    uniform float     u_seed;
+    uniform vec3      u_paper_color;
+    uniform float     u_grain;
+    uniform float     u_grid_opacity;
+    uniform float     u_ink_visibility;
+    uniform float     u_screen_index;
+    uniform float     u_total_screens;
+
+    // Hash / Noise
+    float hash21(vec2 p) {
+        p = fract(p * vec2(123.34, 456.21) + u_seed * 0.001);
+        p += dot(p, p + 45.32);
+        return fract(p.x * p.y);
+    }
+
+    float vnoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash21(i);
+        float b = hash21(i + vec2(1.0, 0.0));
+        float c = hash21(i + vec2(0.0, 1.0));
+        float d = hash21(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    // Beer-Lambert translucent colour (Kubelka-Munk inspired subtractive mixing)
+    vec3 paintColour(vec3 K, float thickness) {
+        vec3 absorption = K * thickness * 4.0;
+        vec3 transmitted = exp(-absorption);
+        return transmitted;
+    }
+
+    void main() {
+        // Multi-screen panoramic UV and aspect correction
+        float totalScreens = max(u_total_screens, 1.0);
+        float totalW = u_resolution.x * totalScreens;
+        vec2 aspect = vec2(totalW / max(u_resolution.y, 1.0), 1.0);
+        if (totalW < u_resolution.y) {
+            aspect = vec2(1.0, u_resolution.y / max(totalW, 1.0));
+        }
+        vec2 uv = vec2((v_uv.x + u_screen_index) / totalScreens, v_uv.y);
+
+        // 1. Warm Archival Watercolor Paper Base
+        vec3 color = u_paper_color;
+
+        // Multi-scale cold-press watercolor paper grain
+        float fine  = (hash21(gl_FragCoord.xy) - 0.5) * u_grain;
+        float med   = (hash21(gl_FragCoord.xy * 0.3 + vec2(17.3, 53.1)) - 0.5) * (u_grain * 0.6);
+        float large = (vnoise(gl_FragCoord.xy * 0.015 + u_seed) - 0.5) * (u_grain * 1.3);
+        color += fine + med + large;
+
+        // 2. Botanical Sketchbook Pencil Grid + Diagonal Construction Lines + Graphite Smudge
+        float gridSpacing = min(u_resolution.x, u_resolution.y) * 0.012;
+        vec2 gridCoord = uv * aspect * gridSpacing;
+
+        float gridLine = 0.0;
+        gridLine += smoothstep(0.97, 0.995, fract(gridCoord.x));
+        gridLine += smoothstep(0.97, 0.995, fract(gridCoord.y));
+        gridLine = clamp(gridLine, 0.0, 1.0) * 0.07 * u_grid_opacity;
+
+        float diag = 0.0;
+        diag += smoothstep(0.985, 0.997, fract((gridCoord.x + gridCoord.y) * 0.55));
+        diag += smoothstep(0.985, 0.997, fract((gridCoord.x - gridCoord.y + 100.0) * 0.55));
+        diag = clamp(diag, 0.0, 1.0) * 0.035 * u_grid_opacity;
+
+        float smudge = vnoise(uv * 7.0 + u_seed * 3.7) * vnoise(uv * 11.0 - u_seed * 1.3);
+        smudge = smoothstep(0.55, 0.9, smudge) * 0.04 * u_grid_opacity;
+
+        color = color * (1.0 - gridLine - diag - smudge)
+              + vec3(0.55, 0.52, 0.48) * (gridLine + diag)
+              + vec3(0.62, 0.59, 0.55) * smudge;
+
+        // 3. Trail Network (Subtle graphite/ink scaffolding along botanical veins)
+        float trail = texture(u_trail, uv).r;
+        float veinDetail = vnoise(uv * 160.0 + trail * 8.0) * 0.5 + 0.5;
+        float veinMask = smoothstep(0.005, 0.020 + veinDetail * 0.016, trail);
+        vec3 networkColor = vec3(0.48, 0.43, 0.37);
+        color = mix(color, networkColor, veinMask * 0.07 * u_ink_visibility);
+
+        // 4. Pigment (Beer-Lambert Subtractive Mixing)
+        vec4 pigment = texture(u_pigment, uv);
+        vec3 K = max(pigment.rgb, vec3(0.0));
+        float X = pigment.a;
+        vec3 avgK = X > 0.0001 ? (K / X) : vec3(0.0);
+
+        vec3 transmitted = paintColour(avgK, X);
+
+        // Strong opacity falloff so dip-pen lines and throat pools are vivid and crisp
+        float opacity = 1.0 - exp(-X * 5.8);
+        color = mix(color, color * transmitted, opacity * u_ink_visibility);
+
+        // Saturation boost in dense pigment so crimson & emerald stay luminous
+        float pigmentDepth = length(avgK) * X;
+        vec3 reflectanceHue = exp(-avgK * 2.4);
+        float satBoost = smoothstep(0.05, 0.38, X);
+        color = mix(color, color * (0.72 + 0.28 * reflectanceHue), satBoost * 0.38 * u_ink_visibility);
+
+        // Edge granulation / watercolor pigment ring at wet edges (on 2048x2048 grid)
+        vec2 texel = 1.0 / vec2(2048.0);
+        float xL = texture(u_pigment, uv - vec2(texel.x, 0.0)).a;
+        float xR = texture(u_pigment, uv + vec2(texel.x, 0.0)).a;
+        float xD = texture(u_pigment, uv - vec2(0.0, texel.y)).a;
+        float xU = texture(u_pigment, uv + vec2(0.0, texel.y)).a;
+        float edgeGrad = length(vec2(xR - xL, xU - xD));
+        float edgeDarkening = smoothstep(0.015, 0.16, edgeGrad) * smoothstep(0.02, 0.35, X);
+        color *= 1.0 - edgeDarkening * 0.16;
+
+        // Deepen dense intersections (keeps flower throats & petal bases rich and velvety)
+        float deep = smoothstep(0.28, 0.85, pigmentDepth);
+        color *= 1.0 - deep * 0.14;
+
+        // Subtle water bloom at vein edges
+        float bloom = smoothstep(0.002, 0.014, trail) * (1.0 - veinMask);
+        color = mix(color, color * reflectanceHue, bloom * 0.05 * u_ink_visibility);
+
+        // 5. Subtle Sketchbook Vignette
+        vec2 vc = uv - 0.5;
+        float vignette = 1.0 - dot(vc, vc) * 0.20;
+        color *= vignette;
+
+        fragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+    }
+    </script>
+  <script src="florilegium.js"></script>
+</body>
+</html>

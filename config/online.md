@@ -207,6 +207,10 @@
 - url: extras/caustics/index.html
 - screens: 2
 
+## Florilegium
+- url: extras/florilegium/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -231,6 +235,7 @@
 - Terrain
 - Inkflow
 - Caustics
+- Florilegium
 
 # 8 ball
 ## 8
