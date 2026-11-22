@@ -211,6 +211,10 @@
 - url: extras/florilegium/index.html
 - screens: 2
 
+## Alien
+- url: extras/alien/index.html
+- screens: 2
+
 ## Random
 - Matrix
 - Lightning
@@ -236,6 +240,7 @@
 - Inkflow
 - Caustics
 - Florilegium
+- Alien
 
 # 8 ball
 ## 8
