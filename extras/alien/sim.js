@@ -1416,8 +1416,8 @@
         else if (type === CELL_TYPE.DEFENDER) basal = 1.12;
         else if (type === CELL_TYPE.VENOM) basal = 1.55;
         else if (type === CELL_TYPE.PHOTO) {
-          // Barely below basal so stationary photo blobs must drift/swim into nutrient blooms
-          this.cellEnergy[i] += 0.62 * dt;
+          // Small passive solar trickle — prey must genuinely harvest blooms to grow & breed
+          this.cellEnergy[i] += 0.28 * dt;
           basal = 0.88;
         }
         // Graceful senescence: older organisms burn extra metabolism instead of randomly popping while full
@@ -1453,10 +1453,13 @@
           continue;
         }
 
-        // Constructor reproduction (pure Lotka-Volterra: regulated by food & prey, not artificial guild caps!)
+        // Constructor reproduction: reserve 120+ pool slots so prey can NEVER lock predators out of breeding!
+        const maxPreySlots = MAX_ORGS - 120;
+        const canBreedInPool = org && (org.hasAttacker || curPreyCount < maxPreySlots);
         if (
           type === CELL_TYPE.CONSTRUCTOR &&
           org &&
+          canBreedInPool &&
           org.reproCooldown <= 0 &&
           this.cellEnergy[i] > 78 &&
           this.activeCellCount < MAX_CELLS - 40 &&
@@ -1651,14 +1654,14 @@
         for (let i = 0; i < needed; i++) {
           let g;
           let gen = 1;
-          if (hofPreds.length > 0 && this.rng() < 0.75) {
+          if (hofPreds.length > 0 && this.rng() < 0.95) {
             const pick = hofPreds[Math.floor(this.rng() * hofPreds.length)];
             g = mutateGenome(pick.genome, this.rng);
             gen = pick.generation + 1;
           } else {
             g = mutateGenome(predStarters[Math.floor(this.rng() * predStarters.length)], this.rng);
           }
-          this.spawnAtEdge(g, gen, 76);
+          this.spawnAtEdge(g, gen, 82);
         }
       }
     }
